@@ -78,7 +78,7 @@ def return_gene_columns(gene,filePath,g2v):
     print(gColumns)
                 
     #import sample data keeping columns of gene
-    vData = np.loadtxt(filePath,dtype = str,usecolds = geneColumns,skiprows = 1)
+    vData = np.loadtxt(filePath,dtype = str,usecols = geneColumns,skiprows = 1)
     #convert NA to 0
     vData[vData =='NA'] = 0
     #convert to int
