@@ -35,6 +35,7 @@ def sample_to_batch_ditct(filePath):
 
 
 def process_line(line,s2b,headerVariants,vDict):
+    line = line.strip().split(' ')
     sample = line[0]
     batch = s2b[sample]
     data = np.array(line[1:],dtype = str)
