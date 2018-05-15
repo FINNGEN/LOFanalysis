@@ -42,28 +42,32 @@ def variant_is_dict(snplist ='/home/pete/lof_data/filtered_lof.snplist' ):
     Read the annotated_varaints and returns a dict[variant][batch] = INFO_SCORE
     '''
 
-    variants = np.loadtxt(snplist,dtype = str)   
-    vDict = defaultdict(dd_str)
-    with gzip.open(annotatedVariants,'rt') as i:
-        header = i.readline().strip().split('\t')
-        infoPos,lofPos,avgPos,genePos = read_header(header)
-        batches = header[infoPos[0]:infoPos[-1]+1]
-        batches = [batch.split('_')[1] for batch in batches]
-        startPos = infoPos[0]
-        rangebatches = np.arange(len(batches))
-        assert len(batches) == len(infoPos)
+    try:
+        vDict = pickle.load(open(dataPath + 'vDict.p','4b'))
+    except:
+        variants = np.loadtxt(snplist,dtype = str)   
+        vDict = defaultdict(dd_str)
+        with gzip.open(annotatedVariants,'rt') as i:
+            header = i.readline().strip().split('\t')
+            infoPos,lofPos,avgPos,genePos = read_header(header)
+            batches = header[infoPos[0]:infoPos[-1]+1]
+            batches = [batch.split('_')[1] for batch in batches]
+            startPos = infoPos[0]
+            rangebatches = np.arange(len(batches))
+            assert len(batches) == len(infoPos)
 
-        #loop variants
-        for line in i:
-            line = line.strip().split('\t')
-            variant = line[0].replace(':','_')
-            if variant in variants:
-                for b in rangebatches:
-                    batch = batches[b]
-                    vDict[variant][batch] = line[startPos + b]
+            #loop variants
+            for line in i:
+                line = line.strip().split('\t')
+                variant = line[0].replace(':','_')
+                if variant in variants:
+                    for b in rangebatches:
+                        batch = batches[b]
+                        vDict[variant][batch] = line[startPos + b]
 
-    pickle.dump(vDict,open(dataPath + 'vDict.p','wb'))
+        pickle.dump(vDict,open(dataPath + 'vDict.p','wb'))
 
+    return vDict
 
 
 def return_gene_columns(gene,filePath,g2v):
