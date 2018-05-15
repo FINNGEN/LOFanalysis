@@ -39,11 +39,12 @@ def get_variant_to_gene_dict(bFile):
             v2g[variant] = gene
 
 
-    
     g2v = dd(list)
-    for variant in v2g:
-        gene = v2g[variant]
-        g2v[gene].append(variant)
+    with open(bFile + '.snplist','rt') as i:
+        for line in i:
+            variant = line.strip()
+            gene = v2g[variant]
+            g2v[gene].append(variant)
     return v2g,g2v
 
 
