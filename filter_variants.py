@@ -16,7 +16,16 @@ annotatedVariants =  dataPath + 'annotated_variants.gz'
 bashPath = 'tmp_scripts/'
 
 
+def sample_to_batch_ditct(filePath):
 
+    s2b = dd()
+    with open(filePath,'rt') as i:
+        for line in :
+            line = line.strip().split(':')
+            sample = line[-1]
+            batch = line[0]
+            s2b[sample] = batchName
+    return s2b
 
 def return_gene_columns(gene,filePath,g2v):
     """
@@ -27,8 +36,16 @@ def return_gene_columns(gene,filePath,g2v):
         header = i.readline()
         header = header.strip().split(' ')
     geneColumns = [i for i,elem in enumerate(header) if '_'.join(elem.split('_')[:-1]) in variantList]
-    
-    return geneColumns
+
+    #import sample data keeping columns of gene
+    vData = np.loadtxt(filePath,dtype = str,usecolds = geneColumns,skiprows = 1)
+    #convert NA to 0
+    vData[vData =='NA'] = 0
+    #convert to int
+    vData = vData.astype(int)
+    #sum across variants and check if >1
+    gData = (np.sum(sampleData,axis = 1) >0).astype(int)
+    return gData
 def get_variant_to_gene_dict(bFile):
 
     #get variant to gene mapping from full list of variants
