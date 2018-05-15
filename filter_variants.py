@@ -4,7 +4,10 @@ import gzip
 from operator import itemgetter
 import os
 import shutil
-from collections import defaultdict as dd
+from collections import defaultdict 
+def dd():
+    return defaultdict(int)
+
 import shlex
 from subprocess import Popen, PIPE,call
 
@@ -17,16 +20,31 @@ bashPath = 'tmp_scripts/'
 
 
 def sample_to_batch_ditct(filePath):
-
+    '''
+    Given timo's file maps a sample to a batch
+    '''
     s2b = dd()
     with open(filePath,'rt') as i:
         for line in i:
             line = line.strip().split(':')
             sample = line[-1]
-            batch = line[0]
+            batch = line[0].split('_')[1]
             s2b[sample] = batch
     return s2b
 
+def variant_is_dict(snplist ='/home/pete/lof_data/filtered_lof.snplist' ):
+    
+    '''
+    Read the annotated_varaints and returns a dict[variant][batch] = INFO_SCORE
+    '''
+
+    variants = np.loadtxt(snplist,dtype = str)
+    vDict = defaultdict(dd)
+    
+    with gzip.open(annotatedVariants,'rt') as i:
+        infoPos,lofPos,avgPos,genePos = read_header(i.readline().strip().split('\t'))
+        
+        
 def return_gene_columns(gene,filePath,g2v):
     """
     Loops through the header of the matrix file and returns the columns where variants belong to the gene
@@ -46,6 +64,8 @@ def return_gene_columns(gene,filePath,g2v):
     #sum across variants and check if >1
     gData = (np.sum(sampleData,axis = 1) >0).astype(int)
     return gData
+
+
 def get_variant_to_gene_dict(bFile):
 
     #get variant to gene mapping from full list of variants
@@ -67,6 +87,10 @@ def get_variant_to_gene_dict(bFile):
 
 
 
+
+#######################
+#--GENERATING MATRIX--#
+#######################
 def generate_matrix(iFile,oFile):
     """
     Returns variant x sample matrix with 1s where variant is present
