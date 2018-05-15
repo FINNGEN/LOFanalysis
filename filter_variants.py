@@ -20,7 +20,7 @@ def sample_to_batch_ditct(filePath):
 
     s2b = dd()
     with open(filePath,'rt') as i:
-        for line in :
+        for line in i:
             line = line.strip().split(':')
             sample = line[-1]
             batch = line[0]
