@@ -95,7 +95,7 @@ def return_list_of_variants(filePath):
     with open(filePath,'rt') as i:
         header = i.readline()
         header = header.strip().split(' ')[1:]
-        fixedVariants = ['_'.join(elem.split('_')[:1]) for elem in header]
+        fixedVariants = ['_'.join(elem.split('_')[:-1]) for elem in header]
 
     return fixedVariants
                 
