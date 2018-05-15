@@ -16,6 +16,17 @@ annotatedVariants =  dataPath + 'annotated_variants.gz'
 bashPath = 'tmp_scripts/'
 
 
+
+
+def return_gene_columns(gene,filePath,g2v):
+    """
+    Loops through the header of the matrix file and returns the columns where variants belong to the gene
+    """
+    variantList = g2v[gene]
+     with open(filePath,'rt') as i:
+         header = i.readline()
+    geneColumns = [i for i,elem in header if elem in variantList]
+    return geneColumns
 def get_variant_to_gene_dict():
 
     v2g = dd(str)
@@ -24,7 +35,11 @@ def get_variant_to_gene_dict():
             variant,gene = line.strip().split('\t')
             v2g[variant] = gene
 
-    return v2g
+    g2v = dd(list)
+    for variant in v2g:
+        gene = v2g[variant]
+        g2v[gene].append(variant)
+    return v2g,g2v
 
 
 
