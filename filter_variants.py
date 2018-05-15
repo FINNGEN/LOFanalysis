@@ -59,7 +59,7 @@ def variant_is_dict(snplist ='/home/pete/lof_data/filtered_lof.snplist' ):
                     vDict[variant][batch] = line[startPos + b]
                 break
 
-    pickle.dump(vDict,open(dataPath + 'vDict.p','wb')
+    pickle.dump(vDict,open(dataPath + 'vDict.p','wb'))
                     
 def return_gene_columns(gene,filePath,g2v):
     """
