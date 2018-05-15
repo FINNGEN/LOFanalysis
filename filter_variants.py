@@ -28,7 +28,7 @@ def sample_to_batch_ditct(filePath):
         for line in i:
             line = line.strip().split(':')
             sample = line[-1]
-            batch = line[0].split('_')[1]
+            batch = line[0]
             s2b[sample] = batch
     return s2b
 
