@@ -102,8 +102,7 @@ def process_line(line,s2b,headerVariants,vDict):
         try:
             infoArray[i] = vDict[lofVariant][batch]
         except:
-            return vDict[lofVariant][batch]
-
+            print(line)
     print(data[dataMask].shape)
     print(infoArray)
     data[dataMask] *= infoArray
