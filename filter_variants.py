@@ -57,7 +57,6 @@ def variant_is_dict(snplist ='/home/pete/lof_data/filtered_lof.snplist' ):
                 for b in rangebatches:
                     batch = batches[b]
                     vDict[variant][batch] = line[startPos + b]
-                break
 
     pickle.dump(vDict,open(dataPath + 'vDict.p','wb'))
                     
