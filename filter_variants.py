@@ -40,8 +40,16 @@ def plink_filter(filePath,snpslist,oPath,geno = 0.9):
     
     cmd = 'plink -bfile ' + filePath + ' --geno ' + str(geno) + ' --extract ' + snpslist + ' --make-bed -out ' + oPath
     call(shlex.split(cmd))
+    #remove unncessary columns
+    cmd = "cat " +oPath + " |cut -d ' ' -f-2,7- > lof_matrix.tsv "
+    shPath = bashPath +  'filter_lof_matrix.sh'
 
+    with open(shPath,'wt') as o:
+        o.write(' #!/bin/bash\n')
+        o.write(cmd)
 
+    call(['chmod','+x',shPath])
+    call(shPath,shell = True)
 def create_info_file():
 
     '''
