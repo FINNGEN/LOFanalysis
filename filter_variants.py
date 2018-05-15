@@ -59,7 +59,9 @@ def variant_is_dict(snplist ='/home/pete/lof_data/filtered_lof.snplist' ):
                     vDict[variant][batch] = line[startPos + b]
 
     pickle.dump(vDict,open(dataPath + 'vDict.p','wb'))
-                    
+
+
+
 def return_gene_columns(gene,filePath,g2v):
     """
     Loops through the header of the matrix file and returns the columns where variants belong to the gene
@@ -69,7 +71,12 @@ def return_gene_columns(gene,filePath,g2v):
         header = i.readline()
         header = header.strip().split(' ')
     geneColumns = [i for i,elem in enumerate(header) if '_'.join(elem.split('_')[:-1]) in variantList]
-
+    #TEST
+    variants = return_list_of_variants(filePath)
+    gColumns = [i+1 for i,elem in enumerate(variants) if elem in variantList]
+    print geneColumns
+    print gColumns
+                
     #import sample data keeping columns of gene
     vData = np.loadtxt(filePath,dtype = str,usecolds = geneColumns,skiprows = 1)
     #convert NA to 0
@@ -80,6 +87,20 @@ def return_gene_columns(gene,filePath,g2v):
     gData = (np.sum(sampleData,axis = 1) >0).astype(int)
     return gData
 
+
+def return_list_of_variants(filePath):
+    '''
+    The plink command adds the alt to the name of the variant. Here i loop through the variants and just return the original variant name
+    '''
+    with open(filePath,'rt') as i:
+        header = i.readline()
+        header = header.strip().split(' ')[1:]
+        fixedVariants = ['_'.join(elem.split('_')[:1]) for elem in header]
+
+    return fixedVariants
+                
+                  
+    
 
 def get_variant_to_gene_dict(bFile):
 
