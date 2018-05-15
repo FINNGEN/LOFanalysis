@@ -25,7 +25,16 @@ def generate_matrix(iFile,oFile):
 
 
 
+def get_variant_to_gene_dict():
 
+    v2g = dd(list)
+    with open(dataPath + 'lof_variants.txt','wt') as i:
+        for line in:
+            variant,gene = i.split('\t')
+            v2g[variant].append(gene)
+
+    return v2g
+            
 def plink_filter(filePath,snpslist,oPath,geno = 0.9):
 
     
