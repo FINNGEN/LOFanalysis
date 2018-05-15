@@ -41,7 +41,7 @@ def process_line(line,s2b,headerVariants,vDict):
     #now we have a 1 if there is lof and 0 elsewhere
     dataMask = np.where(data==1)[0] #index of variant with lof
     # now i create a mini array that will multiply the 1s
-    infoArray = np.empty(len(datMask),dtype = float)
+    infoArray = np.empty(len(dataMask),dtype = float)
     for i,elem in infoArray:
         lofVariant = headerVariants[i]
         infoArray[i] = vDict[lofVariant][batch]
