@@ -2,10 +2,9 @@ import numpy as np
 import os
 import gzip
 from operator import itemgetter
-import os
 import shutil
 from collections import defaultdict 
-
+import pickle
 import shlex
 from subprocess import Popen, PIPE,call
 
@@ -58,8 +57,10 @@ def variant_is_dict(snplist ='/home/pete/lof_data/filtered_lof.snplist' ):
                 for b in rangebatches:
                     batch = batches[b]
                     vDict[variant][batch] = line[startPos + b]
-                return vDict
-        
+                break
+
+    pickle.dump(vDict,open(dataPath + 'vDict.p','wb')
+                    
 def return_gene_columns(gene,filePath,g2v):
     """
     Loops through the header of the matrix file and returns the columns where variants belong to the gene
