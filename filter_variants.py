@@ -32,7 +32,7 @@ def sample_to_batch_ditct(filePath):
     return s2b
 
 
-def fix_info_score()
+
 
 def variant_is_dict(snplist ='/home/pete/lof_data/filtered_lof.snplist' ):
     
