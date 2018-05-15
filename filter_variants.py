@@ -26,7 +26,7 @@ def return_gene_columns(gene,filePath,g2v):
     with open(filePath,'rt') as i:
         header = i.readline()
         header = header.strip().split(' ')
-    geneColumns = [i for i,elem in enumerate(header) if elem in variantList]
+    geneColumns = [i for i,elem in enumerate(header) if '_'.join(elem.split('_')[:-1]) in variantList]
     
     return geneColumns
 def get_variant_to_gene_dict(bFile):
@@ -39,6 +39,7 @@ def get_variant_to_gene_dict(bFile):
             v2g[variant] = gene
 
 
+    # read snplist of filtered plink file and keep gene to variant list dictionary
     g2v = dd(list)
     with open(bFile + '.snplist','rt') as i:
         for line in i:
