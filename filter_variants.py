@@ -29,14 +29,17 @@ def return_gene_columns(gene,filePath,g2v):
     geneColumns = [i for i,elem in enumerate(header) if elem in variantList]
     
     return geneColumns
-def get_variant_to_gene_dict():
+def get_variant_to_gene_dict(bFile):
 
+    #get variant to gene mapping from full list of variants
     v2g = dd(str)
     with open(dataPath + 'lof_variants.txt','rt') as i:
         for line in i:
             variant,gene = line.strip().split('\t')
             v2g[variant] = gene
 
+
+    
     g2v = dd(list)
     for variant in v2g:
         gene = v2g[variant]
@@ -71,7 +74,8 @@ def plink_filter(filePath,snpslist,oPath,geno = 0.9):
     
     cmd = 'plink -bfile ' + filePath + ' --geno ' + str(geno) + ' --extract ' + snpslist + ' --make-bed -out ' + oPath
     call(shlex.split(cmd))
-
+    cmd = 'plink -bfile ' + oPath + ' --write-snplist --out ' + oPath
+    call(shlex.split(cmd))
     
 def create_info_file():
 
