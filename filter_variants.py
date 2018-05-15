@@ -35,7 +35,7 @@ def generate_matrix(iFile,oFile):
     cmd = 'plink -bfile '+ iFile +' --recode A --out ' + oFile
     call(shlex.split(cmd))
     #remove unncessary columns
-    cmd = "cat " +oFile + ".raw |cut -d ' ' -f-2,7- > " + oFile
+    cmd = "cat " +oFile + ".raw |cut -d ' ' -f-1,7- > " + oFile
     shPath = bashPath +  'filter_lof_matrix.sh'
 
     with open(shPath,'wt') as o:
