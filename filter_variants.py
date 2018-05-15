@@ -4,18 +4,16 @@ import gzip
 from operator import itemgetter
 import os
 import shutil
+from collections import defaultdict as dd
+import shlex
+from subprocess import Popen, PIPE,call
 
 plink = shutil.which('plink')
 
-import pickle
 currPath = os.getcwd() + '/'
 dataPath =  'Data/'
 annotatedVariants =  dataPath + 'annotated_variants.gz'
 bashPath = 'tmp_scripts/'
-from collections import defaultdict as dd
-
-import shlex
-from subprocess import Popen, PIPE
 
 
 
