@@ -55,9 +55,10 @@ def variant_is_dict(snplist ='/home/pete/lof_data/filtered_lof.snplist' ):
             line = line.strip().split('\t')
             variant = line[0].replace(':','_')
             if variant in variants:
-                return line
-
-    return batches
+                for b in rangebatches:
+                    batch = batches[b]
+                    vDict[variant][batch] = line[startPos + b]
+                return vDict
         
 def return_gene_columns(gene,filePath,g2v):
     """
