@@ -27,7 +27,7 @@ def generate_vars_file():
 
 
 
-def create_info_file(filt = 0.9):
+def create_info_file():
 
     '''
     Creates a filtered_variants_score.txt file which only contains the variants with minimum IS across batches >= filt
