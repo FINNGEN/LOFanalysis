@@ -42,7 +42,8 @@ def variant_is_dict(snplist ='/home/pete/lof_data/filtered_lof.snplist' ):
     vDict = defaultdict(dd)
     
     with gzip.open(annotatedVariants,'rt') as i:
-        infoPos,lofPos,avgPos,genePos = read_header(i.readline().strip().split('\t'))
+        header = i.readline()
+        infoPos,lofPos,avgPos,genePos = read_header(header.strip().split('\t'))
         
         
 def return_gene_columns(gene,filePath,g2v):
