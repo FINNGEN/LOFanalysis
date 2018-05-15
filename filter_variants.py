@@ -69,10 +69,10 @@ def get_variant_to_gene_dict(bFile):
 #--GET INFO SCORE OF LOF VARIANTS--#
 ####################################
 
-def write_info_score_matrix(annotatedPath,snplist,batchPath,matrixPath):
-    s2b = sample_to_batch_ditct(filePath)
+def write_info_score_matrix(annotatedPath,snplist,batchPath,matrixPath,oPath):
+    s2b = sample_to_batch_ditct(batchPath)
     vDict = variant_is_dict(snplist)
-    headerVariants = return_header_variants(batchPath)
+    headerVariants = return_header_variants(matrixPath)
     with open(matrixPath,'rt') as i,open(oPath,'wt') as o:
         next(i) #skip header
         for line in i:
