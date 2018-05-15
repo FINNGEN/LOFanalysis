@@ -49,7 +49,7 @@ def process_line(line,s2b,headerVariants,vDict):
         infoArray[i] = vDict[lofVariant][batch]
 
     print(data[dataMask].shape)
-    print(infoArray.shape)
+    print(infoArray)
     data[dataMask] *= infoArray
 
     return data
