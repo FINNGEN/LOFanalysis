@@ -5,8 +5,6 @@ from operator import itemgetter
 import os
 import shutil
 from collections import defaultdict 
-def dd():
-    return defaultdict(int)
 
 import shlex
 from subprocess import Popen, PIPE,call
@@ -18,6 +16,8 @@ dataPath =  'Data/'
 annotatedVariants =  dataPath + 'annotated_variants.gz'
 bashPath = 'tmp_scripts/'
 
+def dd():
+    return defaultdict(int)
 
 def sample_to_batch_ditct(filePath):
     '''
