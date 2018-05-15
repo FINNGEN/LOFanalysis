@@ -74,8 +74,8 @@ def return_gene_columns(gene,filePath,g2v):
     #TEST
     variants = return_list_of_variants(filePath)
     gColumns = [i+1 for i,elem in enumerate(variants) if elem in variantList]
-    print geneColumns
-    print gColumns
+    print(geneColumns)
+    print(gColumns)
                 
     #import sample data keeping columns of gene
     vData = np.loadtxt(filePath,dtype = str,usecolds = geneColumns,skiprows = 1)
@@ -99,8 +99,7 @@ def return_list_of_variants(filePath):
 
     return fixedVariants
                 
-                  
-    
+                      
 
 def get_variant_to_gene_dict(bFile):
 
