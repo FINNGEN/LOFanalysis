@@ -15,6 +15,7 @@ dataPath =  'Data/'
 annotatedVariants =  dataPath + 'annotated_variants.gz'
 bashPath = 'tmp_scripts/'
 
+timo_to_pietro_dict = {''}
 def dd_str():
     return defaultdict(str)
 def dd(tp):
@@ -108,7 +109,7 @@ def process_line(line,s2b,headerVariants,vDict):
 
 def sample_to_batch_ditct(filePath):
     '''
-    Given timo's file maps a sample to a batch
+    Given timo's file maps a sample to a batch. requires a conversion on the fly
     '''
     s2b = dd(str)
     with open(filePath,'rt') as i:
@@ -140,7 +141,7 @@ def variant_is_dict(snplist ='/home/pete/lof_data/filtered_lof.snplist' ):
             header = i.readline().strip().split('\t')
             infoPos,lofPos,avgPos,genePos = read_header(header)
             batches = header[infoPos[0]:infoPos[-1]+1]
-            batches = [batch.split('_')[1] for batch in batches]
+            batches = [batch.split('INFO_')[1].split('_R1')[0] for batch in batches]
             startPos = infoPos[0]
             rangebatches = np.arange(len(batches))
             assert len(batches) == len(infoPos)
