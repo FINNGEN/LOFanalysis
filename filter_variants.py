@@ -77,8 +77,9 @@ def read_header(header = None):
     return infoPos,lofPos,avgPos,genePos
 
 
-def plink_filter(filePath,geno = 0.9):
+def plink_filter(filePath,snpslist,oPath,geno = 0.9):
 
     
-#    cmd = 'plink -bfile ' + filePath + ' --
-    return None
+    cmd = 'plink -bfile ' + filePath + ' --geno ' + str(geno) + ' --extract ' + snpslist + ' --make-bed -out ' + oPath
+    call(shlex.split(cmd))
+
