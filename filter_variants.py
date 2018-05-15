@@ -30,7 +30,7 @@ def get_variant_to_gene_dict():
     v2g = dd(list)
     with open(dataPath + 'lof_variants.txt','rt') as i:
         for line in i:
-            variant,gene = i.split('\t')
+            variant,gene = line.split('\t')
             v2g[variant].append(gene)
 
     return v2g
