@@ -17,16 +17,20 @@ bashPath = 'tmp_scripts/'
 
 
 
-def generate_vars_file():
 
-    '''
-    Returns the list of positions for tabix from the unzipped filtered_variants.file
-    '''
-    #keeps variants and minimum score
-    cmd = """gunzip -c filtered_variants.gz | awk 'BEGIN {OFS = ","} {print $1,$3}' """
-    # keeps only the variants and remove header
-    cmd = """gunzip -c filtered_variants.gz | head | cut -f1 |sed 1d"""
+def generate_matrix(iFile,oFile):
 
+    cmd = 'plink -bfile '+ iFile +' --recode A --out ' + oFile
+    call(shlex.split(cmd))
+
+
+
+
+def plink_filter(filePath,snpslist,oPath,geno = 0.9):
+
+    
+    cmd = 'plink -bfile ' + filePath + ' --geno ' + str(geno) + ' --extract ' + snpslist + ' --make-bed -out ' + oPath
+    call(shlex.split(cmd))
 
 
 def create_info_file():
@@ -75,11 +79,4 @@ def read_header(header = None):
     avgPos = [i for i,elem in enumerate(header) if 'INFO' == elem][0]
     genePos =  [i for i,elem in enumerate(header) if  elem == "gene"][0]
     return infoPos,lofPos,avgPos,genePos
-
-
-def plink_filter(filePath,snpslist,oPath,geno = 0.9):
-
-    
-    cmd = 'plink -bfile ' + filePath + ' --geno ' + str(geno) + ' --extract ' + snpslist + ' --make-bed -out ' + oPath
-    call(shlex.split(cmd))
 
