@@ -53,7 +53,7 @@ def variant_is_dict(snplist ='/home/pete/lof_data/filtered_lof.snplist' ):
         #loop variants
         for line in i:
             line = line.strip().split('\t')
-            variant = line[0]
+            variant = line[0].replace(':','_')
             if variant in variants:
                 return line
 
