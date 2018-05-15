@@ -18,11 +18,11 @@ bashPath = 'tmp_scripts/'
 
 def get_variant_to_gene_dict():
 
-    v2g = dd(list)
+    v2g = dd(str)
     with open(dataPath + 'lof_variants.txt','rt') as i:
         for line in i:
             variant,gene = line.strip().split('\t')
-            v2g[variant].append(gene)
+            v2g[variant] = gene
 
     return v2g
 
