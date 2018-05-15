@@ -43,8 +43,10 @@ def variant_is_dict(snplist ='/home/pete/lof_data/filtered_lof.snplist' ):
     '''
 
     try:
-        vDict = pickle.load(open(dataPath + 'vDict.p','4b'))
+        print('pickling..')
+        vDict = pickle.load(open(dataPath + 'vDict.p','rb'))
     except:
+        print('data missing, generating..')
         variants = np.loadtxt(snplist,dtype = str)   
         vDict = defaultdict(dd_str)
         with gzip.open(annotatedVariants,'rt') as i:
