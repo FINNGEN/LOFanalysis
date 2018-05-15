@@ -24,7 +24,7 @@ def sample_to_batch_ditct(filePath):
             line = line.strip().split(':')
             sample = line[-1]
             batch = line[0]
-            s2b[sample] = batchName
+            s2b[sample] = batch
     return s2b
 
 def return_gene_columns(gene,filePath,g2v):
