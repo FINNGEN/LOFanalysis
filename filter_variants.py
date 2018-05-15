@@ -25,6 +25,7 @@ def return_gene_columns(gene,filePath,g2v):
     variantList = g2v[gene]
     with open(filePath,'rt') as i:
         header = i.readline()
+        header = header.strip().split(' ')
     geneColumns = [i for i,elem in header if elem in variantList]
     return geneColumns
 def get_variant_to_gene_dict():
