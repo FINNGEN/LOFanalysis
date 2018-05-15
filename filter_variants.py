@@ -19,6 +19,7 @@ def dd_str():
     return defaultdict(str)
 def dd(tp):
     return defaultdict(tp)
+
 def sample_to_batch_ditct(filePath):
     '''
     Given timo's file maps a sample to a batch
@@ -42,7 +43,7 @@ def variant_is_dict(snplist ='/home/pete/lof_data/filtered_lof.snplist' ):
     '''
 
     variants = np.loadtxt(snplist,dtype = str)   
-    vDict = defaultdict(dd_str())
+    vDict = defaultdict(dd_str)
     with gzip.open(annotatedVariants,'rt') as i:
         header = i.readline().strip().split('\t')
         infoPos,lofPos,avgPos,genePos = read_header(header)
