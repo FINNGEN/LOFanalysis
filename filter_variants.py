@@ -22,7 +22,7 @@ def sample_to_batch_ditct(filePath):
     '''
     Given timo's file maps a sample to a batch
     '''
-    s2b = dd()
+    s2b = dd(str)
     with open(filePath,'rt') as i:
         for line in i:
             line = line.strip().split(':')
@@ -66,16 +66,12 @@ def return_gene_columns(gene,filePath,g2v):
     """
     Loops through the header of the matrix file and returns the columns where variants belong to the gene
     """
-    variantList = g2v[gene]
-    with open(filePath,'rt') as i:
-        header = i.readline()
-        header = header.strip().split(' ')
-    geneColumns = [i for i,elem in enumerate(header) if '_'.join(elem.split('_')[:-1]) in variantList]
+    geneVariants = g2v[gene]
+  
     #TEST
-    variants = return_list_of_variants(filePath)
-    gColumns = [i+1 for i,elem in enumerate(variants) if elem in variantList]
+    headerVariants = return_header_variants(filePath)
+    geneColumns = [i+1 for i,elem in enumerate(headerVariants) if elem in geneVariants]
     print(geneColumns)
-    print(gColumns)
                 
     #import sample data keeping columns of gene
     vData = np.loadtxt(filePath,dtype = str,usecols = geneColumns,skiprows = 1)
@@ -88,16 +84,16 @@ def return_gene_columns(gene,filePath,g2v):
     return gData
 
 
-def return_list_of_variants(filePath):
+def return_header_variants(filePath):
     '''
     The plink command adds the alt to the name of the variant. Here i loop through the variants and just return the original variant name
     '''
     with open(filePath,'rt') as i:
         header = i.readline()
         header = header.strip().split(' ')[1:]
-        fixedVariants = ['_'.join(elem.split('_')[:-1]) for elem in header]
-
-    return fixedVariants
+        headerVariants = ['_'.join(elem.split('_')[:-1]) for elem in header]
+        
+    return headerVariants
                 
                       
 
