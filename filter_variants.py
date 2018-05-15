@@ -16,8 +16,6 @@ dataPath =  'Data/'
 annotatedVariants =  dataPath + 'annotated_variants.gz'
 bashPath = 'tmp_scripts/'
 
-def dd():
-    return defaultdict(int)
 
 def sample_to_batch_ditct(filePath):
     '''
