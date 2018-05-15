@@ -73,9 +73,13 @@ def write_info_score_matrix(annotatedPath,snplist,batchPath,matrixPath):
     s2b = sample_to_batch_ditct(filePath)
     vDict = variant_is_dict(snplist)
     headerVariants = return_header_variants(batchPath)
-    with open(matrixPath,'rt') as i:
+    with open(matrixPath,'rt') as i,open(oPath,'wt') as o:
         next(i) #skip header
-        for line in :
+        for line in i:
+            sample,data = process_line(line,s2b,headerVariants,vDict)
+            o.write(sample + '\t' + '\t'.join([str(elem) for elem in data]) + '\n')
+    
+              
             
 
     
