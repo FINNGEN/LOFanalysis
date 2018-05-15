@@ -34,6 +34,22 @@ def sample_to_batch_ditct(filePath):
     return s2b
 
 
+def process_line(line,s2b,headerVariants,vDict):
+    sample = line[0]
+    batch = s2b[sample]
+    data = np.isin(np.array(line[1:],dtype = str),['1','2']).astype(float)
+    #now we have a 1 if there is lof and 0 elsewhere
+    dataMask = np.where(data==1)[0] #index of variant with lof
+    # now i create a mini array that will multiply the 1s
+    infoArray = np.empty(len(datMask),dtype = float)
+    for i,elem in infoArray:
+        lofVariant = headerVariants[i]
+        infoArray[i] = vDict[lofVariant][batch]
+
+    data[dataMask] *= infoArray
+
+    return data
+    
 
 
 def variant_is_dict(snplist ='/home/pete/lof_data/filtered_lof.snplist' ):
@@ -103,7 +119,7 @@ def return_header_variants(filePath):
         header = header.strip().split(' ')[1:]
         headerVariants = ['_'.join(elem.split('_')[:-1]) for elem in header]
         
-    return headerVariants
+    return np.array(headerVariants,dtype = str)
                 
                       
 
