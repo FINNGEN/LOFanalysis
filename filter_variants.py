@@ -45,7 +45,7 @@ def variant_is_dict(snplist ='/home/pete/lof_data/filtered_lof.snplist' ):
         header = i.readline()
         iPos,lofPos,avgPos,genePos = read_header(header.strip().split('\t'))
         batches = header[iPos[0]:iPos[-1]+1]
-        batches = [batch.split('_')[1] for batch in batches]
+#        batches = [batch.split('_')[1] for batch in batches]
         assert len(batches) == len(infoPos)
 
     return batches
