@@ -31,15 +31,17 @@ def sample_to_batch_ditct(filePath):
             s2b[sample] = batch
     return s2b
 
+
+def fix_info_score()
+
 def variant_is_dict(snplist ='/home/pete/lof_data/filtered_lof.snplist' ):
     
     '''
     Read the annotated_varaints and returns a dict[variant][batch] = INFO_SCORE
     '''
 
-    variants = np.loadtxt(snplist,dtype = str)
-    
-    vDict = defaultdict(dd)
+    variants = np.loadtxt(snplist,dtype = str)   
+    vDict = defaultdict(dd(str))
     with gzip.open(annotatedVariants,'rt') as i:
         header = i.readline().strip().split('\t')
         infoPos,lofPos,avgPos,genePos = read_header(header)
