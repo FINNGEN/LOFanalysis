@@ -16,32 +16,26 @@ annotatedVariants =  dataPath + 'annotated_variants.gz'
 bashPath = 'tmp_scripts/'
 
 
-
-
-def generate_matrix(iFile,oFile):
-
-    cmd = 'plink -bfile '+ iFile +' --recode A --out ' + oFile
-    call(shlex.split(cmd))
-
-
-
 def get_variant_to_gene_dict():
 
     v2g = dd(list)
     with open(dataPath + 'lof_variants.txt','rt') as i:
         for line in i:
-            variant,gene = line.split('\t')
+            variant,gene = line.strip().split('\t')
             v2g[variant].append(gene)
 
     return v2g
-            
-def plink_filter(filePath,snpslist,oPath,geno = 0.9):
 
-    
-    cmd = 'plink -bfile ' + filePath + ' --geno ' + str(geno) + ' --extract ' + snpslist + ' --make-bed -out ' + oPath
+
+
+def generate_matrix(iFile,oFile):
+    """
+    Returns variant x sample matrix with 1s where variant is present
+    """
+    cmd = 'plink -bfile '+ iFile +' --recode A --out ' + oFile
     call(shlex.split(cmd))
     #remove unncessary columns
-    cmd = "cat " +oPath + " |cut -d ' ' -f-2,7- > lof_matrix.tsv "
+    cmd = "cat " +oFile + " |cut -d ' ' -f-2,7- > lof_matrix.tsv "
     shPath = bashPath +  'filter_lof_matrix.sh'
 
     with open(shPath,'wt') as o:
@@ -50,10 +44,22 @@ def plink_filter(filePath,snpslist,oPath,geno = 0.9):
 
     call(['chmod','+x',shPath])
     call(shPath,shell = True)
+
+
+            
+def plink_filter(filePath,snpslist,oPath,geno = 0.9):
+    """
+    Filter full data for only varianst we need
+    """
+    
+    cmd = 'plink -bfile ' + filePath + ' --geno ' + str(geno) + ' --extract ' + snpslist + ' --make-bed -out ' + oPath
+    call(shlex.split(cmd))
+
+    
 def create_info_file():
 
     '''
-    Creates a filtered_variants_score.txt file which only contains the variants with minimum IS across batches >= filt
+    Creates a lof_variants.txt with variants that carry lof along with their genes
     '''
     
     with gzip.open(annotatedVariants,'rt') as i,open(dataPath + 'lof_variants.txt','wt') as o:
@@ -62,13 +68,12 @@ def create_info_file():
         for line in i:
             line = line.strip().split('\t')
             variant = line[0]
-            info = min([float(elem) for elem in itemgetter(*infoPos)(line)])
-            avg = float(line[avgPos])
             lof = line[lofPos]
             gene = line[genePos]
             if (lof == "true"):
                 o.write(variant.replace(':','_') + '\t' + gene + '\n')
 
+    #write snplist for plink
     shPath = bashPath +  'snplist.sh'
     cmd = "cat Data/lof_variants.txt | cut -f1 >> Data/lof.snplist"
     with open(shPath,'wt') as o:
