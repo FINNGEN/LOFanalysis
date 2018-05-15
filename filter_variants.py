@@ -99,12 +99,7 @@ def process_line(line,s2b,headerVariants,vDict):
     infoArray = np.empty(len(dataMask),dtype = float)
     for i,elem in enumerate(infoArray):
         lofVariant = headerVariants[i]
-        try:
-            infoArray[i] = vDict[lofVariant][batch]
-        except:
-            print(line)
-    print(data[dataMask].shape)
-    print(infoArray)
+        infoArray[i] = vDict[lofVariant][batch]
     data[dataMask] *= infoArray
 
     return sample,data
