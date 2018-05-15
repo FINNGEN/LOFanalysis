@@ -20,21 +20,70 @@ def dd_str():
 def dd(tp):
     return defaultdict(tp)
 
-def sample_to_batch_ditct(filePath):
-    '''
-    Given timo's file maps a sample to a batch
-    '''
-    s2b = dd(str)
-    with open(filePath,'rt') as i:
-        for line in i:
-            line = line.strip().split(':')
-            sample = line[-1]
-            batch = line[0]
-            s2b[sample] = batch
-    return s2b
 
+###############################
+#--MERGE VARIANTS INTO GENES--#
+###############################
+def return_gene_columns(gene,filePath,g2v):
+    """
+    Loops through the header of the matrix file and returns the columns where variants belong to the gene
+    """
+    geneVariants = g2v[gene]
+  
+    #TEST
+    headerVariants = return_header_variants(filePath)
+    geneColumns = [i+1 for i,elem in enumerate(headerVariants) if elem in geneVariants]
+    print(geneColumns)
+                
+    #import sample data keeping columns of gene
+    vData = np.loadtxt(filePath,dtype = str,usecols = geneColumns,skiprows = 1)
+    #convert NA to 0
+    vData[vData =='NA'] = 0
+    #convert to int
+    vData = vData.astype(int)
+    #sum across variants and check if >1
+    gData = (np.sum(sampleData,axis = 1) >0).astype(int)
+    return gData
+def get_variant_to_gene_dict(bFile):
+
+    #get variant to gene mapping from full list of variants
+    v2g = dd(str)
+    with open(dataPath + 'lof_variants.txt','rt') as i:
+        for line in i:
+            variant,gene = line.strip().split('\t')
+            v2g[variant] = gene
+
+
+    # read snplist of filtered plink file and keep gene to variant list dictionary
+    g2v = dd(list)
+    with open(bFile + '.snplist','rt') as i:
+        for line in i:
+            variant = line.strip()
+            gene = v2g[variant]
+            g2v[gene].append(variant)
+    return v2g,g2v
+
+
+
+####################################
+#--GET INFO SCORE OF LOF VARIANTS--#
+####################################
+
+def write_info_score_matrix(annotatedPath,snplist,batchPath,matrixPath):
+    s2b = sample_to_batch_ditct(filePath)
+    vDict = variant_is_dict(snplist)
+    headerVariants = return_header_variants(batchPath)
+    with open(matrixPath,'rt') as i:
+        next(i) #skip header
+        for line in :
+            
+
+    
 
 def process_line(line,s2b,headerVariants,vDict):
+    '''
+    Given a line of the lof_matrix, it returns 0 if not lof and INFO_SCORE of the batch for that variant otherwise
+    '''
     line = line.strip().split(' ')
     sample = line[0]
     batch = s2b[sample]
@@ -52,14 +101,31 @@ def process_line(line,s2b,headerVariants,vDict):
     print(infoArray)
     data[dataMask] *= infoArray
 
-    return data
+    return sample,data
     
 
 
+def sample_to_batch_ditct(filePath):
+    '''
+    Given timo's file maps a sample to a batch
+    '''
+    s2b = dd(str)
+    with open(filePath,'rt') as i:
+        for line in i:
+            line = line.strip().split(':')
+            sample = line[-1]
+            batch = line[0]
+            s2b[sample] = batch
+    return s2b
+
+
+#####################################
+#---VARIANT/SAMPLE/INFO_SCORE DICT--#
+#####################################
 def variant_is_dict(snplist ='/home/pete/lof_data/filtered_lof.snplist' ):
     
     '''
-    Read the annotated_varaints and returns a dict[variant][batch] = INFO_SCORE
+    Read the annotated_variants and returns a dict[variant][batch] = INFO_SCORE for teh variants that are in the snplist
     '''
 
     try:
@@ -92,26 +158,6 @@ def variant_is_dict(snplist ='/home/pete/lof_data/filtered_lof.snplist' ):
     return vDict
 
 
-def return_gene_columns(gene,filePath,g2v):
-    """
-    Loops through the header of the matrix file and returns the columns where variants belong to the gene
-    """
-    geneVariants = g2v[gene]
-  
-    #TEST
-    headerVariants = return_header_variants(filePath)
-    geneColumns = [i+1 for i,elem in enumerate(headerVariants) if elem in geneVariants]
-    print(geneColumns)
-                
-    #import sample data keeping columns of gene
-    vData = np.loadtxt(filePath,dtype = str,usecols = geneColumns,skiprows = 1)
-    #convert NA to 0
-    vData[vData =='NA'] = 0
-    #convert to int
-    vData = vData.astype(int)
-    #sum across variants and check if >1
-    gData = (np.sum(sampleData,axis = 1) >0).astype(int)
-    return gData
 
 
 def return_header_variants(filePath):
@@ -127,24 +173,6 @@ def return_header_variants(filePath):
                 
                       
 
-def get_variant_to_gene_dict(bFile):
-
-    #get variant to gene mapping from full list of variants
-    v2g = dd(str)
-    with open(dataPath + 'lof_variants.txt','rt') as i:
-        for line in i:
-            variant,gene = line.strip().split('\t')
-            v2g[variant] = gene
-
-
-    # read snplist of filtered plink file and keep gene to variant list dictionary
-    g2v = dd(list)
-    with open(bFile + '.snplist','rt') as i:
-        for line in i:
-            variant = line.strip()
-            gene = v2g[variant]
-            g2v[gene].append(variant)
-    return v2g,g2v
 
 
 
