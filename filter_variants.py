@@ -38,6 +38,7 @@ def process_line(line,s2b,headerVariants,vDict):
     sample = line[0]
     batch = s2b[sample]
     data = np.isin(np.array(line[1:],dtype = str),['1','2']).astype(float)
+    print(data)
     #now we have a 1 if there is lof and 0 elsewhere
     dataMask = np.where(data==1)[0] #index of variant with lof
     # now i create a mini array that will multiply the 1s
