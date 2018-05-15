@@ -82,4 +82,5 @@ def read_header(header = None):
 def plink_filter(filePath,geno = 0.9):
 
     
-    cmd = 'plink -bfile ' + filePath + ' --
+#    cmd = 'plink -bfile ' + filePath + ' --
+    return None
