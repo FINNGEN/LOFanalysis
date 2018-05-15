@@ -42,11 +42,11 @@ def variant_is_dict(snplist ='/home/pete/lof_data/filtered_lof.snplist' ):
     
     vDict = defaultdict(dd)
     with gzip.open(annotatedVariants,'rt') as i:
-        header = i.readline()
-        iPos,lofPos,avgPos,genePos = read_header(header.strip().split('\t'))
-        batches = header[iPos[0]:iPos[-1]+1]
-#        batches = [batch.split('_')[1] for batch in batches]
-        assert len(batches) == len(iPos)
+        header = i.readline().strip().split('\t')
+        infoPos,lofPos,avgPos,genePos = read_header(header)
+        batches = header[infoPos[0]:infoPos[-1]+1]
+        batches = [batch.split('_')[1] for batch in batches]
+        assert len(batches) == len(infoPos)
 
     return batches
         
