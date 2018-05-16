@@ -58,12 +58,15 @@ def return_gene_columns(gene,filePath,g2v):
     vData = vData.astype(int)        
     if len(geneColumns) > 1:
         #sum across variants and check if >1
-        vData = (np.sum(vData,axis = 1) >0).astype(int)
-    return vData
+        vData = np.sum(vData,axis = 1)
+    
+    return (vData>0).astype(int)
 
 
 def get_variant_to_gene_dict(bFile):
-
+    '''
+    Reads the plink snplist and returns a gene to variant dictionary 
+    '''
     #get variant to gene mapping from full list of variants
     v2g = dd(str)
     with open(dataPath + 'lof_variants.txt','rt') as i:
