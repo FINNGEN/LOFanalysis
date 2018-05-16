@@ -34,7 +34,7 @@ def write_new_matrix(iPath):
     g2v = get_variant_to_gene_dict(iPath)
 
     headerVariants = return_header_variants(iPath + matrixName)
-    with open(iPath + "gene_to_sample_lof.txt",'wt') as f:
+    with open(iPath + "gene_to_sample_lof.tsv",'wt') as f:
         samples =  np.loadtxt(iPath + matrixName,dtype = str,usecols =[0])
         f.write("\t".join(samples) + '\n')
         for gene in g2v:
