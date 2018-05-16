@@ -143,12 +143,14 @@ def create_info_file(annotatedFile):
     '''
     Creates a lof_variants.txt with variants that carry lof along with their genes
     '''
+    
     lofPath =dataPath + 'lof_variants.txt'
     if os.path.isfile(lofPath):
         print('variants already filtered')
         return 
 
     else:
+        print('filtering lof variants...')
         with gzip.open(annotatedFile,'rt') as i,open(lofPath,'wt') as o:
             infoPos,lofPos,avgPos,genePos = read_header(i.readline().strip().split('\t'))
 
