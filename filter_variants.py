@@ -21,15 +21,19 @@ for path in [dataPath,bashPath]:
 def dd(tp):
     return defaultdict(tp)
 
+lofName = "filtered_lof"
+matrixName = "lofvariantmatrix.tsv"
+
 
 ###############################
 #--MERGE VARIANTS INTO GENES--#
 ###############################
 
-def write_new_matrix(g2v,filePath,oFile):
+def write_new_matrix(iPath):
 
+    g2v = get_variant_to_gene_dict(iPath + lofName)
     samples =  np.loadtxt(filePath,dtype = str,usecols =[0])
-    with open(oFile,'wt') as f:
+    with open(iPath + "gene_to_sample_lof.txt,'wt') as f:
         f.write("\t".join(samples) + '\n')
         for gene in g2v:
             gData = return_gene_columns(gene,filePath,g2v).astype(str)
@@ -43,7 +47,6 @@ def return_gene_columns(gene,iPath,g2v):
     Loops through the header of the matrix file and returns the columns where variants belong to the gene
     """
     geneVariants = g2v[gene]
-    matrixName = "lofvariantmatrix.tsv"
     filePath = iPath + matrixName
     #TEST
     headerVariants = return_header_variants(filePath)
@@ -68,7 +71,7 @@ def get_variant_to_gene_dict(iPath):
     Reads the plink snplist and returns a gene to variant dictionary 
     '''
     #get variant to gene mapping from full list of variants
-    bFile = iPath + "filtered_lof"
+    bFile = iPath + lofName
 
     v2g = dd(str)
     with open(dataPath + 'lof_variants.txt','rt') as i:
@@ -84,7 +87,7 @@ def get_variant_to_gene_dict(iPath):
             variant = line.strip()
             gene = v2g[variant]
             g2v[gene].append(variant)
-    return v2g,g2v
+    return g2v
 
 
 #######################
@@ -94,9 +97,8 @@ def generate_matrix(iPath):
     """
     Returns variant x sample matrix with 1s where variant is present
     """
-    matrixName = "lofvariantmatrix.tsv"
     oFile = iPath + matrixName
-    iFile = iPath + "filtered_lof"
+    iFile = iPath + lofName
     cmd = 'plink -bfile '+ iFile +' --recode A --out ' + oFile
     call(shlex.split(cmd))
     #remove unncessary columns
@@ -118,10 +120,9 @@ def plink_filter(filePath,oPath,geno = 0.9):
     """
     snpslist = dataPath + "lof.snplist"
     make_sure_path_exists(oPath)
-    oName = "filtered_lof"
-    cmd = 'plink -bfile ' + filePath + ' --geno ' + str(geno) + ' --extract ' + snpslist + ' --make-bed -out ' + oPath + oName
+    cmd = 'plink -bfile ' + filePath + ' --geno ' + str(geno) + ' --extract ' + snpslist + ' --make-bed -out ' + oPath + lofName
     call(shlex.split(cmd))
-    cmd = 'plink -bfile ' + oPath + oName +  ' --write-snplist --out ' + oPath + oName
+    cmd = 'plink -bfile ' + oPath + lofName +  ' --write-snplist --out ' + oPath + lofName
     call(shlex.split(cmd))
 
     generate_matrix(oPath)
