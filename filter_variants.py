@@ -30,12 +30,12 @@ def write_new_matrix(g2v,filePath,oFile):
 
     samples =  np.loadtxt(filePath,dtype = str,usecols =[0])
     with open(oFile,'wt') as f:
-        f.write("\t".join(samples))
+        f.write("\t".join(samples) + '\n')
         for gene in g2v:
             gData = return_gene_columns(gene,filePath,g2v).astype(str)
             gArray = np.concatenate((np.array([gene]),gData))
             assert gArray.shape == samples.shape
-            f.write("\t".join(gArray))
+            f.write("\t".join(gArray) + '\n')
             break
     
 
