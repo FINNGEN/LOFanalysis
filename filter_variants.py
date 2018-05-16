@@ -136,7 +136,7 @@ def create_info_file(annotatedFile):
         return 
 
     else:
-        with gzip.open(annotatedFile,'rt') as i,open(,'wt') as o:
+        with gzip.open(annotatedFile,'rt') as i,open(lofPath,'wt') as o:
             infoPos,lofPos,avgPos,genePos = read_header(i.readline().strip().split('\t'))
 
             for line in i:
