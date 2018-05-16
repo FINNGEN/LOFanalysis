@@ -35,7 +35,6 @@ def write_new_matrix(g2v,filePath,oFile):
             gData = return_gene_columns(gene,filePath,g2v).astype(str)
             gArray = np.concatenate((np.array([gene]),gData))
             assert gArray.shape == samples.shape
-            np.savetxt(fileHandle,gArray,fmt = '%s',newline =" ")
             f.write("\t".join(gArray))
             break
     fileHandle.close()
