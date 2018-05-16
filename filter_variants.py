@@ -38,7 +38,7 @@ def write_new_matrix(iPath):
         samples =  np.loadtxt(iPath + matrixName,dtype = str,usecols =[0])
         f.write("\t".join(samples) + '\n')
         for gene in g2v:
-            gData = return_gene_columns(gene,iPath,g2v).astype(str)
+            gData = return_gene_columns(gene,iPath,g2v,headerVariants)
             gArray = np.concatenate((np.array([gene]),gData))
             assert gArray.shape == samples.shape
             f.write("\t".join(gArray) + '\n')
@@ -65,7 +65,7 @@ def return_gene_columns(gene,iPath,g2v,headerVariants):
         #sum across variants and check if >1
         vData = np.sum(vData,axis = 1)
     
-    return (vData>0).astype(int)
+    return (vData>0).astype(str)
 
 
 def get_variant_to_gene_dict(iPath):
