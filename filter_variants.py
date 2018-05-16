@@ -7,17 +7,17 @@ from collections import defaultdict
 import pickle
 import shlex
 from subprocess import Popen, PIPE,call
-
+from file_utils import make_sure_path_exists
 plink = shutil.which('plink')
 
 currPath = os.getcwd() + '/'
 dataPath =  'Data/'
 annotatedVariants =  dataPath + 'annotated_variants.gz'
 bashPath = 'tmp_scripts/'
+for path in [dataPath,bashPath]:
+    make_sure_path_exists(path)
 
-timo_to_pietro_dict = {''}
-def dd_str():
-    return defaultdict(str)
+
 def dd(tp):
     return defaultdict(tp)
 
@@ -36,7 +36,6 @@ def write_new_matrix(g2v,filePath,oFile):
             gArray = np.concatenate((np.array([gene]),gData))
             assert gArray.shape == samples.shape
             f.write("\t".join(gArray) + '\n')
-            break
     
 
 def return_gene_columns(gene,filePath,g2v):
@@ -200,10 +199,14 @@ def return_header_variants(filePath):
 #######################
 #--GENERATING MATRIX--#
 #######################
-def generate_matrix(iFile,oFile):
+def generate_matrix(iPath,oPath):
     """
     Returns variant x sample matrix with 1s where variant is present
     """
+    make_sure_path_exists(oPath)
+    matrixName = "lofvariantmatrix.tsv"
+    oFile = oPath + matrixName
+    iFile = ipath + "filtered_lof"
     cmd = 'plink -bfile '+ iFile +' --recode A --out ' + oFile
     call(shlex.split(cmd))
     #remove unncessary columns
@@ -219,23 +222,25 @@ def generate_matrix(iFile,oFile):
 
 
             
-def plink_filter(filePath,snpslist,oPath,geno = 0.9):
+def plink_filter(filePath,oPath,geno = 0.9):
     """
     Filter full data for only varianst we need
     """
-    
-    cmd = 'plink -bfile ' + filePath + ' --geno ' + str(geno) + ' --extract ' + snpslist + ' --make-bed -out ' + oPath
+    snpslist = dataPath + "lof.snplist"
+    make_sure_path_exists(oPath)
+    oName = "filtered_lof"
+    cmd = 'plink -bfile ' + filePath + ' --geno ' + str(geno) + ' --extract ' + snpslist + ' --make-bed -out ' + oPath + oName
     call(shlex.split(cmd))
-    cmd = 'plink -bfile ' + oPath + ' --write-snplist --out ' + oPath
+    cmd = 'plink -bfile ' + oPath + oName +  ' --write-snplist --out ' + oPath + oName
     call(shlex.split(cmd))
     
-def create_info_file():
+def create_info_file(annotatedFile = annotatedVariants):
 
     '''
     Creates a lof_variants.txt with variants that carry lof along with their genes
     '''
     
-    with gzip.open(annotatedVariants,'rt') as i,open(dataPath + 'lof_variants.txt','wt') as o:
+    with gzip.open(annotatedFile,'rt') as i,open(dataPath + 'lof_variants.txt','wt') as o:
         infoPos,lofPos,avgPos,genePos = read_header(i.readline().strip().split('\t'))
 
         for line in i:
@@ -275,3 +280,16 @@ def read_header(header = None):
     genePos =  [i for i,elem in enumerate(header) if  elem == "gene"][0]
     return infoPos,lofPos,avgPos,genePos
 
+
+
+if __name__ == '__main__':
+    
+    parser = argparse.ArgumentParser(description="Generation of gene to samples LOF matrix")
+
+    
+    parser.add_argument("--annotatedFile", type= str,
+                        help="path to annotatedFile",required = False)
+    parser.add_argument("--plinkFile",type = str,help ="path to plink files")
+    
+    args = parser.parse_args()
+   
