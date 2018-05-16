@@ -32,8 +32,10 @@ matrixName = "lofvariantmatrix.tsv"
 def write_new_matrix(iPath):
 
     g2v = get_variant_to_gene_dict(iPath)
-    samples =  np.loadtxt(iPath + matrixName,dtype = str,usecols =[0])
+
+    headerVariants = return_header_variants(iPath + matrixName)
     with open(iPath + "gene_to_sample_lof.txt",'wt') as f:
+        samples =  np.loadtxt(iPath + matrixName,dtype = str,usecols =[0])
         f.write("\t".join(samples) + '\n')
         for gene in g2v:
             gData = return_gene_columns(gene,iPath,g2v).astype(str)
@@ -42,14 +44,14 @@ def write_new_matrix(iPath):
             f.write("\t".join(gArray) + '\n')
     
 
-def return_gene_columns(gene,iPath,g2v):
+def return_gene_columns(gene,iPath,g2v,headerVariants):
     """
     Loops through the header of the matrix file and returns the columns where variants belong to the gene
     """
     geneVariants = g2v[gene]
     matrixPath = iPath + matrixName
-    #TEST
-    headerVariants = return_header_variants(matrixPath)
+
+
     geneColumns = [i+1 for i,elem in enumerate(headerVariants) if elem in geneVariants]
     print(geneColumns)
 
@@ -79,7 +81,6 @@ def get_variant_to_gene_dict(iPath):
             variant,gene = line.strip().split('\t')
             v2g[variant] = gene
 
-
     # read snplist of filtered plink file and keep gene to variant list dictionary
     g2v = dd(list)
     with open(bFile + '.snplist','rt') as i:
@@ -100,9 +101,6 @@ def return_header_variants(matrixPath):
         
     return np.array(headerVariants,dtype = str)
                 
-                      
-
-
 
 #######################
 #--GENERATING MATRIX--#
