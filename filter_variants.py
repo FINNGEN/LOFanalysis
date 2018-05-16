@@ -28,10 +28,8 @@ def dd(tp):
 
 def write_new_matrix(g2v,filePath):
 
-    samples =  np.loadtxt(filePath,dtype = str,usecols =[0],skiprows = 1)
-    nbrGenes = len(g2v.keys())
-    finalMatrix = np.empty((len(samples)+1,nbrGenes+1),dtype = str)
-    return finalMatrix
+    samples =  np.loadtxt(filePath,dtype = str,usecols =[0])
+    return samples
 
 def return_gene_columns(gene,filePath,g2v):
     """
