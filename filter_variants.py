@@ -36,12 +36,12 @@ def write_new_matrix(iPath):
     headerVariants = return_header_variants(iPath + matrixName)
     with open(iPath + "gene_to_sample_lof.tsv",'wt') as f:
         samples =  np.loadtxt(iPath + matrixName,dtype = str,usecols =[0])
-        f.write(" ".join(samples) + '\n')
+        f.write("\t".join(samples) + '\n')
         for gene in g2v:
-            gData = return_gene_columns(gene,iPath,g2v,headerVariants)
+            gData = return_gene_columns(gene,iPath,g2v,headerVariants).astype(str)
             gArray = np.concatenate((np.array([gene]),gData))
             assert gArray.shape == samples.shape
-            f.write(" ".join(gArray) + '\n')
+            f.write("\t".join(gArray) + '\n')
     
 
 def return_gene_columns(gene,iPath,g2v,headerVariants):
@@ -65,7 +65,7 @@ def return_gene_columns(gene,iPath,g2v,headerVariants):
         #sum across variants and check if >1
         vData = np.sum(vData,axis = 1)
     
-    return (vData>0).astype(str)
+    return (vData>0).astype(int)
 
 
 def get_variant_to_gene_dict(iPath):
