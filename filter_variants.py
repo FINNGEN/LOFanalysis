@@ -43,8 +43,9 @@ def return_gene_columns(gene,filePath,g2v):
     #convert to int
     vData = vData.astype(int)
     #sum across variants and check if >1
-    gData = (np.sum(sampleData,axis = 1) >0).astype(int)
+    gData = (np.sum(vData,axis = 1) >0).astype(int)
     return gData
+
 def get_variant_to_gene_dict(bFile):
 
     #get variant to gene mapping from full list of variants
@@ -121,9 +122,7 @@ def sample_to_batch_ditct(filePath):
     return s2b
 
 
-#####################################
 #---VARIANT/SAMPLE/INFO_SCORE DICT--#
-#####################################
 def variant_is_dict(snplist ='/home/pete/lof_data/filtered_lof.snplist' ):
     
     '''
