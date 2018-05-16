@@ -37,7 +37,7 @@ def write_new_matrix(g2v,filePath,oFile):
             assert gArray.shape == samples.shape
             f.write("\t".join(gArray))
             break
-    fileHandle.close()
+    
 
 def return_gene_columns(gene,filePath,g2v):
     """
