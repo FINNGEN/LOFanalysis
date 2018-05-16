@@ -36,12 +36,12 @@ def write_new_matrix(iPath):
     headerVariants = return_header_variants(iPath + matrixName)
     with open(iPath + "gene_to_sample_lof.tsv",'wt') as f:
         samples =  np.loadtxt(iPath + matrixName,dtype = str,usecols =[0])
-        f.write("\t".join(samples) + '\n')
+        f.write(" ".join(samples) + '\n')
         for gene in g2v:
             gData = return_gene_columns(gene,iPath,g2v,headerVariants)
             gArray = np.concatenate((np.array([gene]),gData))
             assert gArray.shape == samples.shape
-            f.write("\t".join(gArray) + '\n')
+            f.write(" ".join(gArray) + '\n')
     
 
 def return_gene_columns(gene,iPath,g2v,headerVariants):
