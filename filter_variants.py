@@ -33,7 +33,7 @@ def write_new_matrix(iPath):
 
     g2v = get_variant_to_gene_dict(iPath + lofName)
     samples =  np.loadtxt(filePath,dtype = str,usecols =[0])
-    with open(iPath + "gene_to_sample_lof.txt,'wt') as f:
+    with open(iPath + "gene_to_sample_lof.txt",'wt') as f:
         f.write("\t".join(samples) + '\n')
         for gene in g2v:
             gData = return_gene_columns(gene,filePath,g2v).astype(str)
