@@ -53,7 +53,7 @@ def return_gene_columns(gene,iPath,g2v,headerVariants):
 
 
     geneColumns = [i+1 for i,elem in enumerate(headerVariants) if elem in geneVariants]
-    print(geneColumns)
+    print(gene,geneColumns)
 
     #import sample data keeping columns of gene
     vData = np.loadtxt(matrixPath,dtype = str,usecols = geneColumns,skiprows = 1)
