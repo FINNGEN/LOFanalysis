@@ -32,11 +32,11 @@ matrixName = "lofvariantmatrix.tsv"
 def write_new_matrix(iPath):
 
     g2v = get_variant_to_gene_dict(iPath)
-    samples =  np.loadtxt(filePath,dtype = str,usecols =[0])
+    samples =  np.loadtxt(iPath + matrixName,dtype = str,usecols =[0])
     with open(iPath + "gene_to_sample_lof.txt",'wt') as f:
         f.write("\t".join(samples) + '\n')
         for gene in g2v:
-            gData = return_gene_columns(gene,filePath,g2v).astype(str)
+            gData = return_gene_columns(gene,iPath,g2v).astype(str)
             gArray = np.concatenate((np.array([gene]),gData))
             assert gArray.shape == samples.shape
             f.write("\t".join(gArray) + '\n')
