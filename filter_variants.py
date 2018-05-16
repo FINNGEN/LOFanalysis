@@ -29,14 +29,15 @@ def dd(tp):
 def write_new_matrix(g2v,filePath,oFile):
 
     samples =  np.loadtxt(filePath,dtype = str,usecols =[0])
-    fileHandle = open(oFile,'a')
-    np.savetxt(fileHandle,samples,fmt = '%s')
-    for gene in g2v:
-        gData = return_gene_columns(gene,filePath,g2v).astype(str)
-        gArray = np.concatenate((np.array([gene]),gData))
-        assert gArray.shape == samples.shape
-        np.savetxt(fileHandle,gArray,fmt = '%s',newline =" ")
-        break
+    with open(oFile,'wt') as f:
+        f.write("\t".join(samples))
+        for gene in g2v:
+            gData = return_gene_columns(gene,filePath,g2v).astype(str)
+            gArray = np.concatenate((np.array([gene]),gData))
+            assert gArray.shape == samples.shape
+            np.savetxt(fileHandle,gArray,fmt = '%s',newline =" ")
+            f.write("\t".join(gArray))
+            break
     fileHandle.close()
 
 def return_gene_columns(gene,filePath,g2v):
@@ -52,17 +53,14 @@ def return_gene_columns(gene,filePath,g2v):
 
     #import sample data keeping columns of gene
     vData = np.loadtxt(filePath,dtype = str,usecols = geneColumns,skiprows = 1)
-    
+    #convert NA to 0
+    vData[vData =='NA'] = 0
+    #convert to int    
+    vData = vData.astype(int)        
     if len(geneColumns) > 1:
-        
-        #convert NA to 0
-        vData[vData =='NA'] = 0
-        #convert to int
-        vData = vData.astype(int)
         #sum across variants and check if >1
-        return (np.sum(vData,axis = 1) >0).astype(int)
-    else:
-        return vData
+        vData = (np.sum(vData,axis = 1) >0).astype(int)
+    return vData
 
 
 def get_variant_to_gene_dict(bFile):
