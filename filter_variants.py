@@ -26,10 +26,12 @@ def dd(tp):
 #--MERGE VARIANTS INTO GENES--#
 ###############################
 
-def write_new_matrix(g2v,filePath):
+def write_new_matrix(g2v,filePath,oFile):
 
     samples =  np.loadtxt(filePath,dtype = str,usecols =[0])
-    return samples
+    fileHandle = file(oFile,'a')
+    np.savetxt(fileHandle,samples)
+    
 
 def return_gene_columns(gene,filePath,g2v):
     """
