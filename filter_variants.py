@@ -35,16 +35,21 @@ def return_gene_columns(gene,filePath,g2v):
     headerVariants = return_header_variants(filePath)
     geneColumns = [i+1 for i,elem in enumerate(headerVariants) if elem in geneVariants]
     print(geneColumns)
-                
+
     #import sample data keeping columns of gene
     vData = np.loadtxt(filePath,dtype = str,usecols = geneColumns,skiprows = 1)
-    #convert NA to 0
-    vData[vData =='NA'] = 0
-    #convert to int
-    vData = vData.astype(int)
-    #sum across variants and check if >1
-    gData = (np.sum(vData,axis = 1) >0).astype(int)
-    return gData
+    
+    if len(geneColumns) > 1:
+        
+        #convert NA to 0
+        vData[vData =='NA'] = 0
+        #convert to int
+        vData = vData.astype(int)
+        #sum across variants and check if >1
+        return (np.sum(vData,axis = 1) >0).astype(int)
+    else:
+        return vData
+
 
 def get_variant_to_gene_dict(bFile):
 
