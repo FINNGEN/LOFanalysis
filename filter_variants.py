@@ -47,14 +47,14 @@ def return_gene_columns(gene,iPath,g2v):
     Loops through the header of the matrix file and returns the columns where variants belong to the gene
     """
     geneVariants = g2v[gene]
-    filePath = iPath + matrixName
+    matrixPath = iPath + matrixName
     #TEST
-    headerVariants = return_header_variants(filePath)
+    headerVariants = return_header_variants(matrixPath)
     geneColumns = [i+1 for i,elem in enumerate(headerVariants) if elem in geneVariants]
     print(geneColumns)
 
     #import sample data keeping columns of gene
-    vData = np.loadtxt(filePath,dtype = str,usecols = geneColumns,skiprows = 1)
+    vData = np.loadtxt(matrixPath,dtype = str,usecols = geneColumns,skiprows = 1)
     #convert NA to 0
     vData[vData =='NA'] = 0
     #convert to int    
@@ -89,11 +89,11 @@ def get_variant_to_gene_dict(iPath):
             g2v[gene].append(variant)
     return g2v
 
-def return_header_variants(iPath):
+def return_header_variants(matrixPath):
     '''
     The plink command adds the alt to the name of the variant. Here i loop through the variants and just return the original variant name
     '''
-    with open(iPath + matrixName,'rt') as i:
+    with open(matrixPath,'rt') as i:
         header = i.readline()
         header = header.strip().split(' ')[1:]
         headerVariants = ['_'.join(elem.split('_')[:-1]) for elem in header]
