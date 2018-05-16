@@ -199,14 +199,14 @@ def return_header_variants(filePath):
 #######################
 #--GENERATING MATRIX--#
 #######################
-def generate_matrix(iPath,oPath):
+def generate_matrix(iPath):
     """
     Returns variant x sample matrix with 1s where variant is present
     """
     make_sure_path_exists(oPath)
     matrixName = "lofvariantmatrix.tsv"
-    oFile = oPath + matrixName
-    iFile = ipath + "filtered_lof"
+    oFile = iPath + matrixName
+    iFile = iPath + "filtered_lof"
     cmd = 'plink -bfile '+ iFile +' --recode A --out ' + oFile
     call(shlex.split(cmd))
     #remove unncessary columns
