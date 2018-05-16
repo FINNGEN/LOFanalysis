@@ -208,4 +208,4 @@ if __name__ == '__main__':
    
     create_info_file(args.annotatedFile)
     plink_filter(args.plinkFile,args.oPath,geno = args.geno)
-    
+    write_new_matrix(args.oPath)
