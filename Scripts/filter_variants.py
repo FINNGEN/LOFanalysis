@@ -151,7 +151,8 @@ def create_info_file(annotatedFile,lofString = 'hc_lof'):
         lofFilterList = ["frameshift_variant","splice_donor_variant","stop_gained","splice_acceptor_variant"]
 
 
-    lofPath =dataPath + lofString + '_variants.txt'      
+    lofPath =dataPath + lofString + '_variants.txt'
+    snpsPath =dataPath + lofString + '.snplist'
     if os.path.isfile(lofPath):
         print('variants already filtered')
         return 
@@ -171,7 +172,7 @@ def create_info_file(annotatedFile,lofString = 'hc_lof'):
 
         #write snplist for plink
         shPath = bashPath +  'snplist.sh'
-        cmd = "cat  " +dataPath +lofString +".txt | cut -f1 >> " +dataPath +lofString + ".snplist"
+        cmd = "cat  " + lofPath+ " | cut -f1 >> " + snpsPath
         with open(shPath,'wt') as o:
             o.write(' #!/bin/bash\n')
             o.write(cmd)
