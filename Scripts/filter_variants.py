@@ -10,11 +10,13 @@ from subprocess import Popen, PIPE,call
 from file_utils import make_sure_path_exists
 plink = shutil.which('plink')
 
-currPath = os.getcwd() + '/'
-dataPath =  currPath + 'Data/'
+
+rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
+dataPath = rootPath + 'Data/'
 annotatedVariants =  dataPath + 'annotated_variants.gz'
-bashPath = 'tmp_scripts/'
+bashPath = rootPath + 'tmp_scripts/'
 for path in [dataPath,bashPath]:
+    print(path)
     make_sure_path_exists(path)
 
 
