@@ -23,7 +23,7 @@ def dd(tp):
     return defaultdict(tp)
 
 lofName = "filtered_lof"
-matrixName = "lofvariantmatrix.tsv"
+matrixName = "_variantmatrix.tsv"
 
 
 ###############################
@@ -106,12 +106,12 @@ def return_header_variants(matrixPath):
 #######################
 #--GENERATING MATRIX--#
 #######################
-def generate_matrix(iPath):
+def generate_matrix(iPath,lofString = 'hc_lof'):
     """
     Returns variant x sample matrix with 1s where variant is present
     """
-    oFile = iPath + matrixName
-    iFile = iPath + lofName
+    oFile = iPath + +lofString + matrixName
+    iFile = iPath + lofString
     cmd = 'plink -bfile '+ iFile +' --recode A --out ' + oFile
     call(shlex.split(cmd))
     #remove unncessary columns
@@ -127,15 +127,15 @@ def generate_matrix(iPath):
 
 
             
-def plink_filter(filePath,oPath,geno = 0.9):
+def plink_filter(filePath,oPath,geno = 0.9,lofString = "hc_lof"):
     """
     Filter full data for only varianst we need
     """
-    snpslist = dataPath + "lof.snplist"
+    snpslist = dataPath + lofString + ".snplist"
     make_sure_path_exists(oPath)
-    cmd = 'plink -bfile ' + filePath + ' --geno ' + str(geno) + ' --extract ' + snpslist + ' --make-bed -out ' + oPath + lofName
+    cmd = 'plink -bfile ' + filePath + ' --geno ' + str(geno) + ' --extract ' + snpslist + ' --make-bed -out ' + oPath + lofString
     call(shlex.split(cmd))
-    cmd = 'plink -bfile ' + oPath + lofName +  ' --write-snplist --out ' + oPath + lofName
+    cmd = 'plink -bfile ' + oPath + lofString +  ' --write-snplist --out ' + oPath + lofString
     call(shlex.split(cmd))
 
     generate_matrix(oPath)
