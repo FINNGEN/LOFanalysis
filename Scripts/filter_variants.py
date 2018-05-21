@@ -160,7 +160,7 @@ def create_info_file(annotatedFile,lofString = 'hc_lof'):
     else:
         print('filtering ' + lofString +  ' variants...')
         with gzip.open(annotatedFile,'rt') as i,open(lofPath,'wt') as o:
-            infoPos,lofPos,avgPos,genePos = read_header(i.readline().strip().split('\t'))
+            infoPos,lofPos,avgPos,genePos = read_header(i.readline().strip().split('\t'),lofString )
 
             for line in i:
                 line = line.strip().split('\t')
