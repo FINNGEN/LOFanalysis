@@ -35,12 +35,12 @@ task chrom_filter_merge {
      
 
      command {    	     
-          python3 /ProcessImputedData/Scripts/filter_tabix.py --cFile ${cFile} --tbiFile ${tbiFile} --vFile ${vFile} --chrom ${chrom} --oPath "/cromwell_root/results/" 
+          python3 /ProcessImputedData/Scripts/filter_tabix.py --cFile ${cFile} --tbiFile ${tbiFile} --vFile ${vFile} --chrom ${chrom} --oPath "/cromwell_root/results/" --separator _
 	  du -sh | cut -f1 | rev | cut -c 2- | rev > freedisk.txt
 	  } 
 
      runtime {
-        docker: "eu.gcr.io/finngen-refinery-dev/filter_variants:0.001"
+        docker: "eu.gcr.io/finngen-refinery-dev/filter_variants:0.002"
 	cpu: 3
         disks: "local-disk 50 HDD"
         zones: "europe-west1-b"
@@ -71,7 +71,7 @@ task fix_files {
      }
 
      runtime {
-        docker: "eu.gcr.io/finngen-refinery-dev/filter_variants:0.001"
+        docker: "eu.gcr.io/finngen-refinery-dev/filter_variants:0.002"
 	cpu: 1
         disks: "local-disk 1000 HDD"
         zones: "europe-west1-b"

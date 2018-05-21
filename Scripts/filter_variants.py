@@ -126,12 +126,23 @@ def generate_matrix(iPath,lofString = 'hc_lof'):
     call(shPath,shell = True)
 
 
+-def plink_filter(filePath,oPath,geno = 0.9,lofString = "hc_lof"):
+    """
+    Filter full data for only varianst we need
+    """
+    snpslist = dataPath + lofString + ".snplist"
+    make_sure_path_exists(oPath)
+    cmd = 'plink -bfile ' + filePath + ' --geno ' + str(geno) + ' --extract ' + snpslist + ' --make-bed -out ' + oPath + lofString
+    call(shlex.split(cmd))
+    cmd = 'plink -bfile ' + oPath + lofString +  ' --write-snplist --out ' + oPath + lofString
+    call(shlex.split(cmd))
+    
 #-------> here i run wdl
 
 
 def create_info_file(annotatedFile,lofString = 'hc_lof'):
     '''
-    Creates a lof_variants.txt with variants that carry lof along with their genes
+    Creates a lof_variants.txt with variants that carry lof along with their genes. 
     '''
 
     if lofString == 'hc_lof':
@@ -143,7 +154,7 @@ def create_info_file(annotatedFile,lofString = 'hc_lof'):
         raise ValueError("invalid lof filter")
 
     lofPath =dataPath + lofString + '_variants.txt'
-    snpsPath =dataPath + lofString + '_wdl_variants.txt'
+    snpsPath =dataPath + lofString + '.snplist'
     if os.path.isfile(lofPath):
         print('variants already filtered')
         return 
@@ -160,7 +171,7 @@ def create_info_file(annotatedFile,lofString = 'hc_lof'):
                 gene = line[genePos]
                 if (lof in lofFilterList):
                     o.write(variant.replace(':','_') + '\t' + gene + '\n')
-                    oo.write(variant + '\n')
+                    oo.write(variant.replace(':','_')+ '\n')
 
 
 def read_header(header = None,lofString = "hc_lof"):
