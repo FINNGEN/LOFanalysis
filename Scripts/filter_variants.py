@@ -16,7 +16,6 @@ dataPath = rootPath + 'Data/'
 annotatedVariants =  dataPath + 'annotated_variants.gz'
 bashPath = rootPath + 'tmp_scripts/'
 for path in [dataPath,bashPath]:
-    print(path)
     make_sure_path_exists(path)
 
 
@@ -150,9 +149,9 @@ def create_info_file(annotatedFile,lofString = 'hc_lof'):
         lofFilterList = "true"
     elif lofString == "most_severe":
         lofFilterList = ["frameshift_variant","splice_donor_variant","stop_gained","splice_acceptor_variant"]
-        lofPath =dataPath + lofString + '_variants.txt'
 
-        
+
+    lofPath =dataPath + lofString + '_variants.txt'      
     if os.path.isfile(lofPath):
         print('variants already filtered')
         return 
