@@ -219,7 +219,9 @@ if __name__ == '__main__':
     if args.command == "filter":
         create_info_file(args.annotatedFile,args.lof)
 
+    
     if args.command == "generate matrix":
-        plink_filter(args.plinkPath,args.oPath,args.geno,args.lof)
+        oPath = args.oPath + '_' + args.lof +'/'
+        plink_filter(args.plinkPath,oPath,args.geno,args.lof)
 
         
