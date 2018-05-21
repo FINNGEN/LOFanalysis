@@ -209,7 +209,7 @@ if __name__ == '__main__':
                         help="type of lof filter",required = True )
 
     # create the parser for the "command_2" command
-    parser_matrix = subparsers.add_parser('generate matrix', help='help for command_2')
+    parser_matrix = subparsers.add_parser('generate-matrix', help='help for command_2')
     parser_matrix.add_argument("--plinkPath", type= str,help="Path to plink data (with name of bFile)",required = True)
     parser_matrix.add_argument("--oPath", type= str,help="Path to folder where to output",required = True)
     parser_matrix.add_argument("--lof", type= str,help="type of lof filter",required = True )
