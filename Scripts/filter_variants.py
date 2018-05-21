@@ -148,21 +148,6 @@ def process_line(line,s2b,headerVariants,vDict):
     return sample,data
     
 
-def sample_to_batch_ditct(filePath = dataPath + 'sample_info.txt'):
-    '''
-    Given timo's file maps a sample to a batch. requires a conversion on the fly due to slightly different names between his batch names and ours. Need to pass our batches and use difflib
-    '''
-    ourbatches = pickle.load(open(dataPath + 'ourbatches.p','rb'))
-    import difflib
-    print('returning sample to batch dict')
-                             
-    s2b = dd(str)
-    sampleData = np.loadtxt(filePath,dtype = str,delimiter=':',usecols=[0,-1])
-    for entry in sampleData:
-        timoBatch,sample = entry
-        ourBatch = difflib.get_close_matches(timoBatch,ourbatches)[0]
-        s2b[sample] = ourBatch
-    return s2b
 
 
 def variant_is_dict(annVariants = annotatedVariants,snplist ='/home/pete/results/hc_lof/',lofString = "hc_lof" ):
@@ -211,6 +196,21 @@ def variant_is_dict(annVariants = annotatedVariants,snplist ='/home/pete/results
 
 
 
+def sample_to_batch_ditct(filePath = dataPath + 'sample_info.txt'):
+    '''
+    Given timo's file maps a sample to a batch. requires a conversion on the fly due to slightly different names between his batch names and ours. Need to pass our batches and use difflib
+    '''
+    ourbatches = pickle.load(open(dataPath + 'ourbatches.p','rb'))
+    import difflib
+    print('returning sample to batch dict')
+                             
+    s2b = dd(str)
+    sampleData = np.loadtxt(filePath,dtype = str,delimiter=':',usecols=[0,-1])
+    for entry in sampleData:
+        timoBatch,sample = entry
+        ourBatch = difflib.get_close_matches(timoBatch,ourbatches)[0]
+        s2b[sample] = ourBatch
+    return s2b
 
 
 #######################

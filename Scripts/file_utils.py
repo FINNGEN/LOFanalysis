@@ -1,5 +1,5 @@
 import os
-
+import numpy as np
 
 def make_sure_path_exists(path):
     import errno
