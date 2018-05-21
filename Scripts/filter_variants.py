@@ -107,7 +107,43 @@ def return_header_variants(matrixPath):
 
 
 #---VARIANT/SAMPLE/INFO_SCORE DICT--#
+def write_info_score_matrix(annotatedPath,snplist,batchPath,matrixPath,oPath,lofString):
+    
+    vDict = variant_is_dict(annotatedPath,snplist,lofString)
+    s2b = sample_to_batch_ditct(batchPath)
 
+    headerVariants = return_header_variants(matrixPath)
+    with open(matrixPath,'rt') as i,open(oPath,'wt') as o:
+        next(i) #skip header
+        for line in i:
+            sample,data = process_line(line,s2b,headerVariants,vDict)
+            o.write(sample + ' ' + ' '.join([str(elem) for elem in data]) + '\n')
+    
+              
+            
+
+    
+
+def process_line(line,s2b,headerVariants,vDict):
+    '''
+    Given a line of the lof_matrix, it returns 0 if not lof and INFO_SCORE of the batch for that variant otherwise
+    '''
+    line = line.strip().split(' ')
+    sample = line[0]
+    batch = s2b[sample]
+    data = np.array(line[1:],dtype = str)
+    data = np.isin(data,['1','2']).astype(float)
+    #now we have a 1 if there is lof and 0 elsewhere
+    dataMask = np.where(data==1)[0] #index of variant with lof
+    # now i create a mini array that will multiply the 1s
+    infoArray = np.empty(len(dataMask),dtype = float)
+    for i,elem in enumerate(infoArray):
+        lofVariant = headerVariants[i]
+        infoArray[i] = vDict[lofVariant][batch]
+    data[dataMask] *= infoArray
+
+    return sample,data
+    
 
 def sample_to_batch_ditct(filePath):
     '''
