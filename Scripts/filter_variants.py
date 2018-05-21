@@ -126,7 +126,7 @@ def generate_matrix(iPath,lofString = 'hc_lof'):
     call(shPath,shell = True)
 
 
--def plink_filter(filePath,oPath,geno = 0.9,lofString = "hc_lof"):
+def plink_filter(filePath,oPath,geno = 0.9,lofString = "hc_lof"):
     """
     Filter full data for only varianst we need
     """
