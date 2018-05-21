@@ -110,8 +110,9 @@ def generate_matrix(iPath,lofString = 'hc_lof'):
     """
     Returns variant x sample matrix with 1s where variant is present
     """
-    oFile = iPath  +lofString + matrixName
-    iFile = iPath 
+    iFile = iPath +lofString
+    oFile = iFile + matrixName
+
     cmd = 'plink -bfile '+ iFile +' --recode A --out ' + oFile
     call(shlex.split(cmd))
     #remove unncessary columns
