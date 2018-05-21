@@ -111,7 +111,7 @@ def generate_matrix(iPath,lofString = 'hc_lof'):
     Returns variant x sample matrix with 1s where variant is present
     """
     oFile = iPath + +lofString + matrixName
-    iFile = iPath + lofString
+    iFile = iPath 
     cmd = 'plink -bfile '+ iFile +' --recode A --out ' + oFile
     call(shlex.split(cmd))
     #remove unncessary columns
@@ -126,20 +126,9 @@ def generate_matrix(iPath,lofString = 'hc_lof'):
     call(shPath,shell = True)
 
 
-            
-def plink_filter(filePath,oPath,geno = 0.9,lofString = "hc_lof"):
-    """
-    Filter full data for only varianst we need
-    """
-    snpslist = dataPath + lofString + ".snplist"
-    make_sure_path_exists(oPath)
-    cmd = 'plink -bfile ' + filePath + ' --geno ' + str(geno) + ' --extract ' + snpslist + ' --make-bed -out ' + oPath + lofString
-    call(shlex.split(cmd))
-    cmd = 'plink -bfile ' + oPath + lofString +  ' --write-snplist --out ' + oPath + lofString
-    call(shlex.split(cmd))
+#-------> here i run wdl
 
-    generate_matrix(oPath)
-    
+
 def create_info_file(annotatedFile,lofString = 'hc_lof'):
     '''
     Creates a lof_variants.txt with variants that carry lof along with their genes
@@ -150,6 +139,8 @@ def create_info_file(annotatedFile,lofString = 'hc_lof'):
     elif lofString == "most_severe":
         lofFilterList = ["frameshift_variant","splice_donor_variant","stop_gained","splice_acceptor_variant"]
 
+    else:
+        raise ValueError("invalid lof filter")
 
     lofPath =dataPath + lofString + '_variants.txt'
     snpsPath =dataPath + lofString + '.snplist'
@@ -204,16 +195,23 @@ def read_header(header = None,lofString = "hc_lof"):
 if __name__ == '__main__':
 
     import argparse
-    parser = argparse.ArgumentParser(description="Generation of gene to samples LOF matrix")
 
-    
-    parser.add_argument("--annotatedFile", type= str,
+    parser = argparse.ArgumentParser(description="Deal with lof variants")
+    subparsers = parser.add_subparsers(help='help for subcommand',dest ="command")
+
+    # create the parser for the generate_variants command
+    parser_filter = subparsers.add_parser('filter', help='filter the variants')
+    parser_filter.add_argument("--annotatedFile", type= str,
                         help="path to annotatedFile",required = False,default =annotatedVariants )
-    parser.add_argument("--plinkFile",type = str,help ="path to plink files")
-    parser.add_argument("--oPath",type = str,help ="file to write results")
-    parser.add_argument("--geno",type = float,required = False,default = 0.9,help ="genotype call rate")
+    parser_filter.add_argument("lof", type= str,
+                        help="type of lof filter",required = True )
+
+    # create the parser for the "command_2" command
+    parser_meta = subparsers.add_parser('matrix', help='help for command_2')
+    parser_meta.add_argument("--id", type= str,help="workflow id")
+
     args = parser.parse_args()
-   
-    create_info_file(args.annotatedFile)
-    plink_filter(args.plinkFile,args.oPath,geno = args.geno)
-    write_new_matrix(args.oPath)
+
+    if args.command == "filter":
+        create_info_file(args.annotatedFile,args.lof)
+
