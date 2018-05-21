@@ -163,7 +163,7 @@ def variant_is_dict(annVariants = annotatedVariants,snplist ='/home/pete/results
                         batch = batches[b]
                         vDict[variant][batch] = line[startPos + b]
 
-        pickle.dump(vDict,open(dataPath + 'vDict.p','wb'))
+        pickle.dump(vDict,open(dataPath + lofString + '_vDict.p','wb'))
 
     return vDict
 
