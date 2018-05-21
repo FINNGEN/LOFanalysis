@@ -21,7 +21,8 @@ for path in [dataPath,bashPath]:
 
 def dd(tp):
     return defaultdict(tp)
-
+def dd_str():
+    return defaultdict(str)
 lofName = "filtered_lof"
 matrixName = "_variantmatrix.tsv"
 
@@ -119,7 +120,7 @@ def variant_is_dict(annVariants = annotatedVariants,snplist ='/home/pete/results
     except:
         print('data missing, generating..')
         variants = np.loadtxt(snplist,dtype = str)   
-        vDict = defaultdict(dd(str))
+        vDict = defaultdict(dd_str)
         with gzip.open(annVariants,'rt') as i:
             #read header
             header = i.readline().strip().split('\t')
