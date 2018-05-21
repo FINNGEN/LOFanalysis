@@ -151,9 +151,10 @@ def sample_to_batch_ditct(filePath):
     '''
     ourbatches = pickle.load(open(dataPath + 'ourbatches.p','rb'))
     import difflib
+    print('returning sample to batch dict')
                              
     s2b = dd(str)
-    sampleData = np.loadtxt(filePath,dtype = str,delimiter=':',usecols=[0,1])
+    sampleData = np.loadtxt(filePath,dtype = str,delimiter=':',usecols=[0,-1])
     for entry in sampleData:
         timoBatch,sample = entry
         ourBatch = difflib.get_close_matches(timoBatch,ourbatches)[0]
