@@ -227,7 +227,7 @@ if __name__ == '__main__':
 
     
     if args.command == "generate-matrix":
-        oPath = args.oPath + '/' + args.lof +'/'
+        oPath = (args.oPath + '/' + args.lof +'/').replace('//','/')
         plink_filter(args.plinkPath,oPath,args.geno,args.lof)
         generate_matrix(oPath,args.lof)
         
