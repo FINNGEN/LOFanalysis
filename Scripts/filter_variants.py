@@ -194,7 +194,7 @@ if __name__ == '__main__':
     parser_filter = subparsers.add_parser('filter', help='filter the variants')
     parser_filter.add_argument("--annotatedFile", type= str,
                         help="path to annotatedFile",required = False,default =annotatedVariants )
-    parser_filter.add_argument("lof", type= str,
+    parser_filter.add_argument("--lof", type= str,
                         help="type of lof filter",required = True )
 
     # create the parser for the "command_2" command
