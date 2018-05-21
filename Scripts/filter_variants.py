@@ -171,7 +171,7 @@ def create_info_file(annotatedFile,lofString = 'hc_lof'):
 
         #write snplist for plink
         shPath = bashPath +  'snplist.sh'
-        cmd = "cat  " +dataPath +"/lof_variants.txt | cut -f1 >> "DataPath +lofString + ".snplist"
+        cmd = "cat  " +dataPath +"/lof_variants.txt | cut -f1 >> " +DataPath +lofString + ".snplist"
         with open(shPath,'wt') as o:
             o.write(' #!/bin/bash\n')
             o.write(cmd)
