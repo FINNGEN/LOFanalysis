@@ -109,7 +109,7 @@ def return_header_variants(matrixPath):
 #---VARIANT/SAMPLE/INFO_SCORE DICT--#
 
 
-def sample_to_batch_ditct(filePath,vDict):
+def sample_to_batch_ditct(filePath):
     '''
     Given timo's file maps a sample to a batch. requires a conversion on the fly due to slightly different names between his batch names and ours. Need to pass our batches and use difflib
     '''
