@@ -141,12 +141,16 @@ def plink_filter(filePath,oPath,geno = 0.9):
 
     generate_matrix(oPath)
     
-def create_info_file(annotatedFile):
+def create_info_file(annotatedFile,lofString = 'hc_lof'):
     '''
     Creates a lof_variants.txt with variants that carry lof along with their genes
     '''
-    
-    lofPath =dataPath + 'lof_variants.txt'
+
+    if lofString == 'hc_lof':
+        lofFilterList = "true"
+    elif lofString == "most_severe":
+        lofFilterList = ["frameshift_variant","splice_donor_variant","stop_gained","splice_acceptor_variant"]
+        lofPath =dataPath + lofString '_variants.txt'
     if os.path.isfile(lofPath):
         print('variants already filtered')
         return 
@@ -161,12 +165,12 @@ def create_info_file(annotatedFile):
                 variant = line[0]
                 lof = line[lofPos]
                 gene = line[genePos]
-                if (lof == "true"):
+                if (lof in lofFilterList):
                     o.write(variant.replace(':','_') + '\t' + gene + '\n')
 
         #write snplist for plink
         shPath = bashPath +  'snplist.sh'
-        cmd = "cat Data/lof_variants.txt | cut -f1 >> Data/lof.snplist"
+        cmd = "cat Data/lof_variants.txt | cut -f1 >> Data/"+lofString + ".snplist"
         with open(shPath,'wt') as o:
             o.write(' #!/bin/bash\n')
             o.write(cmd)
@@ -175,7 +179,7 @@ def create_info_file(annotatedFile):
         call(shPath,shell = True)
 
 
-def read_header(header = None):
+def read_header(header = None,lofString = "hc_lof"):
     '''
     Reads the first line of the variants.gz file and returns the position of the Info score
     '''
@@ -188,7 +192,7 @@ def read_header(header = None):
 
             
     infoPos = [i for i,elem in enumerate(header) if 'INFO_' in elem]
-    lofPos = [i for i,elem in enumerate(header) if  elem == "hc_lof"][0]
+    lofPos = [i for i,elem in enumerate(header) if  elem == lofString][0]
     avgPos = [i for i,elem in enumerate(header) if 'INFO' == elem][0]
     genePos =  [i for i,elem in enumerate(header) if  elem == "gene"][0]
     return infoPos,lofPos,avgPos,genePos

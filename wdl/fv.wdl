@@ -1,4 +1,4 @@
-workflow filter_merge {
+workflow filter_lof {
 
 	Array[String] chromList
 	
@@ -41,8 +41,8 @@ task chrom_filter_merge {
 
      runtime {
         docker: "eu.gcr.io/finngen-refinery-dev/filter_variants:0.001"
-	cpu: 64
-        disks: "local-disk 100 HDD"
+	cpu: 3
+        disks: "local-disk 20 HDD"
         zones: "europe-west1-b"
         preemptible: 0
 	bootDiskSizeGb: 20
@@ -77,7 +77,7 @@ task fix_files {
         zones: "europe-west1-b"
         preemptible: 0
 	bootDiskSizeGb: 20
-	memory: "16 GB"
+	memory: "4 GB"
 
     }
 
