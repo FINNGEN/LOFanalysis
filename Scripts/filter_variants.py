@@ -107,10 +107,28 @@ def return_header_variants(matrixPath):
 
 
 #---VARIANT/SAMPLE/INFO_SCORE DICT--#
+
+
+def sample_to_batch_ditct(filePath,vDict):
+    '''
+    Given timo's file maps a sample to a batch. requires a conversion on the fly due to slightly different names between his batch names and ours. Need to pass our batches and use difflib
+    '''
+    
+    s2b = dd(str)
+    with open(filePath,'rt') as i:
+        for line in i:
+            line = line.strip().split(':')
+            sample = line[-1]
+            batch = line[0]
+            s2b[sample] = batch
+    return s2b
+
+
 def variant_is_dict(annVariants = annotatedVariants,snplist ='/home/pete/results/hc_lof/',lofString = "hc_lof" ):
     
     '''
-    Read the annotated_variants and returns a dict[variant][batch] = INFO_SCORE for teh variants that are in the snplist
+    Read the annotated_variants and returns a dict[variant][batch] = INFO_SCORE for teh variants that are in the snplist.
+    I can use this dictionary to retreieve the info score for the samples
     '''
 
     snplist = snplist + lofString + '.snplist'
@@ -129,6 +147,8 @@ def variant_is_dict(annVariants = annotatedVariants,snplist ='/home/pete/results
             batches = header[infoPos[0]:infoPos[-1]+1]
             #return batches
             batches = [batch.split('INFO_')[1].split('_R1')[0] for batch in batches]
+            pickle.dump(batches,open(dataPath + 'ourbatches.p','wb'))
+
             startPos = infoPos[0]
             rangebatches = np.arange(len(batches))
             assert len(batches) == len(infoPos)
