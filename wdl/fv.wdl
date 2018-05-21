@@ -42,7 +42,7 @@ task chrom_filter_merge {
      runtime {
         docker: "eu.gcr.io/finngen-refinery-dev/filter_variants:0.001"
 	cpu: 3
-        disks: "local-disk 20 HDD"
+        disks: "local-disk 50 HDD"
         zones: "europe-west1-b"
         preemptible: 0
 	bootDiskSizeGb: 20

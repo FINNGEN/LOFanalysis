@@ -157,7 +157,7 @@ def create_info_file(annotatedFile,lofString = 'hc_lof'):
         return 
 
     else:
-        print('filtering lof variants...')
+        print('filtering ' + lofString +  ' variants...')
         with gzip.open(annotatedFile,'rt') as i,open(lofPath,'wt') as o:
             infoPos,lofPos,avgPos,genePos = read_header(i.readline().strip().split('\t'))
 
@@ -171,7 +171,7 @@ def create_info_file(annotatedFile,lofString = 'hc_lof'):
 
         #write snplist for plink
         shPath = bashPath +  'snplist.sh'
-        cmd = "cat Data/lof_variants.txt | cut -f1 >> Data/"+lofString + ".snplist"
+        cmd = "cat  " +dataPath +"/lof_variants.txt | cut -f1 >> "DataPath +lofString + ".snplist"
         with open(shPath,'wt') as o:
             o.write(' #!/bin/bash\n')
             o.write(cmd)
