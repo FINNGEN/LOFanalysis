@@ -123,6 +123,7 @@ def write_info_score_matrix(annotatedPath,oPath,lofString,batchPath = dataPath +
     s2b = sample_to_batch_ditct(batchPath)
     headerVariants = return_header_variants(matrixPath)
     
+    print('looping samples...')
     with open(matrixPath,'rt') as i,open(oFile,'wt') as o:
         next(i) #skip header
         for line in i:
