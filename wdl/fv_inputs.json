@@ -1,0 +1,6 @@
+{
+    "filter_merge.chromList": ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22"],
+  "filter_merge.chrom_filter_merge.chromPath": "gs://finngen-production-library-red/finngen_genotypes_R1_v1.0/release1_info_NS_AF_chr_CHROM.vcf.gz" ,
+    "filter_merge.chrom_filter_merge.tbiPath": "gs://finngen-production-library-red/finngen_genotypes_R1_v1.0/release1_info_NS_AF_chr_CHROM.vcf.gz.tbi" ,
+    "filter_merge.chrom_filter_merge.variantsPath": "gs://filter_variants/variants.txt"
+}
