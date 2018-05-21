@@ -119,7 +119,7 @@ def variant_is_dict(annVariants = annotatedVariants,snplist ='/home/pete/results
     except:
         print('data missing, generating..')
         variants = np.loadtxt(snplist,dtype = str)   
-        vDict = defaultdict(dd_str)
+        vDict = defaultdict(dd(str))
         with gzip.open(annVariants,'rt') as i:
             #read header
             header = i.readline().strip().split('\t')
