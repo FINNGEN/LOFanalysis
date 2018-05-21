@@ -105,15 +105,20 @@ def return_header_variants(matrixPath):
                 
 
 
-
-#---VARIANT/SAMPLE/INFO_SCORE DICT--#
-def write_info_score_matrix(annotatedPath,snplist,batchPath,matrixPath,oPath,lofString):
-    
+###############################################
+#---CONVERTS LOF MATRIX TO INFO_SCORE MATIX---#
+###############################################
+def write_info_score_matrix(annotatedPath,oPath,lofString,batchPath = dataPath + 'sample_info.txt'):
+     
     vDict = variant_is_dict(annotatedPath,snplist,lofString)
     s2b = sample_to_batch_ditct(batchPath)
 
+    snplist = oPath + lofString + '.snplist'
+    oFile = oPath + lofString + 'info_score_matrix.txt'
+    matrixPath = oPath + lofString + matrixName
+    
     headerVariants = return_header_variants(matrixPath)
-    with open(matrixPath,'rt') as i,open(oPath,'wt') as o:
+    with open(matrixPath,'rt') as i,open(oFile,'wt') as o:
         next(i) #skip header
         for line in i:
             sample,data = process_line(line,s2b,headerVariants,vDict)
@@ -129,13 +134,15 @@ def process_line(line,s2b,headerVariants,vDict):
     Given a line of the lof_matrix, it returns 0 if not lof and INFO_SCORE of the batch for that variant otherwise
     '''
     line = line.strip().split(' ')
+    # get sample info
     sample = line[0]
     batch = s2b[sample]
+    #read data from sample
     data = np.array(line[1:],dtype = str)
-    data = np.isin(data,['1','2']).astype(float)
+    data = np.isin(data,['1','2']).astype(float) # boolean if lof or not
     #now we have a 1 if there is lof and 0 elsewhere
     dataMask = np.where(data==1)[0] #index of variant with lof
-    # now i create a mini array that will multiply the 1s
+    # now i create a mini array only for the positions with lof and i multiply the original array, masking it, with the info-score array
     infoArray = np.empty(len(dataMask),dtype = float)
     for i,elem in enumerate(infoArray):
         lofVariant = headerVariants[i]
@@ -145,7 +152,7 @@ def process_line(line,s2b,headerVariants,vDict):
     return sample,data
     
 
-def sample_to_batch_ditct(filePath):
+def sample_to_batch_ditct(filePath = dataPath + 'sample_info.txt'):
     '''
     Given timo's file maps a sample to a batch. requires a conversion on the fly due to slightly different names between his batch names and ours. Need to pass our batches and use difflib
     '''
@@ -327,6 +334,8 @@ if __name__ == '__main__':
     parser_matrix.add_argument("--oPath", type= str,help="Path to folder where to output",default = ".")
     parser_matrix.add_argument("--lof", type= str,help="type of lof filter",required = True )
     parser_matrix.add_argument("--geno", type= float,help="genotype call rate for plink",default = 0.9 )
+    parser_filter.add_argument("--annotatedFile", type= str,
+                        help="path to annotatedFile",required = False,default =annotatedVariants )
 
 
     
@@ -340,5 +349,4 @@ if __name__ == '__main__':
         oPath = (args.oPath + '/' + args.lof +'/').replace('//','/')
         plink_filter(args.plinkPath,oPath,args.geno,args.lof)
         generate_matrix(oPath,args.lof)
-        
-        
+        write_info_score_matrix(args.annotatedFile,oPath,args.lof)
