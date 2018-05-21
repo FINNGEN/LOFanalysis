@@ -110,7 +110,7 @@ def generate_matrix(iPath,lofString = 'hc_lof'):
     """
     Returns variant x sample matrix with 1s where variant is present
     """
-    oFile = iPath + +lofString + matrixName
+    oFile = iPath  +lofString + matrixName
     iFile = iPath 
     cmd = 'plink -bfile '+ iFile +' --recode A --out ' + oFile
     call(shlex.split(cmd))
@@ -131,11 +131,16 @@ def plink_filter(filePath,oPath,geno = 0.9,lofString = "hc_lof"):
     Filter full data for only varianst we need
     """
     snpslist = dataPath + lofString + ".snplist"
-    make_sure_path_exists(oPath)
-    cmd = 'plink -bfile ' + filePath + ' --geno ' + str(geno) + ' --extract ' + snpslist + ' --make-bed -out ' + oPath + lofString
-    call(shlex.split(cmd))
-    cmd = 'plink -bfile ' + oPath + lofString +  ' --write-snplist --out ' + oPath + lofString
-    call(shlex.split(cmd))
+    if os.path.isfile(oPath + lofString + ".snplist"):
+        print('data already exists')
+
+    else:
+
+        make_sure_path_exists(oPath)
+        cmd = 'plink -bfile ' + filePath + ' --geno ' + str(geno) + ' --extract ' + snpslist + ' --make-bed -out ' + oPath + lofString
+        call(shlex.split(cmd))
+        cmd = 'plink -bfile ' + oPath + lofString +  ' --write-snplist --out ' + oPath + lofString
+        call(shlex.split(cmd))
     
 #-------> here i run wdl
 
