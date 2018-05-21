@@ -103,6 +103,53 @@ def return_header_variants(matrixPath):
     return np.array(headerVariants,dtype = str)
                 
 
+
+
+#---VARIANT/SAMPLE/INFO_SCORE DICT--#
+def variant_is_dict(annVariants = annotatedVariants,snplist ='~/results/hc_lof/',lofString = "hc_lof" ):
+    
+    '''
+    Read the annotated_variants and returns a dict[variant][batch] = INFO_SCORE for teh variants that are in the snplist
+    '''
+
+    snplist = snplist + lofString + 'snplist'
+    try:
+        print('pickling..')
+        vDict = pickle.load(open(dataPath + lofString + '_vDict.p','rb'))
+    except:
+        print('data missing, generating..')
+        variants = np.loadtxt(snplist,dtype = str)   
+        vDict = defaultdict(dd_str)
+        with gzip.open(annVariants,'rt') as i:
+            #read header
+            header = i.readline().strip().split('\t')
+            infoPos,lofPos,avgPos,genePos = read_header(header)
+            #return position of batches 
+            batches = header[infoPos[0]:infoPos[-1]+1]
+            #return batches
+            batches = [batch.split('INFO_')[1].split('_R1')[0] for batch in batches]
+            startPos = infoPos[0]
+            rangebatches = np.arange(len(batches))
+            assert len(batches) == len(infoPos)
+
+            #loop variants
+            for line in i:
+                line = line.strip().split('\t')
+                variant = line[0].replace(':','_')
+                if variant in variants:
+                    for b in rangebatches:
+                        batch = batches[b]
+                        vDict[variant][batch] = line[startPos + b]
+
+        pickle.dump(vDict,open(dataPath + 'vDict.p','wb'))
+
+    return vDict
+
+
+
+
+
+
 #######################
 #--GENERATING MATRIX--#
 #######################
