@@ -106,7 +106,7 @@ def return_header_variants(matrixPath):
 
 
 #---VARIANT/SAMPLE/INFO_SCORE DICT--#
-def variant_is_dict(annVariants = annotatedVariants,snplist ='~/results/hc_lof/',lofString = "hc_lof" ):
+def variant_is_dict(annVariants = annotatedVariants,snplist ='/home/pete/results/hc_lof/',lofString = "hc_lof" ):
     
     '''
     Read the annotated_variants and returns a dict[variant][batch] = INFO_SCORE for teh variants that are in the snplist
