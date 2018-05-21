@@ -112,7 +112,7 @@ def variant_is_dict(annVariants = annotatedVariants,snplist ='~/results/hc_lof/'
     Read the annotated_variants and returns a dict[variant][batch] = INFO_SCORE for teh variants that are in the snplist
     '''
 
-    snplist = snplist + lofString + 'snplist'
+    snplist = snplist + lofString + '.snplist'
     try:
         print('pickling..')
         vDict = pickle.load(open(dataPath + lofString + '_vDict.p','rb'))
@@ -267,6 +267,9 @@ if __name__ == '__main__':
     parser_matrix.add_argument("--oPath", type= str,help="Path to folder where to output",default = ".")
     parser_matrix.add_argument("--lof", type= str,help="type of lof filter",required = True )
     parser_matrix.add_argument("--geno", type= float,help="genotype call rate for plink",default = 0.9 )
+
+
+    
     args = parser.parse_args()
 
     if args.command == "filter":
@@ -277,4 +280,5 @@ if __name__ == '__main__':
         oPath = (args.oPath + '/' + args.lof +'/').replace('//','/')
         plink_filter(args.plinkPath,oPath,args.geno,args.lof)
         generate_matrix(oPath,args.lof)
+        
         
