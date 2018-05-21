@@ -319,12 +319,13 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description="Deal with lof variants")
+    parser.add_argument("--annotatedFile", type= str,
+                        help="path to annotatedFile",required = False,default =annotatedVariants )
+
     subparsers = parser.add_subparsers(help='help for subcommand',dest ="command")
 
     # create the parser for the generate_variants command
     parser_filter = subparsers.add_parser('filter', help='filter the variants')
-    parser_filter.add_argument("--annotatedFile", type= str,
-                        help="path to annotatedFile",required = False,default =annotatedVariants )
     parser_filter.add_argument("--lof", type= str,
                         help="type of lof filter",required = True )
 
@@ -334,8 +335,6 @@ if __name__ == '__main__':
     parser_matrix.add_argument("--oPath", type= str,help="Path to folder where to output",default = ".")
     parser_matrix.add_argument("--lof", type= str,help="type of lof filter",required = True )
     parser_matrix.add_argument("--geno", type= float,help="genotype call rate for plink",default = 0.9 )
-    parser_filter.add_argument("--annotatedFile", type= str,
-                        help="path to annotatedFile",required = False,default =annotatedVariants )
 
 
     
