@@ -197,7 +197,6 @@ def read_header(header = None):
 
 if __name__ == '__main__':
 
-    print(currPath)
     import argparse
     parser = argparse.ArgumentParser(description="Generation of gene to samples LOF matrix")
 
