@@ -220,7 +220,7 @@ if __name__ == '__main__':
         create_info_file(args.annotatedFile,args.lof)
 
     
-    if args.command == "generate matrix":
+    if args.command == "generate-matrix":
         oPath = args.oPath + '_' + args.lof +'/'
         plink_filter(args.plinkPath,oPath,args.geno,args.lof)
 
