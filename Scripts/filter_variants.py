@@ -104,12 +104,11 @@ def write_info_score_matrix(annotatedPath,oPath,lofString,batchPath = dataPath +
     Goes through each line of the matrix(sample data) and updates the 1s to be the Info score for that sample's batch
     '''
     
-    snplist = oPath + lofString + '.snplist'
     oFile = oPath + lofString + 'info_score_matrix.txt'
     matrixPath = oPath + lofString + matrixName
 
     #stuff required  
-    vDict = variant_is_dict(annotatedPath,snplist,lofString)
+    vDict = variant_is_dict(annotatedPath,oPath,lofString)
     s2b = sample_to_batch_ditct(batchPath)
     headerVariants = return_header_variants(matrixPath)
     
@@ -150,19 +149,20 @@ def process_line(line,s2b,headerVariants,vDict):
 
 
 
-def variant_is_dict(annVariants = annotatedVariants,snplist ='/home/pete/results/hc_lof/',lofString = "hc_lof" ):
+def variant_is_dict(annVariants = annotatedVariants,iPath ='/home/pete/results/hc_lof/',lofString = "hc_lof" ):
     
     '''
     Read the annotated_variants and returns a dict[variant][batch] = INFO_SCORE for teh variants that are in the snplist.
     I can use this dictionary to retreieve the info score for the samples
     '''
 
-    snplist = snplist + lofString + '.snplist'
     picklePath = dataPath + lofString + '_vDict.p'
     try:
         print('pickling..')
         vDict = pickle.load(open(dataPath + lofString + '_vDict.p','rb'))
     except:
+        snplist = iPath + lofString + '.snplist'
+
         print('data missing, generating..')
         variants = np.loadtxt(snplist,dtype = str)   
         vDict = defaultdict(dd_str)
