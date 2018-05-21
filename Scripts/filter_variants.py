@@ -109,15 +109,20 @@ def return_header_variants(matrixPath):
 #---CONVERTS LOF MATRIX TO INFO_SCORE MATIX---#
 ###############################################
 def write_info_score_matrix(annotatedPath,oPath,lofString,batchPath = dataPath + 'sample_info.txt'):
-     
-    vDict = variant_is_dict(annotatedPath,snplist,lofString)
-    s2b = sample_to_batch_ditct(batchPath)
 
+    '''
+    Goes through each line of the matrix(sample data) and updates the 1s to be the Info score for that sample's batch
+    '''
+    
     snplist = oPath + lofString + '.snplist'
     oFile = oPath + lofString + 'info_score_matrix.txt'
     matrixPath = oPath + lofString + matrixName
-    
+
+    #stuff required  
+    vDict = variant_is_dict(annotatedPath,snplist,lofString)
+    s2b = sample_to_batch_ditct(batchPath)
     headerVariants = return_header_variants(matrixPath)
+    
     with open(matrixPath,'rt') as i,open(oFile,'wt') as o:
         next(i) #skip header
         for line in i:
