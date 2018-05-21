@@ -11,7 +11,7 @@ from file_utils import make_sure_path_exists
 plink = shutil.which('plink')
 
 currPath = os.getcwd() + '/'
-dataPath =  'Data/'
+dataPath =  '../Data/'
 annotatedVariants =  dataPath + 'annotated_variants.gz'
 bashPath = 'tmp_scripts/'
 for path in [dataPath,bashPath]:
