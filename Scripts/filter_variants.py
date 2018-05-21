@@ -143,14 +143,14 @@ def create_info_file(annotatedFile,lofString = 'hc_lof'):
         raise ValueError("invalid lof filter")
 
     lofPath =dataPath + lofString + '_variants.txt'
-    snpsPath =dataPath + lofString + '.snplist'
+    snpsPath =dataPath + lofString + '_wdl_variants.txt'
     if os.path.isfile(lofPath):
         print('variants already filtered')
         return 
 
     else:
         print('filtering ' + lofString +  ' variants...')
-        with gzip.open(annotatedFile,'rt') as i,open(lofPath,'wt') as o:
+        with gzip.open(annotatedFile,'rt') as i,open(lofPath,'wt') as o,open(snpsPath,'wt') as oo:
             infoPos,lofPos,avgPos,genePos = read_header(i.readline().strip().split('\t'),lofString )
 
             for line in i:
@@ -160,16 +160,7 @@ def create_info_file(annotatedFile,lofString = 'hc_lof'):
                 gene = line[genePos]
                 if (lof in lofFilterList):
                     o.write(variant.replace(':','_') + '\t' + gene + '\n')
-
-        #write snplist for plink
-        shPath = bashPath +  'snplist.sh'
-        cmd = "cat  " + lofPath+ " | cut -f1 >> " + snpsPath
-        with open(shPath,'wt') as o:
-            o.write(' #!/bin/bash\n')
-            o.write(cmd)
-
-        call(['chmod','+x',shPath])
-        call(shPath,shell = True)
+                    oo.write(variant + '\n')
 
 
 def read_header(header = None,lofString = "hc_lof"):
