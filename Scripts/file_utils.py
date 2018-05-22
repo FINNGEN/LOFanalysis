@@ -20,3 +20,14 @@ def return_header_variants(matrixPath):
         
     return np.array(headerVariants,dtype = str)
                 
+
+def split_array_chunk(seq, num):
+    avg = len(seq) / float(num)
+    out = []
+    last = 0.0
+
+    while last < len(seq):
+        out.append(seq[int(last):int(last + avg)])
+        last += avg
+
+    return out

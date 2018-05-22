@@ -7,8 +7,10 @@ from collections import defaultdict
 import pickle
 import shlex
 from subprocess import Popen, PIPE,call
-from file_utils import make_sure_path_exists,return_header_variants
+from file_utils import make_sure_path_exists,return_header_variants,split_array_chunk
 plink = shutil.which('plink')
+import multiprocessing
+cpus = multiprocessing.cpu_count()
 
 
 rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
@@ -33,19 +35,42 @@ matrixName = "_variantmatrix.tsv"
 
 def write_new_matrix(iPath,lofString = 'hc_lof'):
 
-    g2v = get_variant_to_gene_dict(iPath)
-    matrixPath = iPath + lofString + matrixName
-    headerVariants = return_header_variants(matrixPath)
-    with open(iPath + lofString + "_gene_to_sample_lof.tsv",'wt') as f:
+    oFile = iPath + lofString + "_gene_to_sample_lof.tsv"
+    if os.path.isfile(oFile):
+        print("gene to sample matrix already generated.")
+
+    else:
+        g2v = get_variant_to_gene_dict(iPath)
+        matrixPath = iPath + lofString + matrixName
+        headerVariants = return_header_variants(matrixPath)
         samples =  np.loadtxt(matrixPath,dtype = str,usecols =[0])
-        f.write("\t".join(samples) + '\n')
-        for gene in g2v:
-            gData = return_gene_columns(gene,iPath,g2v,headerVariants).astype(str)
-            gArray = np.concatenate((np.array([gene]),gData))
-            assert gArray.shape == samples.shape
-            f.write("\t".join(gArray) + '\n')
+
+        with open(oFile,'wt') as f:
+            f.write("\t".join(samples) + '\n')
+            for gene in g2v:
+                gData = return_gene_columns(gene,iPath,g2v,headerVariants).astype(str)
+                gArray = np.concatenate((np.array([gene]),gData))
+                assert gArray.shape == samples.shape
+                f.write("\t".join(gArray) + '\n')
+
+
+
+def write_genelists(iPath,v2g,chunks = cpus):
+
+    chunkPath = iPath + '/gene_chunks/'
+    make_sure_path_exists(chunkPath)
+
+    geneList = np.array(list(v2g.keys()))
+    chunkList = split_array_chunk(geneList,chunks)
+    for i,chunk in enumerate chunkList:
+        np.savetxt(chunkPath + 'gene_chunk_'+str(i) + '.txt',chunk,fmt = '%s')
+                        
+
+
     
 
+
+    
 def return_gene_columns(gene,iPath,g2v,headerVariants,lofString = 'hc_lof'):
     """
     Loops through the header of the matrix file and returns the columns where variants belong to the gene
@@ -105,6 +130,7 @@ def write_info_score_matrix(annotatedPath,oPath,lofString,batchPath = dataPath +
         print('info score matrix already generated')
 
     else:
+        print('generating info score matrix..')
         matrixPath = oPath + lofString + matrixName
 
         #stuff required  
@@ -154,7 +180,7 @@ def variant_is_dict(annVariants = annotatedVariants,iPath ='/home/pete/results/h
 
     picklePath = dataPath + lofString + '_vDict.p'
     try:
-        print('pickling..')
+        print('pickling variant/batch/info_score dict..')
         vDict = pickle.load(open(picklePath,'rb'))
     except:
         snplist = iPath + lofString + '.snplist'
@@ -254,7 +280,7 @@ def plink_filter(filePath,oPath,geno = 0.9,lofString = "hc_lof"):
     """
     snpslist = dataPath + lofString + ".snplist"
     if os.path.isfile(oPath + lofString + ".snplist"):
-        print('data already exists')
+        print('plink files already generated')
 
     else:
 
