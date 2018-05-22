@@ -28,7 +28,8 @@ def logistic_regression(iPath,lofString = 'hc_lof',phenoDict = None,geneDict = N
             next(i)
             line = i.readline().strip().split('\t')
             assert line[0] == gene
-            
+            data = np.array(line[1:],dtype = float)
+            assert data.shape == lofSamples.shape
             
 def filter_pcs(iPath,lofString='hc_lof',f = phenoFile,pcPath = eigenvecPath):
     '''
