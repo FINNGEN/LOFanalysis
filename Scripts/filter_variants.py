@@ -51,7 +51,7 @@ def return_gene_columns(gene,iPath,g2v,headerVariants,lofString = 'hc_lof'):
     Loops through the header of the matrix file and returns the columns where variants belong to the gene
     """
     geneVariants = g2v[gene]
-    matrixPath = iPath +  lofString + matrixName
+    matrixPath = iPath +  lofString + '_info_score_matrix.txt'
 
     geneColumns = [i+1 for i,elem in enumerate(headerVariants) if elem in geneVariants]
     print(gene,geneColumns)
