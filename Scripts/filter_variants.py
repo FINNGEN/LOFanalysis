@@ -53,7 +53,6 @@ def return_gene_columns(gene,iPath,g2v,headerVariants,lofString = 'hc_lof'):
     geneVariants = g2v[gene]
     matrixPath = iPath +  lofString + matrixName
 
-
     geneColumns = [i+1 for i,elem in enumerate(headerVariants) if elem in geneVariants]
     print(gene,geneColumns)
 
