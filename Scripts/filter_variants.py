@@ -60,7 +60,10 @@ def do_chunks(iPath,lofString = 'hc_lof'):
     write_genelists(iPath)
     
     params  = list(product(range(cpus),[iPath],[lofString]))
-    
+
+    pool = Pool(cpus)
+    pool.map(multi_wrapper_func,params)
+    pool.close()
 
 
 def multi_wrapper_func(args):
