@@ -59,17 +59,21 @@ def do_chunks(iPath,lofString = 'hc_lof'):
 
     write_genelists(iPath)
     
-    params  = list(product(range(cpus),[iPath]))
-    print(params)
+    params  = list(product(range(cpus),[iPath],[lofString]))
+    
 
+
+def multi_wrapper_func(args):
+    multiprocess_func(*args)
+    
 def multiprocess_func(chunkInt,iPath,lofString):
     
     g2v = get_variant_to_gene_dict(iPath)
     matrixPath = iPath + lofString + matrixName
     headerVariants = return_header_variants(matrixPath)
     chunkPath = iPath + '/gene_chunks/'
-    geneList = np.loadtxt(chunkPath + 'gene_chunk_'+str(i) + '.txt')
-    with open(chunkPath + 'matrix_chunk_' + str(i) + '.tsv','wt') as f:
+    geneList = np.loadtxt(chunkPath + 'gene_chunk_'+str(chunkInt) + '.txt')
+    with open(chunkPath + 'matrix_chunk_' + str(chunkInt) + '.tsv','wt') as f:
         for gene in geneList:
              gData = return_gene_columns(gene,iPath,g2v,headerVariants).astype(str)
              gArray = np.concatenate((np.array([gene]),gData))
