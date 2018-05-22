@@ -407,4 +407,4 @@ if __name__ == '__main__':
         plink_filter(args.plinkPath,oPath,args.geno,args.lof)
         generate_matrix(oPath,args.lof)
         write_info_score_matrix(args.annotatedFile,oPath,args.lof)
-        write_new_matrix(oPath,args.lof)
+        do_chunks(oPath,args.lof)
