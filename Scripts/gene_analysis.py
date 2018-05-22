@@ -19,7 +19,8 @@ eigenvecPath = dataPath + '10pc.eigenvec'
 
 def filter_pcs(iPath,lofString='hc_lof',f = phenoFile,pcPath = eigenvecPath):
     samples = get_shared_samples(iPath,lofString,f, pcPath)
-    with open(pcPath,'rt') as i,open(iPath + lofString + 'pcs.txt','wt') as o:
+    print('samples loaded.')
+    with open(pcPath,'rt') as i,open(iPath + lofString + '_pcs.txt','wt') as o:
         for line in i:
             sample = line.strip().split(' ')[0]
             if sample in samples:
