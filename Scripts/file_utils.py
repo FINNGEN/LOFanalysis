@@ -31,3 +31,10 @@ def split_array_chunk(seq, num):
         last += avg
 
     return out
+
+
+import shlex
+from subprocess import call
+
+def git_pull():
+    call(shlex.split('git pull'))
