@@ -100,23 +100,25 @@ def write_info_score_matrix(annotatedPath,oPath,lofString,batchPath = dataPath +
     '''
     
     oFile = oPath + lofString + '_info_score_matrix.txt'
-    matrixPath = oPath + lofString + matrixName
 
-    #stuff required  
-    vDict = variant_is_dict(annotatedPath,oPath,lofString)
-    s2b = sample_to_batch_ditct(batchPath)
-    headerVariants = return_header_variants(matrixPath)
-    
-    print('looping samples...')
-    with open(matrixPath,'rt') as i,open(oFile,'wt') as o:
-        next(i) #skip header
-        for line in i:
-            sample,data = process_line(line,s2b,headerVariants,vDict)
-            o.write(sample + ' ' + ' '.join([str(elem) for elem in data]) + '\n')
-    
-              
-            
+    if os.path.isfile(oFile):
+        print('info score matrix already generated')
 
+    except:
+
+        matrixPath = oPath + lofString + matrixName
+
+        #stuff required  
+        vDict = variant_is_dict(annotatedPath,oPath,lofString)
+        s2b = sample_to_batch_ditct(batchPath)
+        headerVariants = return_header_variants(matrixPath)
+    
+        print('looping samples...')
+        with open(matrixPath,'rt') as i,open(oFile,'wt') as o:
+            next(i) #skip header
+            for line in i:
+                sample,data = process_line(line,s2b,headerVariants,vDict)
+                o.write(sample + ' ' + ' '.join([str(elem) for elem in data]) + '\n')
     
 
 def process_line(line,s2b,headerVariants,vDict):
@@ -229,18 +231,22 @@ def generate_matrix(iPath,lofString = 'hc_lof'):
     iFile = iPath +lofString
     oFile = iFile + matrixName
 
-    cmd = 'plink -bfile '+ iFile +' --recode A --out ' + oFile
-    call(shlex.split(cmd))
-    #remove unncessary columns
-    cmd = "cat " +oFile + ".raw |cut -d ' ' -f-1,7- > " + oFile
-    shPath = bashPath +  'filter_lof_matrix.sh'
+    if os.path.isfile(oFile):
+        print('original lof matrix already generated')
 
-    with open(shPath,'wt') as o:
-        o.write(' #!/bin/bash\n')
-        o.write(cmd)
+    else:
+        cmd = 'plink -bfile '+ iFile +' --recode A --out ' + oFile
+        call(shlex.split(cmd))
+        #remove unncessary columns
+        cmd = "cat " +oFile + ".raw |cut -d ' ' -f-1,7- > " + oFile
+        shPath = bashPath +  'filter_lof_matrix.sh'
 
-    call(['chmod','+x',shPath])
-    call(shPath,shell = True)
+        with open(shPath,'wt') as o:
+            o.write(' #!/bin/bash\n')
+            o.write(cmd)
+
+        call(['chmod','+x',shPath])
+        call(shPath,shell = True)
 
 
 def plink_filter(filePath,oPath,geno = 0.9,lofString = "hc_lof"):
@@ -351,3 +357,4 @@ if __name__ == '__main__':
         plink_filter(args.plinkPath,oPath,args.geno,args.lof)
         generate_matrix(oPath,args.lof)
         write_info_score_matrix(args.annotatedFile,oPath,args.lof)
+        write_new_matrix(oPath,args.lof)
