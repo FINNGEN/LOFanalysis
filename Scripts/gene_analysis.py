@@ -23,7 +23,7 @@ def logistic_regression(iPath,lofString = 'hc_lof',phenoDict = None,lofDict= Non
     phenoDict and lofDictmap samples to their respective value. I need it in order to build arrays that in sync with the pc data
     '''
 
-    if lofDictis None:
+    if lofDict is None:
         print('lofDict missing, creating...')
         lofDict= dd()
         gene = 'TTLL10'
