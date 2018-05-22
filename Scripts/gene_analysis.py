@@ -1,7 +1,7 @@
 import numpy as np
 import os
 import gzip
-
+from collections import defaultdict as dd
 rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
 dataPath = rootPath + 'Data/'
 annotatedVariants =  dataPath + 'annotated_variants.gz'
@@ -17,7 +17,23 @@ eigenvecPath = dataPath + '10pc.eigenvec'
 
 
 
+def logistic_regression(iPath,lofString = 'hc_lof',phenoDict = None,geneDict = None):
+    
+
+    if geneDict is None:
+        geneDict = dd()
+        gene = 'TTLL10'
+        lofSamples = return_lof_samples(iPath,lofString)
+        with open(iPath + lofString + '_gene_to_sample_tsv') as i:
+            next(i)
+            line = i.readline().strip().split('\t')
+            assert line[0] == gene
+            
+            
 def filter_pcs(iPath,lofString='hc_lof',f = phenoFile,pcPath = eigenvecPath):
+    '''
+    Filters the eigenvec file to keep only samples that are shared across all files
+    '''
     samples = get_shared_samples(iPath,lofString,f, pcPath)
     print('samples loaded.')
     with open(pcPath,'rt') as i,open(iPath + lofString + '_pcs.txt','wt') as o:
@@ -27,6 +43,9 @@ def filter_pcs(iPath,lofString='hc_lof',f = phenoFile,pcPath = eigenvecPath):
                 o.write(line)
 
 def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenvecPath):
+    '''
+    Returns and saves the samples shared across all files
+    '''
     sharedPath = dataPath +lofString + '_shared_samples.txt'
     if os.path.isfile(sharedPath):
         samples = np.loadtxt(sharedPath,dtype = str)
@@ -52,8 +71,7 @@ def return_lof_samples(iPath,lofString = 'hc_lof'):
     return np.array(samples)
 
 def return_pc_samples(pcPath = eigenvecPath):
-
-    
+ 
     pcSamples = np.loadtxt(pcPath,dtype = str,usecols = [0])
 
     return pcSamples
