@@ -5,8 +5,6 @@ rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
 dataPath = rootPath + 'Data/'
 annotatedVariants =  dataPath + 'annotated_variants.gz'
 bashPath = rootPath + 'tmp_scripts/'
-for path in [dataPath,bashPath]:
-    make_sure_path_exists(path)
 
 
 
