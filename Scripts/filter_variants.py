@@ -31,7 +31,7 @@ matrixName = "_variantmatrix.tsv"
 #--MERGE VARIANTS INTO GENES--#
 ###############################
 
-def write_new_matrix(iPath):
+def write_new_matrix(iPath,lofString = 'hc_lof'):
 
     g2v = get_variant_to_gene_dict(iPath)
     matrixPath = iPath + lofString + matrixName
