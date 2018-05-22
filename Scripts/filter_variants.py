@@ -37,7 +37,7 @@ matrixName = "_variantmatrix.tsv"
 
 def write_new_matrix(iPath,lofString = 'hc_lof'):
 
-    oFile = iPath + lofString + "_gene_to_sample_lof.tsv"
+    oFile = iPath + lofString + "_gene_to_sample.tsv"
     if os.path.isfile(oFile):
         print("gene to sample matrix already generated.")
 
