@@ -17,13 +17,17 @@ eigenvecPath = dataPath + '10pc.eigenvec'
 
 
 
-def logistic_regression(iPath,lofString = 'hc_lof',phenoDict = None,geneDict = None):
-    
+def logistic_regression(iPath,lofString = 'hc_lof',phenoDict = None,lofDict= None,f = phenoFile):
+    '''
+    Returns the logistic regression for the lof + pcs vs pheno.
+    phenoDict and lofDictmap samples to their respective value. I need it in order to build arrays that in sync with the pc data
+    '''
 
-    if geneDict is None:
-        print('geneDict missing, creating...')
-        geneDict = dd()
+    if lofDictis None:
+        print('lofDict missing, creating...')
+        lofDict= dd()
         gene = 'TTLL10'
+        print(gene)
         lofSamples = return_lof_samples(iPath,lofString)
         with open(iPath + lofString + '_gene_to_sample.tsv') as i:
             next(i)
@@ -31,10 +35,18 @@ def logistic_regression(iPath,lofString = 'hc_lof',phenoDict = None,geneDict = N
             assert line[0] == gene
             data = np.array(line[1:],dtype = float)
             assert data.shape == lofSamples.shape
-            for i,entry in enumerate(data):
-                geneDict[lofSamples[i]] = entry
-
+        for i,entry in enumerate(data):
+            geneDict[lofSamples[i]] = entry
         print('done.')
+        
+    if phenoDict is None:
+        print('phenoDict missing, creating..')
+        pheno = phenoList[0]
+        print(pheno)
+        data = return_column(pheno = pheno,f = f)
+        samples= return_column(f =f)
+        assert data.shape == samples.data
+        
 def filter_pcs(iPath,lofString='hc_lof',f = phenoFile,pcPath = eigenvecPath):
     '''
     Filters the eigenvec file to keep only samples that are shared across all files
