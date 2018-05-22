@@ -415,3 +415,4 @@ if __name__ == '__main__':
         write_info_score_matrix(args.annotatedFile,oPath,args.lof)
         
         do_chunks(oPath,args.lof)
+        write_new_matrix(oPath,args.lof)
