@@ -7,6 +7,7 @@ from collections import defaultdict
 from itertools import product
 import pickle
 import shlex
+import sys
 from subprocess import Popen, PIPE,call
 from file_utils import make_sure_path_exists,return_header_variants,split_array_chunk
 import multiprocessing
@@ -45,7 +46,6 @@ def write_new_matrix(iPath,lofString = 'hc_lof'):
         matrixPath = iPath + lofString + matrixName
         headerVariants = return_header_variants(matrixPath)
         samples =  np.loadtxt(matrixPath,dtype = str,usecols =[0])
-
         
         with open(oFile,'wt') as f:
             f.write("\t".join(samples) + '\n')
@@ -55,6 +55,7 @@ def write_new_matrix(iPath,lofString = 'hc_lof'):
                 sys.stdout.write('\r merging chunk %i'%{i})
                 sys.stdout.flush()
 #            with open(chunkPath + 'gene_chunk_'+str(i) + '.txt','rt') as i:
+
 def do_chunks(iPath,lofString = 'hc_lof'):
 
     write_genelists(iPath)
