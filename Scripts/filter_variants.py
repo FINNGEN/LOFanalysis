@@ -57,7 +57,7 @@ def return_gene_columns(gene,iPath,g2v,headerVariants,lofString = 'hc_lof'):
     print(gene,geneColumns)
 
     #import sample data keeping columns of gene
-    vData = np.loadtxt(matrixPath,dtype = str,usecols = geneColumns,skiprows = 1)
+    vData = np.loadtxt(matrixPath,dtype = str,usecols = geneColumns)
     #convert NA to 0
     vData[vData =='NA'] = 0
     #convert to int    
