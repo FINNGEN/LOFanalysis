@@ -52,10 +52,11 @@ def write_new_matrix(iPath,lofString = 'hc_lof'):
 
             chunkPath = iPath + '/gene_chunks/'
             for i in range(cpus):
-
                 sys.stdout.write('\r merging chunk %i'%(i))
                 sys.stdout.flush()
-#            with open(chunkPath + 'gene_chunk_'+str(i) + '.txt','rt') as i:
+                with open(chunkPath + 'gene_chunk_'+str(i) + '.txt','rt') as i:
+                    for line in:
+                        f.write(line)
 
 def do_chunks(iPath,lofString = 'hc_lof'):
 
