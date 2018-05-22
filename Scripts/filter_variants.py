@@ -104,8 +104,7 @@ def write_info_score_matrix(annotatedPath,oPath,lofString,batchPath = dataPath +
     if os.path.isfile(oFile):
         print('info score matrix already generated')
 
-    except:
-
+    else:
         matrixPath = oPath + lofString + matrixName
 
         #stuff required  
