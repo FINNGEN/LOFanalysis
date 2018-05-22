@@ -60,7 +60,7 @@ def write_new_matrix(iPath,lofString = 'hc_lof'):
 
 def do_chunks(iPath,lofString = 'hc_lof'):
 
-    write_genelists(iPath)
+    write_genelists(iPath,lofString)
     
     params  = list(product(range(cpus),[iPath],[lofString]))
 
@@ -85,11 +85,11 @@ def multiprocess_func(chunkInt,iPath,lofString):
              gArray = np.concatenate((np.array([gene]),gData))
              f.write("\t".join(gArray) + '\n')
     
-def write_genelists(iPath,chunks = cpus):
+def write_genelists(iPath,chunks = cpus,lofString = 'hc_lof'):
 
     chunkPath = iPath + '/gene_chunks/'
     make_sure_path_exists(chunkPath)
-    g2v = get_variant_to_gene_dict(iPath)
+    g2v = get_variant_to_gene_dict(iPath,lofString)
 
     geneList = np.array(list(g2v.keys()))
     chunkList = split_array_chunk(geneList,chunks)
