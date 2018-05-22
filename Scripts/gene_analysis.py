@@ -44,7 +44,7 @@ def logistic_regression(iPath,lofString = 'hc_lof',phenoDict = None,lofDict= Non
         pheno = phenoList[0]
         print(pheno)
         data = return_column(pheno = pheno,f = f,dtype = float)
-        samples= return_column(f =f)
+        samples= return_column(f =f,dtype =str)
         assert data.shape == samples.shape
         phenoDict = dd()
         for i,entry in enumerate(data):
