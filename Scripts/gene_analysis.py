@@ -46,7 +46,19 @@ def logistic_regression(iPath,lofString = 'hc_lof',phenoDict = None,lofDict= Non
         data = return_column(pheno = pheno,f = f)
         samples= return_column(f =f)
         assert data.shape == samples.shape
-        
+        phenoDict = dd()
+        for i,entry in enumerate(data):
+            phenoDict[samples[i]] = entry
+
+    return lofDict,phenoDict
+    #now i upload the pc data,along with the samples
+    pcPath = iPath + lofString + '_pcs.txt'
+    pcSamples =return_pc_samples(pcPath)
+    pcData = np.loadtxt(pcPath,dtype = float,usecols = range(1,11))
+
+    lofArray = np.empty_like(pcSamples,dtype = float)
+    phenoArray = np.empty_like(pcSamples,dtype = int)
+    
 def filter_pcs(iPath,lofString='hc_lof',f = phenoFile,pcPath = eigenvecPath):
     '''
     Filters the eigenvec file to keep only samples that are shared across all files
