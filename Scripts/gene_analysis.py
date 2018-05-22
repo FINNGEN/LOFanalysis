@@ -13,6 +13,13 @@ phenoFile = dataPath + 'FINNGEN_PHENOTYPES_DF1_V4_2018_03_27.txt.gz'
 eigenvecPath = dataPath + '10pc.eigenvec'
 
 
+
+def return_lof_samples(iPath,lofString = 'hc_lof'):
+    matrixPath =  iPath + lofString + "_gene_to_sample.tsv"
+    with open(matrixPath,'rt') as i:
+        samples =i.readline().strip().split('\t')[1:]
+    return samples
+
 def return_pc_samples(pcPath = eigenvecPath):
 
     
