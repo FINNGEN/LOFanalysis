@@ -8,7 +8,7 @@ annotatedVariants =  dataPath + 'annotated_variants.gz'
 bashPath = rootPath + 'tmp_scripts/'
 
 # REQUIRED FILES
-phenoList = np.loadtxt(dataPath + 'pheno-list.txt',usecols = [0],dtype = str)
+phenoList = np.loadtxt(dataPath + 'pheno-list.txt',usecols = [0],dtype = str,skiprows = 1)
 phenoFile = dataPath + 'FINNGEN_PHENOTYPES_DF1_V4_2018_03_27.txt.gz'
 eigenvecPath = dataPath + '10pc.eigenvec'
 
