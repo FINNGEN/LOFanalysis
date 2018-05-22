@@ -10,6 +10,7 @@ bashPath = rootPath + 'tmp_scripts/'
 # REQUIRED FILES
 phenoList = np.loadtxt(dataPath + 'pheno-list.txt',usecols = [0],dtype = str,skiprows = 1)
 phenoFile = dataPath + 'FINNGEN_PHENOTYPES_DF1_V4_2018_03_27.txt.gz'
+phenoFile = dataPath + 'FINNGEN_PHENOTYPES_DF1_2018_03_01.txt'
 eigenvecPath = dataPath + '10pc.eigenvec'
 
 
@@ -23,12 +24,12 @@ def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenve
     print('importing all samples..')
     pcSamples = return_pc_samples(pcPath)
     lofSamples = return_lof_samples(iPath,lofString)
-    phenoSamples = return_column(f =f)
+    phenoSamples = return_column(f =f,dtype = str)
     print('done')
     sampleLists = [pcSamples,lofSamples,phenoSamples]
     samples = set(sampleLists[0])
     for sampleList in sampleLists[1:]:
-        samples.intersection(sampleList)
+        samples = samples.intersection(sampleList)
 
     return samples
 
