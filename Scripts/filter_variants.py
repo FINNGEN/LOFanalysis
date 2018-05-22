@@ -104,7 +104,7 @@ def write_info_score_matrix(annotatedPath,oPath,lofString,batchPath = dataPath +
     Goes through each line of the matrix(sample data) and updates the 1s to be the Info score for that sample's batch
     '''
     
-    oFile = oPath + lofString + '_info_score_matrix.txt'
+    oFile = oPath + lofString + '_info_score_matrix.tsv'
     matrixPath = oPath + lofString + matrixName
 
     #stuff required  
@@ -117,7 +117,7 @@ def write_info_score_matrix(annotatedPath,oPath,lofString,batchPath = dataPath +
         next(i) #skip header
         for line in i:
             sample,data = process_line(line,s2b,headerVariants,vDict)
-            o.write(sample + ' ' + ' '.join([str(elem) for elem in data]) + '\n')
+            o.write(sample + '\t' + '\t'.join([str(elem) for elem in data]) + '\n')
     
               
             
