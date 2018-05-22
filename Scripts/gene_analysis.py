@@ -37,3 +37,21 @@ def return_column(pheno = 'FINNGENID',f = phenoFile,dtype = 'f8'):
     column = np.genfromtxt(i,usecols = (phenocol,),delimiter = ('\t'),skip_header=1,dtype = dtype)
     i.close()
     return column
+
+
+
+
+def return_header(f = phenogz):
+    '''
+    Reads the header of the pheno file
+    '''
+    if f.split('.')[-1] == 'txt':
+        i = open(f,'rt')
+
+    elif f.split('.')[-1] == 'gz':
+        i = gzip.open(f,'rt')
+    
+    header = i.readline()
+    header = header.strip().split('\t')
+    i.close()
+    return header
