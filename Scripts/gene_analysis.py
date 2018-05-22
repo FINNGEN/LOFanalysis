@@ -22,7 +22,7 @@ def return_pc_samples(pcPath = eigenvecPath):
     
 
 
-def return_column(pheno = 'FINNGENID',f = phenogz,dtype = 'f8'):
+def return_column(pheno = 'FINNGENID',f = phenoFile,dtype = 'f8'):
 
     header = return_header(f =f )
     for i,elem in enumerate(header):
