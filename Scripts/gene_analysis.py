@@ -41,7 +41,7 @@ def return_column(pheno = 'FINNGENID',f = phenoFile,dtype = 'f8'):
 
 
 
-def return_header(f = phenogz):
+def return_header(f = phenoFile):
     '''
     Reads the header of the pheno file
     '''
