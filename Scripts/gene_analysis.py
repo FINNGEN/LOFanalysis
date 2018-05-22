@@ -50,7 +50,6 @@ def logistic_regression(iPath,lofString = 'hc_lof',phenoDict = None,lofDict= Non
         for i,entry in enumerate(data):
             phenoDict[samples[i]] = entry
 
-    return lofDict,phenoDict
     #now i upload the pc data,along with the samples
     pcPath = iPath + lofString + '_pcs.txt'
     pcSamples =return_pc_samples(pcPath)
