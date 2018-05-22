@@ -55,12 +55,12 @@ def write_new_matrix(iPath,lofString = 'hc_lof'):
 
 
 
-def write_genelists(iPath,v2g,chunks = cpus):
+def write_genelists(iPath,g2v,chunks = cpus):
 
     chunkPath = iPath + '/gene_chunks/'
     make_sure_path_exists(chunkPath)
 
-    geneList = np.array(list(v2g.keys()))
+    geneList = np.array(list(g2v.keys()))
     chunkList = split_array_chunk(geneList,chunks)
     for i,chunk in enumerate(chunkList):
         np.savetxt(chunkPath + 'gene_chunk_'+str(i) + '.txt',chunk,fmt = '%s')
