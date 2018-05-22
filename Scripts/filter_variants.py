@@ -74,7 +74,7 @@ def multi_wrapper_func(args):
     
 def multiprocess_func(chunkInt,iPath,lofString):
     
-    g2v = get_variant_to_gene_dict(iPath)
+    g2v = get_variant_to_gene_dict(iPath,lofString)
     matrixPath = iPath + lofString + matrixName
     headerVariants = return_header_variants(matrixPath)
     chunkPath = iPath + '/gene_chunks/'
