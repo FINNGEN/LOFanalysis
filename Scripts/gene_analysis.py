@@ -19,18 +19,23 @@ eigenvecPath = dataPath + '10pc.eigenvec'
 
 
 
-
 def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenvecPath):
-    print('importing all samples..')
-    pcSamples = return_pc_samples(pcPath)
-    lofSamples = return_lof_samples(iPath,lofString)
-    phenoSamples = return_column(f =f,dtype = str)
-    print('done')
-    sampleLists = [pcSamples,lofSamples,phenoSamples]
-    samples = set(sampleLists[0])
-    for sampleList in sampleLists[1:]:
-        samples = samples.intersection(sampleList)
+    sharedPath = dataPath +'shared_samples.txt'
+    if os.path.isfile(sharedPath):
+        samples = np.loadtxt(sharedPath,dtype = str)
+    else:
+        print('importing all samples..')
+        pcSamples = return_pc_samples(pcPath)
+        lofSamples = return_lof_samples(iPath,lofString)
+        phenoSamples = return_column(f =f,dtype = str)
+        print('done')
+        sampleLists = [pcSamples,lofSamples,phenoSamples]
+        samples = set(sampleLists[0])
+        for sampleList in sampleLists[1:]:
+            samples = samples.intersection(sampleList)
 
+        samples = np.array(samples)
+        np.savetxt(,samples,fmt ='%s'
     return samples
 
 def return_lof_samples(iPath,lofString = 'hc_lof'):
