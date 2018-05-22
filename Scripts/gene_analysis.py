@@ -55,7 +55,9 @@ def logistic_regression(iPath,lofString = 'hc_lof',phenoDict = None,lofDict= Non
     pcSamples =return_pc_samples(pcPath)
     pcData = np.loadtxt(pcPath,dtype = float,usecols = range(1,11))
 
+    
     lofArray = np.empty_like(pcSamples,dtype = float)
+    
     phenoArray = np.empty_like(pcSamples,dtype = int)
     
 def filter_pcs(iPath,lofString='hc_lof',f = phenoFile,pcPath = eigenvecPath):
