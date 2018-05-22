@@ -24,7 +24,7 @@ def logistic_regression(iPath,lofString = 'hc_lof',phenoDict = None,geneDict = N
         geneDict = dd()
         gene = 'TTLL10'
         lofSamples = return_lof_samples(iPath,lofString)
-        with open(iPath + lofString + '_gene_to_sample_tsv') as i:
+        with open(iPath + lofString + '_gene_to_sample.tsv') as i:
             next(i)
             line = i.readline().strip().split('\t')
             assert line[0] == gene
