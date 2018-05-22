@@ -25,9 +25,9 @@ def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenve
     lofSamples = return_lof_samples(iPath,lofString)
     phenoSamples = return_column(f =f)
     print('done')
-    sampleList = [pcSamples,lofSamples,phenoSamples]
-    samples = set(sampleList[0])
-    for sampleList in sampleList[1:]:
+    sampleLists = [pcSamples,lofSamples,phenoSamples]
+    samples = set(sampleLists[0])
+    for sampleList in sampleLists[1:]:
         samples.intersection(sampleList)
 
     return samples
