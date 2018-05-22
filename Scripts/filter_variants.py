@@ -60,7 +60,7 @@ def write_new_matrix(iPath,lofString = 'hc_lof'):
 
 def do_chunks(iPath,lofString = 'hc_lof'):
 
-    write_genelists(iPath,lofString)
+    write_genelists(iPath,lofString = lofString)
     
     params  = list(product(range(cpus),[iPath],[lofString]))
 
@@ -413,4 +413,5 @@ if __name__ == '__main__':
         plink_filter(args.plinkPath,oPath,args.geno,args.lof)
         generate_matrix(oPath,args.lof)
         write_info_score_matrix(args.annotatedFile,oPath,args.lof)
-     #   do_chunks(oPath,args.lof)
+        
+        do_chunks(oPath,args.lof)
