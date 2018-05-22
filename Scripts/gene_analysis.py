@@ -18,7 +18,7 @@ def return_lof_samples(iPath,lofString = 'hc_lof'):
     matrixPath =  iPath + lofString + "_gene_to_sample.tsv"
     with open(matrixPath,'rt') as i:
         samples =i.readline().strip().split('\t')[1:]
-    return samples
+    return np.array(samples)
 
 def return_pc_samples(pcPath = eigenvecPath):
 
