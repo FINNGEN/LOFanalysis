@@ -30,7 +30,8 @@ def logistic_regression(iPath,lofString = 'hc_lof',phenoDict = None,geneDict = N
             assert line[0] == gene
             data = np.array(line[1:],dtype = float)
             assert data.shape == lofSamples.shape
-            
+            for i,entry in enumerate(data):
+                geneDict[lofSamples[i]] = entry
 def filter_pcs(iPath,lofString='hc_lof',f = phenoFile,pcPath = eigenvecPath):
     '''
     Filters the eigenvec file to keep only samples that are shared across all files
