@@ -39,18 +39,6 @@ def process_line(line,s2b,headerVariants,vDict):
     
 
 
-def sample_to_batch_ditct(filePath):
-    '''
-    Given timo's file maps a sample to a batch. requires a conversion on the fly due to slightly different names between his batch names and ours. Need to pass our batches and use difflib
-    '''
-    s2b = dd(str)
-    with open(filePath,'rt') as i:
-        for line in i:
-            line = line.strip().split(':')
-            sample = line[-1]
-            batch = line[0]
-            s2b[sample] = batch
-    return s2b
 
 
 #---VARIANT/SAMPLE/INFO_SCORE DICT--#

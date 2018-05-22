@@ -104,7 +104,7 @@ def write_info_score_matrix(annotatedPath,oPath,lofString,batchPath = dataPath +
     Goes through each line of the matrix(sample data) and updates the 1s to be the Info score for that sample's batch
     '''
     
-    oFile = oPath + lofString + 'info_score_matrix.txt'
+    oFile = oPath + lofString + '_info_score_matrix.txt'
     matrixPath = oPath + lofString + matrixName
 
     #stuff required  
@@ -159,7 +159,7 @@ def variant_is_dict(annVariants = annotatedVariants,iPath ='/home/pete/results/h
     picklePath = dataPath + lofString + '_vDict.p'
     try:
         print('pickling..')
-        vDict = pickle.load(open(dataPath + lofString + '_vDict.p','rb'))
+        vDict = pickle.load(open(picklePath,'rb'))
     except:
         snplist = iPath + lofString + '.snplist'
 
@@ -200,16 +200,27 @@ def sample_to_batch_ditct(filePath = dataPath + 'sample_info.txt'):
     '''
     Given timo's file maps a sample to a batch. requires a conversion on the fly due to slightly different names between his batch names and ours. Need to pass our batches and use difflib
     '''
-    ourbatches = pickle.load(open(dataPath + 'ourbatches.p','rb'))
-    import difflib
-    print('returning sample to batch dict')
+
+    picklePath = dataPath +  'sample_to_batch.p'
+
+    try:
+        print('returning sample to batch dict')
+        s2b = pickle.load(open(picklePath,'rb'))
+        
+    except:
+        print("data doesn't exist..generating..")
+        import difflib                         
+        ourbatches = pickle.load(open(dataPath + 'ourbatches.p','rb'))
+
                              
-    s2b = dd(str)
-    sampleData = np.loadtxt(filePath,dtype = str,delimiter=':',usecols=[0,-1])
-    for entry in sampleData:
-        timoBatch,sample = entry
-        ourBatch = difflib.get_close_matches(timoBatch,ourbatches)[0]
-        s2b[sample] = ourBatch
+        s2b = dd(str)
+        sampleData = np.loadtxt(filePath,dtype = str,delimiter=':',usecols=[0,-1])
+        for entry in sampleData:
+            timoBatch,sample = entry
+            ourBatch = difflib.get_close_matches(timoBatch,ourbatches)[0]
+            s2b[sample] = ourBatch
+
+        pickle.dump(s2b,open(picklePath,'wb'))
     return s2b
 
 
