@@ -3,15 +3,16 @@ import os
 import gzip
 from operator import itemgetter
 import shutil
-from collections import defaultdict 
+from collections import defaultdict
+from itertools import product
 import pickle
 import shlex
 from subprocess import Popen, PIPE,call
 from file_utils import make_sure_path_exists,return_header_variants,split_array_chunk
-plink = shutil.which('plink')
 import multiprocessing
 cpus = multiprocessing.cpu_count()
 
+plink = shutil.which('plink')
 
 rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
 dataPath = rootPath + 'Data/'
@@ -54,11 +55,32 @@ def write_new_matrix(iPath,lofString = 'hc_lof'):
                 f.write("\t".join(gArray) + '\n')
 
 
+def do_chunks(iPath,lofString = 'hc_lof'):
 
-def write_genelists(iPath,g2v,chunks = cpus):
+    write_genelists(iPath)
+    
+    params  = list(product(range(cpus),[iPath]))
+    print(params)
+
+def multiprocess_func(chunkInt,iPath,lofString):
+    
+    g2v = get_variant_to_gene_dict(iPath)
+    matrixPath = iPath + lofString + matrixName
+    headerVariants = return_header_variants(matrixPath)
+    chunkPath = iPath + '/gene_chunks/'
+    geneList = np.loadtxt(chunkPath + 'gene_chunk_'+str(i) + '.txt')
+    with open(chunkPath + 'matrix_chunk_' + str(i) + '.tsv','wt') as f:
+        for gene in geneList:
+             gData = return_gene_columns(gene,iPath,g2v,headerVariants).astype(str)
+             gArray = np.concatenate((np.array([gene]),gData))
+             assert gArray.shape == samples.shape
+             f.write("\t".join(gArray) + '\n')
+    
+def write_genelists(iPath,chunks = cpus):
 
     chunkPath = iPath + '/gene_chunks/'
     make_sure_path_exists(chunkPath)
+    g2v = get_variant_to_gene_dict(iPath)
 
     geneList = np.array(list(g2v.keys()))
     chunkList = split_array_chunk(geneList,chunks)
