@@ -46,15 +46,15 @@ def write_new_matrix(iPath,lofString = 'hc_lof'):
         headerVariants = return_header_variants(matrixPath)
         samples =  np.loadtxt(matrixPath,dtype = str,usecols =[0])
 
+        
         with open(oFile,'wt') as f:
             f.write("\t".join(samples) + '\n')
-            for gene in g2v:
-                gData = return_gene_columns(gene,iPath,g2v,headerVariants).astype(str)
-                gArray = np.concatenate((np.array([gene]),gData))
-                assert gArray.shape == samples.shape
-                f.write("\t".join(gArray) + '\n')
 
-
+            chunkPath = iPath + '/gene_chunks/'
+            for i in range(cpus):
+                sys.stdout.write('\r merging chunk %i'%{i})
+                sys.stdout.flush()
+#            with open(chunkPath + 'gene_chunk_'+str(i) + '.txt','rt') as i:
 def do_chunks(iPath,lofString = 'hc_lof'):
 
     write_genelists(iPath)
