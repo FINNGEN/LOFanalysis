@@ -45,7 +45,7 @@ def logistic_regression(iPath,lofString = 'hc_lof',phenoDict = None,lofDict= Non
         print(pheno)
         data = return_column(pheno = pheno,f = f)
         samples= return_column(f =f)
-        assert data.shape == samples.data
+        assert data.shape == samples.shape
         
 def filter_pcs(iPath,lofString='hc_lof',f = phenoFile,pcPath = eigenvecPath):
     '''
