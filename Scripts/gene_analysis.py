@@ -20,7 +20,7 @@ eigenvecPath = dataPath + '10pc.eigenvec'
 
 
 def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenvecPath):
-    sharedPath = dataPath +'shared_samples.txt'
+    sharedPath = dataPath +lofString + '_shared_samples.txt'
     if os.path.isfile(sharedPath):
         samples = np.loadtxt(sharedPath,dtype = str)
     else:
