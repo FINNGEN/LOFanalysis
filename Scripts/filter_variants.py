@@ -51,7 +51,7 @@ def return_gene_columns(gene,iPath,g2v,headerVariants):
     Loops through the header of the matrix file and returns the columns where variants belong to the gene
     """
     geneVariants = g2v[gene]
-    matrixPath = iPath + matrixName
+    matrixPath = iPath +  lofString + matrixName
 
 
     geneColumns = [i+1 for i,elem in enumerate(headerVariants) if elem in geneVariants]
@@ -70,15 +70,15 @@ def return_gene_columns(gene,iPath,g2v,headerVariants):
     return (vData>0).astype(int)
 
 
-def get_variant_to_gene_dict(iPath):
+def get_variant_to_gene_dict(iPath,lofString = 'hc_lof'):
     '''
     Reads the plink snplist and returns a gene to variant dictionary 
     '''
     #get variant to gene mapping from full list of variants
-    bFile = iPath + lofName
+    bFile = iPath +lofString 
 
     v2g = dd(str)
-    with open(dataPath + 'lof_variants.txt','rt') as i:
+    with open(dataPath + lofString + '_variants.txt','rt') as i:
         for line in i:
             variant,gene = line.strip().split('\t')
             v2g[variant] = gene
