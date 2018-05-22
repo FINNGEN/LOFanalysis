@@ -36,7 +36,7 @@ def logistic_regression(iPath,lofString = 'hc_lof',phenoDict = None,lofDict= Non
             data = np.array(line[1:],dtype = float)
             assert data.shape == lofSamples.shape
         for i,entry in enumerate(data):
-            geneDict[lofSamples[i]] = entry
+            lofDict[lofSamples[i]] = entry
         print('done.')
         
     if phenoDict is None:
