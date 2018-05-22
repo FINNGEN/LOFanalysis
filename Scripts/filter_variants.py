@@ -72,7 +72,7 @@ def multiprocess_func(chunkInt,iPath,lofString):
     matrixPath = iPath + lofString + matrixName
     headerVariants = return_header_variants(matrixPath)
     chunkPath = iPath + '/gene_chunks/'
-    geneList = np.loadtxt(chunkPath + 'gene_chunk_'+str(chunkInt) + '.txt')
+    geneList = np.loadtxt(chunkPath + 'gene_chunk_'+str(chunkInt) + '.txt',dtype = str)
     with open(chunkPath + 'matrix_chunk_' + str(chunkInt) + '.tsv','wt') as f:
         for gene in geneList:
              gData = return_gene_columns(gene,iPath,g2v,headerVariants).astype(str)
