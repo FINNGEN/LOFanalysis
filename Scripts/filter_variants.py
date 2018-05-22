@@ -42,7 +42,7 @@ def write_new_matrix(iPath,lofString = 'hc_lof'):
         print("gene to sample matrix already generated.")
 
     else:
-        g2v = get_variant_to_gene_dict(iPath)
+        g2v = get_variant_to_gene_dict(iPath,lofString)
         matrixPath = iPath + lofString + matrixName
         headerVariants = return_header_variants(matrixPath)
         samples =  np.loadtxt(matrixPath,dtype = str,usecols =[0])
