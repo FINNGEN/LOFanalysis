@@ -35,7 +35,7 @@ def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenve
             samples = samples.intersection(sampleList)
 
         samples = np.array(samples)
-        np.savetxt(sharedPath,samples,fmt ='%s'
+        np.savetxt(sharedPath,samples,fmt ='%s')
     return samples
 
 def return_lof_samples(iPath,lofString = 'hc_lof'):
