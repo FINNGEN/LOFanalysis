@@ -62,7 +62,7 @@ def write_genelists(iPath,v2g,chunks = cpus):
 
     geneList = np.array(list(v2g.keys()))
     chunkList = split_array_chunk(geneList,chunks)
-    for i,chunk in enumerate chunkList:
+    for i,chunk in enumerate(chunkList):
         np.savetxt(chunkPath + 'gene_chunk_'+str(i) + '.txt',chunk,fmt = '%s')
                         
 
