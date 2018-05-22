@@ -14,6 +14,24 @@ eigenvecPath = dataPath + '10pc.eigenvec'
 
 
 
+
+
+
+
+
+def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenvecPath):
+    print('importing all samples..')
+    pcSamples = return_pc_samples(pcPath)
+    lofSamples = return_lof_samples(iPath,lofString)
+    phenoSamples = return_column(f =f)
+    print('done')
+    sampleList = [pcSamples,lofSamples,phenoSamples]
+    samples = set(sampleList[0])
+    for sampleList in sampleList[1:]:
+        samples.intersection(sampleList)
+
+    return samples
+
 def return_lof_samples(iPath,lofString = 'hc_lof'):
     matrixPath =  iPath + lofString + "_gene_to_sample.tsv"
     with open(matrixPath,'rt') as i:
