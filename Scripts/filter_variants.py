@@ -34,10 +34,10 @@ matrixName = "_variantmatrix.tsv"
 def write_new_matrix(iPath):
 
     g2v = get_variant_to_gene_dict(iPath)
-
-    headerVariants = return_header_variants(iPath + matrixName)
-    with open(iPath + "gene_to_sample_lof.tsv",'wt') as f:
-        samples =  np.loadtxt(iPath + matrixName,dtype = str,usecols =[0])
+    matrixPath = iPath + lofString + matrixName
+    headerVariants = return_header_variants(matrixPath)
+    with open(iPath + lofString + "_gene_to_sample_lof.tsv",'wt') as f:
+        samples =  np.loadtxt(matrixPath,dtype = str,usecols =[0])
         f.write("\t".join(samples) + '\n')
         for gene in g2v:
             gData = return_gene_columns(gene,iPath,g2v,headerVariants).astype(str)
