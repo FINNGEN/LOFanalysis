@@ -46,7 +46,7 @@ def write_new_matrix(iPath):
             f.write("\t".join(gArray) + '\n')
     
 
-def return_gene_columns(gene,iPath,g2v,headerVariants):
+def return_gene_columns(gene,iPath,g2v,headerVariants,lofString = 'hc_lof'):
     """
     Loops through the header of the matrix file and returns the columns where variants belong to the gene
     """
