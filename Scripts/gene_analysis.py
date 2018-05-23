@@ -28,12 +28,7 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     if lofData is None:
         print('lofData missing, creating..')
         gene = 'TTLL10'
-        with open(iPath + lofString + '_gene_to_filtered_samples.tsv') as i:
-            next(i)
-            line = i.readline().strip().split('\t')
-            assert line[0] == gene
-            lofData = np.array(line[1:],dtype = float)
-        print('Import lofData done.')
+        lofData = get_lof_data(iPath,gene,lofString)
         
     if phenoData is None:
         pheno = phenoList[0]
@@ -55,10 +50,18 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     import statsmodels.api as sm
     logit_model=sm.Logit(y,X)
     result=logit_model.fit()
-    print(result.summary())
+    return result
     
     
-    
+def get_lof_data(iPath,gene,lofString = 'hc_lof'):
+     with open(iPath + lofString + '_gene_to_filtered_samples.tsv') as i:
+         next(i)
+         for line in i:
+             line = i.readline().strip().split('\t')
+             if line[0] == gene:
+                 lofData = np.array(line[1:],dtype = float)
+    print('Import lofData done.')
+    return lofData
 def get_pheno_data(iPath,pheno,f = phenoFile,lofString = 'hc_lof'):
     print('phenoData missing, creating..')
     
