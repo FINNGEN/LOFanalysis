@@ -79,7 +79,7 @@ def transpose_matrix(iPath,lofString= 'hc_lof'):
     all_data = list(tsv_reader)
 
     # Transpose it.
-    all_data = list(itertools.izip_longest(*all_data, fillvalue=''))
+    all_data = list(itertools.zip_longest(*all_data, fillvalue=''))
 
     # Write it back out.
     tsv_writer = csv.writer(oMatrix +'.tmp', delimiter='\t')
