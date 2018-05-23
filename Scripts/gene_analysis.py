@@ -149,7 +149,7 @@ def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenve
     '''
     sharedPath = iPath +lofString + '_shared_samples.txt'
     if os.path.isfile(sharedPath):
-        samples = np.loadtxt(sharedPath,dtype = str)
+        finalSamples = np.loadtxt(sharedPath,dtype = str)
     else:
         print('importing all samples..')
         pcSamples = return_pc_samples(pcPath)
