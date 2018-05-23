@@ -146,7 +146,7 @@ def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenve
     '''
     Returns and saves the samples shared across all files
     '''
-    sharedPath = dataPath +lofString + '_shared_samples.txt'
+    sharedPath = iPath +lofString + '_shared_samples.txt'
     if os.path.isfile(sharedPath):
         samples = np.loadtxt(sharedPath,dtype = str)
     else:
@@ -161,8 +161,9 @@ def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenve
             samples = samples.intersection(sampleList)
 
         samples = np.array(list(samples))
-        np.savetxt(sharedPath,samples,fmt ='%s')
-    return samples
+        finalSamples = [s for s in pcSamples if s in samples]
+        np.savetxt(sharedPath,finalSamples,fmt ='%s')
+    return finalSamples
 
 def return_lof_samples(iPath,lofString = 'hc_lof'):
     matrixPath =  iPath + lofString + "_gene_to_sample.tsv"
