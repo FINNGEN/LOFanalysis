@@ -102,7 +102,7 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
 
     # now i need to "flip" the matrix so it's easier to load the data
     with open(oMatrix,'rt') as i:
-        line = i.readline()
+        line = i.readline().strip().split('\t')
         return line
 
         
