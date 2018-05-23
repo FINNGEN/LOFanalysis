@@ -26,6 +26,7 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoArray = No
     '''
 
     if lofArray is None:
+        print('lofData missing, creating..')
         gene = 'TTLL10'
         with open(iPath + lofString + '_gene_to_filtered_samples.tsv') as i:
             next(i)
@@ -47,7 +48,9 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoArray = No
         samples = get_shared_samples(iPath,lofString)
         phenoData = np.empty_like(samples,dtype = int)
         for i,sample in enumerate(samples):
-            phenoDict[i] = int(phenoDict[sample])
+            phenoData[i] = int(phenoDict[sample])
+        print('done.')
+
     #now i upload the pc data,along with the samples
     if pcData is None:
         pcPath = iPath + lofString + '_pcs.txt'
