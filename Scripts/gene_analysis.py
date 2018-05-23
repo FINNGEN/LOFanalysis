@@ -77,25 +77,32 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
     iMatrix = iPath + lofString + "_gene_to_sample.tsv"
     oMatrix = iPath + lofString + "_gene_to_filtered_sample.tsv"
 
-    samples = return_pc_shared_samples(iPath,lofString)
-    lofSamples = return_lof_samples(iPath,lofString)
-    with open(iMatrix,'rt') as i,open(oMatrix,'wt') as o:
-        for line in i:
-            # i create a dict that stores the info for each samples so i can then rearrange them
-            geneDict = dd()
-            line = line.strip().split('\t')
-            gene = line[0]
-            sys.stdout.write('processing gene %s \r'%(gene)),
-            sys.stdout.flush()
-            data = line[1:]
-            assert len(data) == len(lofSamples)
-            # store sample Data
-            for j,sample in enumerate(lofSamples):
-                geneDict[sample] = data[j]
-            # write new line only keeping shared sample data
-            newLine = gene +'\t'
-            newLine += '\t'.join([geneDict[sample] for sample in samples])
-            o.write(newLine + '\n')
+    if os.path.isfile(oMatrix):
+        print('matrix already reordered')
+    else:
+        samples = return_pc_shared_samples(iPath,lofString)
+        lofSamples = return_lof_samples(iPath,lofString)
+        with open(iMatrix,'rt') as i,open(oMatrix,'wt') as o:
+            for line in i:
+                # i create a dict that stores the info for each samples so i can then rearrange them
+                geneDict = dd()
+                line = line.strip().split('\t')
+                gene = line[0]
+                sys.stdout.write('processing gene %s \r'%(gene)),
+                sys.stdout.flush()
+                data = line[1:]
+                assert len(data) == len(lofSamples)
+                # store sample Data
+                for j,sample in enumerate(lofSamples):
+                    geneDict[sample] = data[j]
+                    # write new line only keeping shared sample data
+                    newLine = gene +'\t'
+                    newLine += '\t'.join([geneDict[sample] for sample in samples])
+                    o.write(newLine + '\n')
+
+    with open(oMatrix,'rt' as i):
+        line = i.readline()
+        return line
 
         
         
