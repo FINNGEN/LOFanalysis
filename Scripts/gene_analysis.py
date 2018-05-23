@@ -66,11 +66,20 @@ def logistic_regression(iPath,lofString = 'hc_lof',phenoDict = None,lofDict= Non
 #####################################
 
 
-def reorder_lof_matrix():
+def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
     '''
     Shuffles the column of the gene_lof_matrix so that the ordering of samples is the same as in the eigenvec file
     '''
+    
 
+    iMatrix = iPath + lofString + "_gene_to_sample.tsv"
+    oMatrix = iPath + lofString + "_gene_to_filtered_sample.tsv"
+
+    samples = get_shared_samples(iPath,lofString,f, pcPath)
+
+    with open(iMatrix,'rt') as i:
+        print(i.readline())
+    
 def filter_pcs(iPath,lofString='hc_lof',f = phenoFile,pcPath = eigenvecPath):
     '''
     Filters the eigenvec file to keep only samples that are shared across all files
