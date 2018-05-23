@@ -76,16 +76,16 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenve
     oMatrix = iPath + lofString + "_gene_to_filtered_sample.tsv"
 
     samples = get_shared_samples(iPath,lofString,f, pcPath)
-
+    lofSamples = return_lof_samples(iPath,lofString)
     with open(iMatrix,'rt') as i:
         next(i)
         line = i.readline().strip().split('\t')
         gene = line[0]
         data = line[1:]
-        assert len(samples) == len(data)
-        
-        return(data)
 
+        assert len(data) == len(lofSamples)
+        
+        
         
     
 def filter_pcs(iPath,lofString='hc_lof',f = phenoFile,pcPath = eigenvecPath):
