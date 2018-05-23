@@ -45,7 +45,7 @@ def write_gene_matrix(iPath,lofString = 'hc_lof'):
 
     else:
         g2v = get_variant_to_gene_dict(iPath,lofString)
-        matrixPath = iPath + lofString + matrixName
+        matrixPath = iPath + 'plink_files/'+ lofString + matrixName
         headerVariants = return_header_variants(matrixPath)
         samples =  np.loadtxt(matrixPath,dtype = str,usecols =[0])
         
