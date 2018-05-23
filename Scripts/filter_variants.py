@@ -93,7 +93,7 @@ def multiprocess_func(chunkInt,iPath,lofString):
         with open(chunkFile,'wt') as f:
             for gene in geneList:
                 gData = return_gene_columns(gene,iPath,g2v,headerVariants,lofString).astype(str)
-                gArray = np.concatenate((np.array([gene]),gData))
+                gArray = np.transpose(np.concatenate((np.array([gene]),gData)))
                 f.write("\t".join(gArray) + '\n')
     
 def write_genelists(iPath,chunks = cpus,lofString = 'hc_lof'):

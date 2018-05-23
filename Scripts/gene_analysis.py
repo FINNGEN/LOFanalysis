@@ -67,25 +67,6 @@ def logistic_regression(iPath,lofString = 'hc_lof',phenoDict = None,lofDict= Non
 #--FIX FILES TO ORDER SAMPLE DATA---#
 #####################################
 
-def transpose_matrix(iPath,lofString= 'hc_lof'):
-    import csv
-    import itertools
-
-
-    # Read all Tab-delimited rows from stdin.
-    oMatrix = iPath + lofString + "_gene_to_filtered_sample.tsv"
-
-    tsv_reader = csv.reader(open(oMatrix,'rt'), delimiter='\t')
-    all_data = list(tsv_reader)
-    print('data imported..')
-        
-    # Transpose it.
-    all_data = list(itertools.zip_longest(*all_data, fillvalue=''))
-    print('data transposed...')
-    # Write it back out.
-    tsv_writer = csv.writer(open(oMatrix +'.tmp','wt'), delimiter='\t')
-    for row in all_data:
-        tsv_writer.writerow(row) 
 
 def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
     '''
