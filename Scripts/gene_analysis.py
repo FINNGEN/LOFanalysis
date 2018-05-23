@@ -80,7 +80,7 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
     if os.path.isfile(oMatrix):
         print('matrix already reordered')
     else:
-        samples = return_pc_shared_samples(iPath,lofString)
+        samples = get_shared_samples(iPath,lofString)
         lofSamples = return_lof_samples(iPath,lofString)
         with open(iMatrix,'rt') as i,open(oMatrix,'wt') as o:
             for line in i:
@@ -144,7 +144,8 @@ def filter_pcs(iPath,lofString='hc_lof',f = phenoFile,pcPath = eigenvecPath):
 
 def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenvecPath):
     '''
-    Returns and saves the samples shared across all files and it returns them in the order of the pc file'
+    Returns and saves the samples shared across all files and it returns them in the order of the pc file.
+    After the first reordering, the function will always load the same order of samples
     '''
     sharedPath = iPath +lofString + '_shared_samples.txt'
     if os.path.isfile(sharedPath):
