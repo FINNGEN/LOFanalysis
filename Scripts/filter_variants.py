@@ -86,7 +86,7 @@ def multiprocess_func(chunkInt,iPath,lofString):
         print('chunk ' + str(chunkInt) + ' already generated')
     else:
         g2v = get_variant_to_gene_dict(iPath,lofString)
-        matrixPath = iPath + lofString + matrixName
+        matrixPath = iPath + 'plink_files/'+lofString + matrixName
         headerVariants = return_header_variants(matrixPath)
 
         geneList = np.loadtxt(chunkPath + 'gene_chunk_'+str(chunkInt) + '.txt',dtype = str)
