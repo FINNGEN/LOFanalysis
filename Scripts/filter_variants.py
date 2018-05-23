@@ -73,17 +73,23 @@ def multi_wrapper_func(args):
     multiprocess_func(*args)
     
 def multiprocess_func(chunkInt,iPath,lofString):
-    
-    g2v = get_variant_to_gene_dict(iPath,lofString)
-    matrixPath = iPath + lofString + matrixName
-    headerVariants = return_header_variants(matrixPath)
+
+
     chunkPath = iPath + '/gene_chunks/'
-    geneList = np.loadtxt(chunkPath + 'gene_chunk_'+str(chunkInt) + '.txt',dtype = str)
-    with open(chunkPath + 'matrix_chunk_' + str(chunkInt) + '.tsv','wt') as f:
-        for gene in geneList:
-             gData = return_gene_columns(gene,iPath,g2v,headerVariants,lofString).astype(str)
-             gArray = np.concatenate((np.array([gene]),gData))
-             f.write("\t".join(gArray) + '\n')
+    chunkFile = chunkPath + 'matrix_chunk_' + str(chunkInt) + '.tsv'
+    if os.path.isfile(chunkFile):
+        print('chunk ' + str(chunkInt) + ' already generated')
+    else:
+        g2v = get_variant_to_gene_dict(iPath,lofString)
+        matrixPath = iPath + lofString + matrixName
+        headerVariants = return_header_variants(matrixPath)
+
+        geneList = np.loadtxt(chunkPath + 'gene_chunk_'+str(chunkInt) + '.txt',dtype = str)
+        with open(chunkFile,'wt') as f:
+            for gene in geneList:
+                gData = return_gene_columns(gene,iPath,g2v,headerVariants,lofString).astype(str)
+                gArray = np.concatenate((np.array([gene]),gData))
+                f.write("\t".join(gArray) + '\n')
     
 def write_genelists(iPath,chunks = cpus,lofString = 'hc_lof'):
 
