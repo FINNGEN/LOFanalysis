@@ -81,7 +81,7 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenve
         for line in i:
             # i create a dict that stores the info for each samples so i can then rearrange them
             geneDict = dd()
-            line = i.readline().strip().split('\t')
+            line = line.strip().split('\t')
             gene = line[0]
             data = line[1:]
             assert len(data) == len(lofSamples)
