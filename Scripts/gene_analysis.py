@@ -19,7 +19,7 @@ eigenvecPath = dataPath + '10pc.eigenvec'
 
 
 
-def logistic_regression(iPath,lofString = 'hc_lof',phenoDict = None,lofDict= None,f = phenoFile):
+def logistic_regression(iPath,lofString = 'hc_lof',phenoArray = None,lofArray= None,f = phenoFile):
     '''
     Returns the logistic regression for the lof + pcs vs pheno.
     phenoDict and lofDictmap samples to their respective value. I need it in order to build arrays that in sync with the pc data
@@ -29,16 +29,14 @@ def logistic_regression(iPath,lofString = 'hc_lof',phenoDict = None,lofDict= Non
         print('lofDict missing, creating...')
         lofDict= dd()
         gene = 'TTLL10'
-        print(gene)
-        lofSamples = return_lof_samples(iPath,lofString)
-        with open(iPath + lofString + '_gene_to_sample.tsv') as i:
+
+
+        with open(iPath + lofString + '_gene_to_filtered_samples.tsv') as i:
             next(i)
             line = i.readline().strip().split('\t')
             assert line[0] == gene
-            data = np.array(line[1:],dtype = float)
-            assert data.shape == lofSamples.shape
-        for i,entry in enumerate(data):
-            lofDict[lofSamples[i]] = entry
+            lofData = np.array(line[1:],dtype = float)
+
         print('done.')
         
     if phenoDict is None:
@@ -46,22 +44,24 @@ def logistic_regression(iPath,lofString = 'hc_lof',phenoDict = None,lofDict= Non
         pheno = phenoList[0]
         print(pheno)
         data = return_column(pheno = pheno,f = f,dtype = float)
-        samples= return_column(f =f,dtype =str)
+        phenoSamples= return_column(f =f,dtype =str)
         assert data.shape == samples.shape
         phenoDict = dd()
         for i,entry in enumerate(data):
-            phenoDict[samples[i]] = entry
+            phenoDict[phenoSamples[i]] = entry
 
+        samples = get_shared_samples(iPath,lofString)
+        phenoData = np.empty_like(samples,dtype = int)
+        for i,sample in enumerate(samples):
+            phenoDict[i] = int(phenoDict[sample])
     #now i upload the pc data,along with the samples
     pcPath = iPath + lofString + '_pcs.txt'
     pcSamples =return_pc_samples(pcPath)
     pcData = np.loadtxt(pcPath,dtype = float,usecols = range(1,11))
 
+    return pcData,lofData,phenoData
     
-    lofArray = np.empty_like(pcSamples,dtype = float)
     
-    phenoArray = np.empty_like(pcSamples,dtype = int)
-
 
 #####################################
 #--FIX FILES TO ORDER SAMPLE DATA---#
