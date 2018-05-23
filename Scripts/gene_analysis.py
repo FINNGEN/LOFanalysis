@@ -51,8 +51,17 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     logit_model=sm.Logit(y,X)
     result=logit_model.fit()
     return result
-    
-    
+
+def get_lof_data(iPath,gene,lofString = 'hc_lof'):
+     with open(iPath + lofString + '_gene_to_filtered_samples.tsv','rt') as i:
+         next(i)
+         for line in i:
+             line = i.readline().strip().split('\t')
+             if line[0] == gene:
+                 lofData = np.array(line[1:],dtype = float)
+    print('Import lofData done.')
+    return lofData
+
 
 def get_pheno_data(iPath,pheno,f = phenoFile,lofString = 'hc_lof'):
     print('phenoData missing, creating..')
