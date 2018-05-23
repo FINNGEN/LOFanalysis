@@ -77,13 +77,23 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenve
 
     samples = get_shared_samples(iPath,lofString,f, pcPath)
     lofSamples = return_lof_samples(iPath,lofString)
-    with open(iMatrix,'rt') as i:
+    with open(iMatrix,'rt') as i,open(oMatrix,'wt') as o:
         next(i)
-        line = i.readline().strip().split('\t')
-        gene = line[0]
-        data = line[1:]
 
-        assert len(data) == len(lofSamples)
+        for line in i:
+            # i create a dict that stores the info for each samples so i can then rearrange them
+            geneDict = dd()
+            line = i.readline().strip().split('\t')
+            gene = line[0]
+            data = line[1:]
+            assert len(data) == len(lofSamples)
+            for i,samples in lofSamples:
+                geneDict[sample] = data[i]
+
+            newLine = gene +'\t'
+            newLine += '\t'.join([geneDict[sample] for sample in samples])
+            o.write(newLine + '\n')
+
         
         
         
