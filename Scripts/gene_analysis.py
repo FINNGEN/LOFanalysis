@@ -100,7 +100,8 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
                     newLine += '\t'.join([geneDict[sample] for sample in samples])
                     o.write(newLine + '\n')
 
-    with open(oMatrix,'rt' as i):
+    # now i need to "flip" the matrix so it's easier to load the data
+    with open(oMatrix,'rt') as i:
         line = i.readline()
         return line
 
