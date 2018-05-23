@@ -87,9 +87,10 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenve
             gene = line[0]
             data = line[1:]
             assert len(data) == len(lofSamples)
-            for i,samples in lofSamples:
+            # store sample Data
+            for i,samples in enumerate(lofSamples):
                 geneDict[sample] = data[i]
-
+            # write new line only keeping shared sample data
             newLine = gene +'\t'
             newLine += '\t'.join([geneDict[sample] for sample in samples])
             o.write(newLine + '\n')
