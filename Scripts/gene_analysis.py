@@ -26,18 +26,13 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoArray = No
     '''
 
     if lofArray is None:
-        print('lofDict missing, creating...')
-        lofDict= dd()
         gene = 'TTLL10'
-
-
         with open(iPath + lofString + '_gene_to_filtered_samples.tsv') as i:
             next(i)
             line = i.readline().strip().split('\t')
             assert line[0] == gene
             lofData = np.array(line[1:],dtype = float)
-
-        print('done.')
+        print('Import lofData done.')
         
     if phenoArray is None:
         print('phenoDict missing, creating..')
