@@ -108,7 +108,7 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
     with open(oMatrix,'wt') as o:
         for i in range(len(line)):
             data = np.loadtxt(oMatrix +'.tmp',dtype = str,usecols = [i])
-            sys.stdout.write('processing gene %s \r'%(gene)),
+            sys.stdout.write('processing gene %i \r'%(i)),
             sys.stdout.flush()
             o.write('\t'.join(data) + '\n')
             
