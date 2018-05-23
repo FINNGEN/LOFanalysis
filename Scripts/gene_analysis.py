@@ -19,7 +19,7 @@ eigenvecPath = dataPath + '10pc.eigenvec'
 
 
 
-def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoArray = None,lofArray= None,f = phenoFile):
+def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoArray = None,lofArray= None,f = phenoFile,infoFilter = 0):
     '''
     Returns the logistic regression for the lof + pcs vs pheno.
     phenoDict and lofDictmap samples to their respective value. I need it in order to build arrays that in sync with the pc data
@@ -57,7 +57,15 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoArray = No
         pcSamples =return_pc_samples(iPath)
         pcData = np.loadtxt(pcPath,dtype = float,usecols = range(1,11))
 
-    return pcData,lofData,phenoData
+    # here i apply the info score filter
+    lofData[lofData > infoFilter] = 1
+    y = phenoData
+    X = np.c_[lofData,pcData]     
+    import statsmodels.api as sm
+    logit_model=sm.Logit(y,X)
+    result=logit_model.fit()
+    print(result.summary())
+    
     
     
 
@@ -68,7 +76,7 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoArray = No
 
 def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
     '''
-    Shuffles the column of the gene_lof_matrix so that the ordering of samples is the same as in the eigenvec file
+    Shuffles the column of the gene_lof_matrix so that the ordering of shared samples is the same as in the eigenvec file
     '''
     
 
@@ -82,7 +90,7 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
         lofSamples = return_lof_samples(iPath,lofString)
         with open(iMatrix,'rt') as i,open(oMatrix ,'wt') as o:
             for line in i:
-                # i create a dict that stores the info for each samples so i can then rearrange them
+                # i create a dict that stores the info for each sample so i can then rearrange them in the pc sample order
                 geneDict = dd()
                 line = line.strip().split('\t')
                 gene = line[0]
@@ -93,9 +101,9 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
                 # store sample Data
                 for j,sample in enumerate(lofSamples):
                     geneDict[sample] = data[j]
-                # write new line only keeping shared sample data
+                # write new line
                 newLine = gene +'\t'
-                newLine += '\t'.join([geneDict[tmpSample] for tmpSample in samples])
+                newLine += '\t'.join([geneDict[tmpSample] for tmpSample in samples]) # based on pc data order!
                 o.write(newLine + '\n')
 
 
@@ -133,7 +141,7 @@ def filter_pcs(iPath,lofString='hc_lof',f = phenoFile,pcPath = eigenvecPath):
 #----RETURN SHARED SAMPLES----#
 ###############################
 
-
+#Here I save an np.array with the shared samples based on the order in which they appear in the eigenvector data
 
 def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenvecPath):
     '''
