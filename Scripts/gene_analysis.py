@@ -57,6 +57,7 @@ def get_lof_data(iPath,gene,lofString = 'hc_lof'):
          next(i)
          for line in i:
              line = i.readline().strip().split('\t')
+             print(line[0)
              if line[0] == gene:
                  lofData = np.array(line[1:],dtype = float)
     return lofData
