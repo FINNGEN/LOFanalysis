@@ -2,6 +2,8 @@ import numpy as np
 import os
 import gzip
 from collections import defaultdict as dd
+import sys
+
 rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
 dataPath = rootPath + 'Data/'
 annotatedVariants =  dataPath + 'annotated_variants.gz'
