@@ -75,13 +75,19 @@ def filter_pcs(iPath,lofString='hc_lof',f = phenoFile,pcPath = eigenvecPath):
     '''
     Filters the eigenvec file to keep only samples that are shared across all files
     '''
-    samples = get_shared_samples(iPath,lofString,f, pcPath)
-    print('samples loaded.')
-    with open(pcPath,'rt') as i,open(iPath + lofString + '_pcs.txt','wt') as o:
-        for line in i:
-            sample = line.strip().split(' ')[0]
-            if sample in samples:
-                o.write(line)
+
+    pcFile = iPath + lofString + '_pcs.txt'
+    print('filtering pcs to shared samples --> ' + pcFile)
+    if os.path.isfile(pcFile):
+        print('principal components already filtered')
+    else:
+        samples = get_shared_samples(iPath,lofString,f, pcPath)
+        print('samples loaded.')
+        with open(pcPath,'rt') as i,open(pcFile,'wt') as o:
+            for line in i:
+                sample = line.strip().split(' ')[0]
+                if sample in samples:
+                    o.write(line)
 
 
 
