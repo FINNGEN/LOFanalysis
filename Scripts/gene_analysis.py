@@ -75,7 +75,7 @@ def transpose_matrix(iPath,lofString= 'hc_lof'):
     # Read all Tab-delimited rows from stdin.
     oMatrix = iPath + lofString + "_gene_to_filtered_sample.tsv"
 
-    tsv_reader = csv.reader(oMatrix, delimiter='\t')
+    tsv_reader = csv.reader(open(oMatrix,'rt'), delimiter='\t')
     all_data = list(tsv_reader)
 
     # Transpose it.
