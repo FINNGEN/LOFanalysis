@@ -35,8 +35,10 @@ matrixName = "_variantmatrix.tsv"
 #--MERGE VARIANTS INTO GENES--#
 ###############################
 
-def write_new_matrix(iPath,lofString = 'hc_lof'):
-
+def write_gene_matrix(iPath,lofString = 'hc_lof'):
+    '''
+    Merges the chunks
+    '''
     oFile = iPath + lofString + "_gene_to_sample.tsv"
     if os.path.isfile(oFile):
         print("gene to sample matrix already generated.")
@@ -59,11 +61,12 @@ def write_new_matrix(iPath,lofString = 'hc_lof'):
                         f.write(line)
 
 def do_chunks(iPath,lofString = 'hc_lof'):
-
+    '''
+    Merges the variant file in chunks and outputs a gene_to_sample matrix for each process.
+    '''
     write_genelists(iPath,lofString = lofString)
     
     params  = list(product(range(cpus),[iPath],[lofString]))
-
     pool = multiprocessing.Pool(cpus)
     pool.map(multi_wrapper_func,params)
     pool.close()
@@ -158,7 +161,8 @@ def get_variant_to_gene_dict(iPath,lofString = 'hc_lof'):
 def write_info_score_matrix(annotatedPath,oPath,lofString,batchPath = dataPath + 'sample_info.txt'):
 
     '''
-    Goes through each line of the matrix(sample data) and updates the 1s to be the Info score for that sample's batch
+    Goes through each line of the matrix(sample data) and updates the 1s to be the Info score for that sample's batch.
+    process_line() is called for each line of the matrix
     '''
     
     oFile = oPath + lofString + '_info_score_matrix.txt'
@@ -185,7 +189,8 @@ def write_info_score_matrix(annotatedPath,oPath,lofString,batchPath = dataPath +
 
 def process_line(line,s2b,headerVariants,vDict):
     '''
-    Given a line of the lof_matrix, it returns 0 if not lof and INFO_SCORE of the batch for that variant otherwise
+    Given a line of the lof_matrix, it returns 0 if not lof and INFO_SCORE of the batch for that variant otherwise.
+    It uses
     '''
     line = line.strip().split(' ')
     # get sample info
@@ -215,7 +220,7 @@ def variant_is_dict(annVariants = annotatedVariants,iPath ='/home/pete/results/h
     I can use this dictionary to retreieve the info score for the samples
     '''
 
-    picklePath = dataPath + lofString + '_vDict.p'
+    picklePath = iPath + lofString + '_vDict.p'
     try:
         print('pickling variant/batch/info_score dict..')
         vDict = pickle.load(open(picklePath,'rb'))
@@ -417,8 +422,10 @@ if __name__ == '__main__':
     if args.command == "generate-matrix":
         oPath = (args.oPath + '/' + args.lof +'/').replace('//','/')
         plink_filter(args.plinkPath,oPath,args.geno,args.lof)
+        # build the plink lof matrix
         generate_matrix(oPath,args.lof)
+        # convert 1s and 2s to Info score
         write_info_score_matrix(args.annotatedFile,oPath,args.lof)
-        
+        #from the info score matrix merge variants into genes
         do_chunks(oPath,args.lof)
-        write_new_matrix(oPath,args.lof)
+        write_gene_matrix(oPath,args.lof)
