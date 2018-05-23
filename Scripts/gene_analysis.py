@@ -101,7 +101,7 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
         
 def return_pc_shared_samples(iPath,lofString = 'hc_lof'):
 
-    pcFile = iPath + lofString + '_pcs.txt'
+    pcPath = iPath + lofString + '_pcs.txt'
     pcSamples = np.loadtxt(pcPath,dtype = str,usecols = [0])
 
     return pcSamples
