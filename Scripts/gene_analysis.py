@@ -97,7 +97,7 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
                     geneDict[sample] = data[j]
                     # write new line only keeping shared sample data
                     newLine = gene +'\t'
-                    newLine += '\t'.join([geneDict[sample] for sample in samples])
+                    newLine += '\t'.join([geneDict[tmpSample] for tmpSample in samples])
                     o.write(newLine + '\n')
 
     # now i need to "flip" the matrix so it's easier to load the data
