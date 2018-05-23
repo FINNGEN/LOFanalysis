@@ -65,19 +65,21 @@ def do_chunks(iPath,lofString = 'hc_lof'):
     Merges the variant file in chunks and outputs a gene_to_sample matrix for each process.
     '''
     write_genelists(iPath,lofString = lofString)
-    
+
+
+    def multi_wrapper_func(args):
+        multiprocess_func(*args)
+        
     params  = list(product(range(cpus),[iPath],[lofString]))
     pool = multiprocessing.Pool(cpus)
     pool.map(multi_wrapper_func,params)
     pool.close()
 
 
-def multi_wrapper_func(args):
-    multiprocess_func(*args)
-    
 def multiprocess_func(chunkInt,iPath,lofString):
-
-
+    '''
+    
+    '''
     chunkPath = iPath + '/gene_chunks/'
     chunkFile = chunkPath + 'matrix_chunk_' + str(chunkInt) + '.tsv'
     if os.path.isfile(chunkFile):
@@ -221,8 +223,8 @@ def variant_is_dict(annVariants = annotatedVariants,iPath ='/home/pete/results/h
     '''
 
     picklePath = iPath + lofString + '_vDict.p'
+    print('loading/generating dict[variant][batch] = INFO_SCORE dict -->' + picklePath)
     try:
-        print('pickling variant/batch/info_score dict..')
         vDict = pickle.load(open(picklePath,'rb'))
     except:
         snplist = iPath + lofString + '.snplist'
