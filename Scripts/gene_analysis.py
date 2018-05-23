@@ -80,8 +80,11 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenve
     with open(iMatrix,'rt') as i:
         next(i)
         line = i.readline().strip().split('\t')
+        gene = line[0]
+        data = line[1:]
+        assert len(samples) == len(data)
         
-        return(line)
+        return(data)
 
         
     
