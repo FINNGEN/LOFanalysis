@@ -144,7 +144,7 @@ def filter_pcs(iPath,lofString='hc_lof',f = phenoFile,pcPath = eigenvecPath):
 
 def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenvecPath):
     '''
-    Returns and saves the samples shared across all files
+    Returns and saves the samples shared across all files and it returns them in the order of the pc file'
     '''
     sharedPath = iPath +lofString + '_shared_samples.txt'
     if os.path.isfile(sharedPath):
@@ -161,6 +161,7 @@ def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenve
             samples = samples.intersection(sampleList)
 
         samples = np.array(list(samples))
+        print('set of samples calculated')
         finalSamples = [s for s in pcSamples if s in samples]
         np.savetxt(sharedPath,finalSamples,fmt ='%s')
     return finalSamples
