@@ -75,7 +75,7 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
     
 
     iMatrix = iPath + lofString + "_gene_to_sample.tsv"
-    oMatrix = iPath + lofString + "_gene_to_filtered_sample.tsv"
+    oMatrix = iPath + lofString + "_gene_to_filtered_samples.tsv"
 
     if os.path.isfile(oMatrix):
         print('matrix already reordered')
