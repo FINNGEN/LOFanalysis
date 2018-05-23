@@ -78,7 +78,9 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenve
     samples = get_shared_samples(iPath,lofString,f, pcPath)
 
     with open(iMatrix,'rt') as i:
-        print(i.readline())
+        next(i)
+        line = i.readline()
+        return(line)
 
         
     
