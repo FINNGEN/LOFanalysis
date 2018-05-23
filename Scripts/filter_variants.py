@@ -174,7 +174,7 @@ def write_info_score_matrix(annotatedPath,oPath,lofString,batchPath = dataPath +
 
     else:
         print('generating info score matrix..')
-        matrixPath = oPath + lofString + matrixName
+        matrixPath = oPath + '/plink_files/'+ lofString + matrixName
 
         #stuff required  
         vDict = variant_is_dict(annotatedPath,oPath,lofString)
