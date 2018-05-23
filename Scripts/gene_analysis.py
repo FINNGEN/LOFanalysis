@@ -66,7 +66,7 @@ def logistic_regression(iPath,lofString = 'hc_lof',phenoDict = None,lofDict= Non
 #####################################
 
 
-def reorder_lof_matrix(iPath,lofString = 'hc_lof',f = phenoFile):
+def reorder_lof_matrix(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenvecPath):
     '''
     Shuffles the column of the gene_lof_matrix so that the ordering of samples is the same as in the eigenvec file
     '''
