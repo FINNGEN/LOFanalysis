@@ -59,7 +59,18 @@ def logistic_regression(iPath,lofString = 'hc_lof',phenoDict = None,lofDict= Non
     lofArray = np.empty_like(pcSamples,dtype = float)
     
     phenoArray = np.empty_like(pcSamples,dtype = int)
-    
+
+
+#####################################
+#--FIX FILES TO ORDER SAMPLE DATA---#
+#####################################
+
+
+def reorder_lof_matrix():
+    '''
+    Shuffles the column of the gene_lof_matrix so that the ordering of samples is the same as in the eigenvec file
+    '''
+
 def filter_pcs(iPath,lofString='hc_lof',f = phenoFile,pcPath = eigenvecPath):
     '''
     Filters the eigenvec file to keep only samples that are shared across all files
@@ -71,6 +82,13 @@ def filter_pcs(iPath,lofString='hc_lof',f = phenoFile,pcPath = eigenvecPath):
             sample = line.strip().split(' ')[0]
             if sample in samples:
                 o.write(line)
+
+
+
+
+###############################
+#----RETURN SHARED SAMPLES----#
+###############################
 
 def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenvecPath):
     '''
@@ -107,6 +125,9 @@ def return_pc_samples(pcPath = eigenvecPath):
     return pcSamples
     
 
+##############################
+#--PARSE THE PHENOTYPE FILE--#
+##############################
 
 def return_column(pheno = 'FINNGENID',f = phenoFile,dtype = 'f8'):
 
@@ -141,3 +162,36 @@ def return_header(f = phenoFile):
     header = header.strip().split('\t')
     i.close()
     return header
+
+
+
+if __name__ == '__main__':
+
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Analyze lof data")
+    parser.add_argument("--phenoFile", type= str,
+                        help="path to phenotype file",required = False,default = phenoFile)
+    parser.add_argument("--pcPath", type= str,
+                        help="path to eigenvec file",required = False,default = eigenvecPath)
+
+
+
+    subparsers = parser.add_subparsers(help='help for subcommand',dest ="command")
+
+    # create the parser for the generate_variants command
+    parser_fix_samples = subparsers.add_parser('fix-samples', help='fix files in order to match shared samples')
+    parser_fix_samples.add_argument("--lof", type= str,
+                        help="type of lof filter",required = True )
+    parser_fix_samples.add_argument("--oPath", type= str,help="Path to folder where to output",default = ".")
+    # create the parser for the "command_2" command
+    
+    
+    args = parser.parse_args()
+
+    if args.command == "fix-samples":
+        oPath = (args.oPath + '/' + args.lof +'/').replace('//','/')
+        filter_pcs(oPath,args.lof,args.phenoFile,args.pcPath)
+
+    
+    
