@@ -82,7 +82,7 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
     else:
         samples = get_shared_samples(iPath,lofString)
         lofSamples = return_lof_samples(iPath,lofString)
-        with open(iMatrix,'rt') as i,open(oMatrix +'.tmp','wt') as o:
+        with open(iMatrix,'rt') as i,open(oMatrix ,'wt') as o:
             for line in i:
                 # i create a dict that stores the info for each samples so i can then rearrange them
                 geneDict = dd()
@@ -100,21 +100,7 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
                 newLine += '\t'.join([geneDict[tmpSample] for tmpSample in samples])
                 o.write(newLine + '\n')
 
-    # now i need to "flip" the matrix so it's easier to load the data
-    with open(oMatrix +'.tmp','rt') as i:
-        line = i.readline().strip().split('\t')
 
-    print('flipping matrix...')
-    with open(oMatrix,'wt') as o:
-        for i in range(len(line)):
-            data = np.loadtxt(oMatrix +'.tmp',dtype = str,usecols = [i])
-            sys.stdout.write('processing gene %i \r'%(i)),
-            sys.stdout.flush()
-            o.write('\t'.join(data) + '\n')
-            
-
-
-        
         
 def return_pc_samples(iPath,lofString = 'hc_lof'):
 
