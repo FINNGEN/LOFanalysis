@@ -107,7 +107,7 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
 
         
         
-def return_pc_shared_samples(iPath,lofString = 'hc_lof'):
+def return_pc_samples(iPath,lofString = 'hc_lof'):
 
     pcPath = iPath + lofString + '_pcs.txt'
     pcSamples = np.loadtxt(pcPath,dtype = str,usecols = [0])
@@ -152,7 +152,12 @@ def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenve
         finalSamples = np.loadtxt(sharedPath,dtype = str)
     else:
         print('importing all samples..')
-        pcSamples = return_pc_samples(pcPath)
+       
+
+        def return_pc_original_samples(pcPath = eigenvecPath):
+            return np.loadtxt(pcPath,dtype = str,usecols = [0])
+       
+        pcSamples = return_pc_original_samples(pcPath)
         lofSamples = return_lof_samples(iPath,lofString)
         phenoSamples = return_column(f =f,dtype = str)
         print('done')
@@ -167,18 +172,12 @@ def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenve
         np.savetxt(sharedPath,finalSamples,fmt ='%s')
     return finalSamples
 
+
 def return_lof_samples(iPath,lofString = 'hc_lof'):
     matrixPath =  iPath + lofString + "_gene_to_sample.tsv"
     with open(matrixPath,'rt') as i:
         samples =i.readline().strip().split('\t')[1:]
     return np.array(samples)
-
-def return_pc_samples(pcPath = eigenvecPath):
- 
-    pcSamples = np.loadtxt(pcPath,dtype = str,usecols = [0])
-
-    return pcSamples
-    
 
 ##############################
 #--PARSE THE PHENOTYPE FILE--#
