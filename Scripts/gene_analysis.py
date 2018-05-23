@@ -101,9 +101,18 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
                 o.write(newLine + '\n')
 
     # now i need to "flip" the matrix so it's easier to load the data
-    with open(oMatrix +'.tmp','rt') as i,open(oMatrix,'wt') as o:
+    with open(oMatrix +'.tmp','rt') as i:
         line = i.readline().strip().split('\t')
-        return line
+
+    print('flipping matrix...')
+    with open(oMatrix,'wt') as o:
+        for i in range(len(line)):
+            data = np.loadtxt(oMatrix +'.tmp',dtype = str,usecols = [i])
+            sys.stdout.write('processing gene %s \r'%(gene)),
+            sys.stdout.flush()
+            o.write('\t'.join(data) + '\n')
+            
+
 
         
         
