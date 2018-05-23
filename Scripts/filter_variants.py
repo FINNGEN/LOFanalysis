@@ -67,15 +67,15 @@ def do_chunks(iPath,lofString = 'hc_lof'):
     write_genelists(iPath,lofString = lofString)
 
 
-    def multi_wrapper_func(args):
-        multiprocess_func(*args)
-        
+ 
     params  = list(product(range(cpus),[iPath],[lofString]))
     pool = multiprocessing.Pool(cpus)
     pool.map(multi_wrapper_func,params)
     pool.close()
 
-
+def multi_wrapper_func(args):
+    multiprocess_func(*args)
+        
 def multiprocess_func(chunkInt,iPath,lofString):
     '''
     
