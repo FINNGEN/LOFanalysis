@@ -227,7 +227,7 @@ def variant_is_dict(annVariants = annotatedVariants,iPath ='/home/pete/results/h
     try:
         vDict = pickle.load(open(picklePath,'rb'))
     except:
-        snplist = iPath + lofString + '.snplist'
+        snplist = iPath + '/plink_files/' +lofString + '.snplist'
 
         print('data missing, generating..')
         variants = np.loadtxt(snplist,dtype = str)   
