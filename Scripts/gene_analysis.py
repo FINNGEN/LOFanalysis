@@ -77,10 +77,11 @@ def transpose_matrix(iPath,lofString= 'hc_lof'):
 
     tsv_reader = csv.reader(open(oMatrix,'rt'), delimiter='\t')
     all_data = list(tsv_reader)
-
+    print('data imported..')
+        
     # Transpose it.
     all_data = list(itertools.zip_longest(*all_data, fillvalue=''))
-
+    print('data transposed...')
     # Write it back out.
     tsv_writer = csv.writer(open(oMatrix +'.tmp','wt'), delimiter='\t')
     for row in all_data:
