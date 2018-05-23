@@ -19,13 +19,13 @@ eigenvecPath = dataPath + '10pc.eigenvec'
 
 
 
-def logistic_regression(iPath,lofString = 'hc_lof',phenoArray = None,lofArray= None,f = phenoFile):
+def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoArray = None,lofArray= None,f = phenoFile):
     '''
     Returns the logistic regression for the lof + pcs vs pheno.
     phenoDict and lofDictmap samples to their respective value. I need it in order to build arrays that in sync with the pc data
     '''
 
-    if lofDict is None:
+    if lofArray is None:
         print('lofDict missing, creating...')
         lofDict= dd()
         gene = 'TTLL10'
@@ -39,7 +39,7 @@ def logistic_regression(iPath,lofString = 'hc_lof',phenoArray = None,lofArray= N
 
         print('done.')
         
-    if phenoDict is None:
+    if phenoArray is None:
         print('phenoDict missing, creating..')
         pheno = phenoList[0]
         print(pheno)
@@ -55,9 +55,10 @@ def logistic_regression(iPath,lofString = 'hc_lof',phenoArray = None,lofArray= N
         for i,sample in enumerate(samples):
             phenoDict[i] = int(phenoDict[sample])
     #now i upload the pc data,along with the samples
-    pcPath = iPath + lofString + '_pcs.txt'
-    pcSamples =return_pc_samples(pcPath)
-    pcData = np.loadtxt(pcPath,dtype = float,usecols = range(1,11))
+    if pcData is None:
+        pcPath = iPath + lofString + '_pcs.txt'
+        pcSamples =return_pc_samples(pcPath)
+        pcData = np.loadtxt(pcPath,dtype = float,usecols = range(1,11))
 
     return pcData,lofData,phenoData
     
