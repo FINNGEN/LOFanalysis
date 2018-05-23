@@ -35,7 +35,7 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
             lofData = np.array(line[1:],dtype = float)
         print('Import lofData done.')
         
-    if phenoDataaa is None:
+    if phenoData is None:
         print('phenoData missing, creating..')
         pheno = phenoList[0]
         print(pheno)
