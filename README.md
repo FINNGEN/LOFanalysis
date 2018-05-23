@@ -18,5 +18,7 @@ where\
 `plinkPath` is the path to the plink binaries
 `oPath` is the path where the results are ouputted to. It will automatically be changed to oPath + lof.
 
+The result is a file called `$lof_gene_to_sample.tsv` matrix where each row is the lof data of a gene.
+
 ## gene_analysis.py
 
