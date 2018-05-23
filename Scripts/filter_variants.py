@@ -137,7 +137,7 @@ def get_variant_to_gene_dict(iPath,lofString = 'hc_lof'):
     Reads the plink snplist and returns a gene to variant dictionary 
     '''
     #get variant to gene mapping from full list of variants
-    bFile = iPath +lofString 
+    bFile = iPath + 'plink_files'+lofString 
 
     v2g = dd(str)
     with open(dataPath + lofString + '_variants.txt','rt') as i:
