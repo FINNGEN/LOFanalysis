@@ -68,7 +68,7 @@ def logistic_regression(iPath,lofString = 'hc_lof',phenoDict = None,lofDict= Non
 #####################################
 
 
-def reorder_lof_matrix(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenvecPath):
+def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
     '''
     Shuffles the column of the gene_lof_matrix so that the ordering of samples is the same as in the eigenvec file
     '''
@@ -77,7 +77,7 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenve
     iMatrix = iPath + lofString + "_gene_to_sample.tsv"
     oMatrix = iPath + lofString + "_gene_to_filtered_sample.tsv"
 
-    samples = get_shared_samples(iPath,lofString,f, pcPath)
+    samples = return_pc_shared_samples(iPath,lofString)
     lofSamples = return_lof_samples(iPath,lofString)
     with open(iMatrix,'rt') as i,open(oMatrix,'wt') as o:
         for line in i:
@@ -99,7 +99,13 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenve
 
         
         
-        
+def return_pc_shared_samples(iPath,lofString = 'hc_lof'):
+
+    pcFile = iPath + lofString + '_pcs.txt'
+    pcSamples = np.loadtxt(pcPath,dtype = str,usecols = [0])
+
+    return pcSamples
+    
     
 def filter_pcs(iPath,lofString='hc_lof',f = phenoFile,pcPath = eigenvecPath):
     '''
@@ -125,6 +131,8 @@ def filter_pcs(iPath,lofString='hc_lof',f = phenoFile,pcPath = eigenvecPath):
 ###############################
 #----RETURN SHARED SAMPLES----#
 ###############################
+
+
 
 def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenvecPath):
     '''
