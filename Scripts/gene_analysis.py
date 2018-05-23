@@ -40,7 +40,6 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoArray = No
         print(pheno)
         data = return_column(pheno = pheno,f = f,dtype = float)
         phenoSamples= return_column(f =f,dtype =str)
-        assert data.shape == samples.shape
         phenoDict = dd()
         for i,entry in enumerate(data):
             phenoDict[phenoSamples[i]] = entry
