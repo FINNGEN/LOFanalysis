@@ -85,7 +85,7 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenve
             geneDict = dd()
             line = line.strip().split('\t')
             gene = line[0]
-            sys.stdout.write('\r processing gene %s'%(gene + '     '*10))
+            sys.stdout.write('processing gene %s \r'%(gene)),
             sys.stdout.flush()
             data = line[1:]
             assert len(data) == len(lofSamples)
