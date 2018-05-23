@@ -36,20 +36,10 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
         print('Import lofData done.')
         
     if phenoData is None:
-        print('phenoData missing, creating..')
         pheno = phenoList[0]
         print(pheno)
-        data = return_column(pheno = pheno,f = f,dtype = float)
-        phenoSamples= return_column(f =f,dtype =str)
-        phenoDict = dd()
-        for i,entry in enumerate(data):
-            phenoDict[phenoSamples[i]] = entry
-
-        samples = get_shared_samples(iPath,lofString)
-        phenoData = np.empty_like(samples,dtype = int)
-        for i,sample in enumerate(samples):
-            phenoData[i] = int(phenoDict[sample])
-        print('done.')
+        phenoData = get_pheno_data(iPath,pheno,f,lofString)
+        
 
     #now i upload the pc data,along with the samples
     if pcData is None:
@@ -69,7 +59,21 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     
     
     
-
+def get_pheno_data(iPath,pheno,f = phenoFile,lofString = 'hc_lof'):
+    print('phenoData missing, creating..')
+    
+    data = return_column(pheno = pheno,f = f,dtype = float)
+    phenoSamples= return_column(f =f,dtype =str)
+    phenoDict = dd()
+    for i,entry in enumerate(data):
+        phenoDict[phenoSamples[i]] = entry
+        
+    samples = get_shared_samples(iPath,lofString)
+    phenoData = np.empty_like(samples,dtype = int)
+    for i,sample in enumerate(samples):
+        phenoData[i] = int(phenoDict[sample])
+    print('done.')
+    return phenoData
 #####################################
 #--FIX FILES TO ORDER SAMPLE DATA---#
 #####################################
