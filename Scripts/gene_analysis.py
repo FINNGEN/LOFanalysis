@@ -35,7 +35,7 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoArray = No
         print('Import lofData done.')
         
     if phenoArray is None:
-        print('phenoDict missing, creating..')
+        print('phenoData missing, creating..')
         pheno = phenoList[0]
         print(pheno)
         data = return_column(pheno = pheno,f = f,dtype = float)
@@ -51,7 +51,7 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoArray = No
     #now i upload the pc data,along with the samples
     if pcData is None:
         pcPath = iPath + lofString + '_pcs.txt'
-        pcSamples =return_pc_samples(pcPath)
+        pcSamples =return_pc_samples(iPath)
         pcData = np.loadtxt(pcPath,dtype = float,usecols = range(1,11))
 
     return pcData,lofData,phenoData
