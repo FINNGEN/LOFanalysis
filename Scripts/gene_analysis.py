@@ -152,7 +152,6 @@ def get_lof_data(iPath,gene,lofString = 'hc_lof'):
             
     return lofData
 
-
 def get_pheno_data(iPath,pheno,f = phenoFile,lofString = 'hc_lof'):
     
     data = return_column(pheno = pheno,f = f,dtype = float)
