@@ -2,6 +2,8 @@ import numpy as np
 import os
 import gzip
 from collections import defaultdict as dd
+import statsmodels.api as sm
+from firt_regression import fit_firth
 import sys
 
 rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
@@ -47,19 +49,18 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     lofData[lofData > infoFilter] = 1
     y = phenoData
     X = np.c_[lofData,pcData]     
-    import statsmodels.api as sm
     logit_model=sm.Logit(y,X)
     result=logit_model.fit()
     return result
 
 def get_lof_data(iPath,gene,lofString = 'hc_lof'):
     with open(iPath + lofString + '_gene_to_filtered_samples.tsv','rt') as i:
-         
-         for line in i:
+        for line in i:
              line = i.readline().strip().split('\t')
-             print(line[0])
              if line[0] == gene:
                  lofData = np.array(line[1:],dtype = float)
+                 break
+            
     return lofData
 
 
