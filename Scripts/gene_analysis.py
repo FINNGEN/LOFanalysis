@@ -257,6 +257,6 @@ if __name__ == '__main__':
     if args.command == "fix-samples":
         oPath = (args.oPath + '/' + args.lof +'/').replace('//','/')
         filter_pcs(oPath,args.lof,args.phenoFile,args.pcPath)
-
+        reorder_lof_matrix(oPath,args.lofString)
     
     
