@@ -38,8 +38,6 @@ def multiproc_logit(iPath,lofString='hc_lof',infoFilter = 0.9,f = phenoFile,proc
     
 def multiproc_write_pheno(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = True):
 
-   
-
     pList = phenoList if test is False else phenoList[:proc]
     print(len(pList))
     params  = list(product([iPath],pList,[lofString],[infoFilter],[f],[test]))
@@ -390,6 +388,12 @@ if __name__ == '__main__':
     parser_logit.add_argument("--cpus",type = int, help = 'Number of cores to use', default = cpus)
     parser_logit.add_argument('--test',action = 'store_true',help = 'Flag to run small chunks')
 
+        # create the parser for the generate_variants command
+    parser_pheno = subparsers.add_parser('write-pheno', help='write phenoData')
+    parser_pheno.add_argument("--cpus",type = int, help = 'Number of cores to use', default = cpus)
+    parser_pheno.add_argument('--test',action = 'store_true',help = 'only runs one pheno per cpu passed')
+
+
 
     args = parser.parse_args()
     oPath = (args.oPath + '/' + args.lof +'/').replace('//','/')
@@ -402,3 +406,7 @@ if __name__ == '__main__':
     if args.command == "logit":
 
         multiproc_logit(oPath,args.lof,args.infoFilter,args.phenoFile,args.cpus,args.test)
+
+    if args.command == "write-pheno":
+
+        multiproc_write_pheno(oPath,args.lof,args.phenoFile,args.cpus,args.test)
