@@ -6,6 +6,7 @@ import statsmodels.api as sm
 from firth_regression import fit_firth
 import sys
 import shlex
+from itertools import product
 from scipy.stats import fisher_exact
 from file_utils import make_sure_path_exists
 from scipy import stats
