@@ -51,9 +51,16 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     lofData[lofData > infoFilter] = 1
     y = phenoData
     X = np.c_[lofData,pcData]     
+    #logit regression
     logit_model=sm.Logit(y,X)
     result=logit_model.fit()
-    return result,firth
+    #info
+    phenoMask = (phenoDict >0)
+    cases = phenoMask.sum()
+    lofCases = lofData[mask].sum()
+    
+    
+    return result,cases,lofCases
 
 def get_lof_data(iPath,gene,lofString = 'hc_lof'):
     with open(iPath + lofString + '_gene_to_filtered_samples.tsv','rt') as i:
