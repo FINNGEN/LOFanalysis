@@ -40,7 +40,7 @@ def multiproc_write_pheno(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,tes
 
     pList = phenoList if test is False else phenoList[:proc]
     print(len(pList))
-    params  = list(product([iPath],pList,[lofString],[infoFilter],[f],[test]))
+    params  = list(product([iPath],pList,[lofString],[f],[test]))
     pool = multiprocessing.Pool(proc)
     pool.map(pheno_wrapper,params)
     pool.close()
