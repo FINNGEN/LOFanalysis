@@ -1,7 +1,7 @@
 import statsmodels.api as sm
 import numpy as np
 
-def fit_firth(y, X, start_vec, step_limit=1000, convergence_limit=0.0001):
+def fit_firth(y, X, start_vec = None, step_limit=1000, convergence_limit=0.0001):
 
     logit_model = smf.Logit(y, X)
     
