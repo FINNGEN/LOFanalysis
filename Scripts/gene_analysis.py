@@ -3,7 +3,7 @@ import os
 import gzip
 from collections import defaultdict as dd
 import statsmodels.api as sm
-from firt_regression import fit_firth
+from firth_regression import fit_firth
 import sys
 
 rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
