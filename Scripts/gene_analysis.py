@@ -358,4 +358,4 @@ if __name__ == '__main__':
     
     
     if args.command == "logit":
-        multiproc_logit(oPath,args.lof,args.infoFilter = 0.9,args.phenoFile,args.cpus)
+        multiproc_logit(oPath,args.lof,args.infoFilter,args.phenoFile,args.cpus)
