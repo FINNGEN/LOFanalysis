@@ -27,8 +27,9 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile
 
     oPath = iPath + '/fits/'
     make_sure_path_exists(oPath)
-    oFile = oPath + 'pheno_results.txt'
-    
+    oFile = oPath + pheno +'_pheno_results.txt'
+
+    print(pheno)
     phenoData = get_pheno_data(iPath,pheno,f,lofString)
     print('phenoData imported')
     pcPath = iPath + lofString + '_pcs.txt'
