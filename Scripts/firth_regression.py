@@ -4,7 +4,7 @@ import numpy as np
 def fit_firth(y, X, start_vec = None, step_limit=1000, convergence_limit=0.0001):
 
     logit_model = smf.Logit(y, X)
-    
+    return logit_model
     if start_vec is None:
         start_vec = np.zeros(X.shape[1])
     
