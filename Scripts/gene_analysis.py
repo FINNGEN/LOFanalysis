@@ -132,10 +132,11 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     if pcData is None:
         print('importing pcData...')
         pcPath = iPath + lofString + '_pcs.txt'
-        pcData = np.loadtxt(pcPath,dtype = float,usecols = range(1,10))
+        pcData = np.loadtxt(pcPath,dtype = float,usecols = range(1,11))
 
     # here i apply the info score filter
-    lofData[lofData > infoFilter] = 1
+    lofData[lofData >= infoFilter] = 1
+    lofData[lofData < infoFilter] = 0
     lofData = lofData.astype(int)
     y = phenoData
     X = np.c_[lofData,pcData]     
