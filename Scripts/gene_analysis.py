@@ -6,6 +6,7 @@ import statsmodels.api as sm
 from firth_regression import fit_firth
 import sys
 from scipy.stats import fisher_exact
+from file_utils import make_sure_path_exists
 from scipy import stats
 stats.chisqprob = lambda chisq, df: stats.chi2.sf(chisq, df)
 
@@ -20,6 +21,13 @@ phenoFile = dataPath + 'FINNGEN_PHENOTYPES_DF1_V4_2018_03_27.txt.gz'
 eigenvecPath = dataPath + '10pc.eigenvec'
 
 
+
+def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile):
+
+    phenoData = get_pheno_data(iPath,pheno,f,lofString)
+    
+    
+    return None
 def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = None,lofData= None,f = phenoFile,infoFilter = 0):
     '''
     Returns the logistic regression for the lof + pcs vs pheno.
@@ -70,6 +78,10 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     table = np.empty((2,2),dtype = int)
     table[0] = [lofCases,lofControls]
     table[1] = [nolofCases,nolofControls]
+    oddsratio,f_pval = fischer_exact(table)
+
+    oPath = iPath + '/fits/'
+    make_sure_path_exists(oPath)
     return result,table
 
 def get_lof_data(iPath,gene,lofString = 'hc_lof'):
@@ -96,6 +108,11 @@ def get_pheno_data(iPath,pheno,f = phenoFile,lofString = 'hc_lof'):
     for i,sample in enumerate(samples):
         phenoData[i] = int(phenoDict[sample])
     return phenoData
+
+def get_gene_list(iPath,lofString = 'hc_lof'):
+
+    oMatrix = iPath + lofString + "_gene_to_filtered_samples.tsv"
+    return np.loadtxt(oMatrix,usecols = [0], skiprows = 1)
 #####################################
 #--FIX FILES TO ORDER SAMPLE DATA---#
 #####################################
