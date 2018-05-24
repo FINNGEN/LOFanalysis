@@ -122,7 +122,6 @@ def return_pc_samples(iPath,lofString = 'hc_lof'):
 
     pcPath = iPath + lofString + '_pcs.txt'
     pcSamples = np.loadtxt(pcPath,dtype = str,usecols = [0])
-
     return pcSamples
     
     
@@ -257,6 +256,6 @@ if __name__ == '__main__':
     if args.command == "fix-samples":
         oPath = (args.oPath + '/' + args.lof +'/').replace('//','/')
         filter_pcs(oPath,args.lof,args.phenoFile,args.pcPath)
-        reorder_lof_matrix(oPath,args.lofString)
+        reorder_lof_matrix(oPath,args.lof)
     
     
