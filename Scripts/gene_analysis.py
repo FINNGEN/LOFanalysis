@@ -114,7 +114,7 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     #logit regression
     try:
         logit_model=sm.Logit(y,X)
-        logit_results=logit_model.fit()
+        logit_results=logit_model.fit(full_output = 0)
     except:
         logit_results = None
     #fischer test
