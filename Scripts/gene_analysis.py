@@ -5,6 +5,7 @@ from collections import defaultdict as dd
 import statsmodels.api as sm
 from firth_regression import fit_firth
 import sys
+from scipy.stats import fisher_exact
 from scipy import stats
 stats.chisqprob = lambda chisq, df: stats.chi2.sf(chisq, df)
 
@@ -52,7 +53,6 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     X = np.c_[lofData,pcData]     
     logit_model=sm.Logit(y,X)
     result=logit_model.fit()
-    firth = fit_firth(y,X)
     return result,firth
 
 def get_lof_data(iPath,gene,lofString = 'hc_lof'):
