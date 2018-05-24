@@ -14,11 +14,7 @@ bashPath = rootPath + 'tmp_scripts/'
 # REQUIRED FILES
 phenoList = np.loadtxt(dataPath + 'pheno-list.txt',usecols = [0],dtype = str,skiprows = 1)
 phenoFile = dataPath + 'FINNGEN_PHENOTYPES_DF1_V4_2018_03_27.txt.gz'
-#phenoFile = dataPath + 'FINNGEN_PHENOTYPES_DF1_2018_03_01.txt'
 eigenvecPath = dataPath + '10pc.eigenvec'
-
-
-
 
 
 def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = None,lofData= None,f = phenoFile,infoFilter = 0):
