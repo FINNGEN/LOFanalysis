@@ -112,7 +112,8 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     table[1] = [nolofCases,nolofControls]
     f_results = fisher_exact(table)
 
-    return logit_results,f_results
+    
+    return logit_results,f_results,table
 
 def get_lof_data(iPath,gene,lofString = 'hc_lof'):
     with open(iPath + lofString + '_gene_to_filtered_samples.tsv','rt') as i:
