@@ -42,7 +42,7 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile
 
     oPath = iPath + '/fits/'
     make_sure_path_exists(oPath)
-    oFile = oPath + pheno +'_' + str(infoFilter) + '_pheno_results.txt'
+    oFile = oPath + lofString + '_' + pheno +'_' + str(infoFilter) + '_pheno_results.txt'
 
     print(pheno)
     phenoData = get_pheno_data(iPath,pheno,f,lofString)
@@ -154,7 +154,7 @@ def get_lof_data(iPath,gene,lofString = 'hc_lof'):
 
 def get_pheno_data(iPath,pheno,f = phenoFile,lofString = 'hc_lof'):
 
-    # read data and fix nans
+    # read data and fix nans by setting all non 0 values
     data = return_column(pheno = pheno,f = f,dtype = float)
     mask = (data >0)
     data[mask] = 1
