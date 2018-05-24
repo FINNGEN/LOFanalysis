@@ -112,7 +112,7 @@ def get_pheno_data(iPath,pheno,f = phenoFile,lofString = 'hc_lof'):
 def get_gene_list(iPath,lofString = 'hc_lof'):
 
     oMatrix = iPath + lofString + "_gene_to_filtered_samples.tsv"
-    return np.loadtxt(oMatrix,usecols = [0], skiprows = 1)
+    return np.loadtxt(oMatrix,usecols = [0], skiprows = 1,dtype = str)
 #####################################
 #--FIX FILES TO ORDER SAMPLE DATA---#
 #####################################
