@@ -348,7 +348,10 @@ if __name__ == '__main__':
     parser_logit = subparsers.add_parser('logit', help='do logit analysis')
     parser_logit.add_argument("--infoFilter",type = float, help = 'INFO SCORE filter above which lof is considered',default = 0.9)
     parser_logit.add_argument("--cpus",type = int, help = 'Number of cores to use', default = cpus)
-    
+    parser_logit.add_argument("--test",type = bool, help = 'Number of cores to use', default = cpus)
+    parser_logit.add_argument('--test',action = 'store_true',help = 'Flag to run small chunks')
+
+
     args = parser.parse_args()
     oPath = (args.oPath + '/' + args.lof +'/').replace('//','/')
 
@@ -358,4 +361,5 @@ if __name__ == '__main__':
     
     
     if args.command == "logit":
-        multiproc_logit(oPath,args.lof,args.infoFilter,args.phenoFile,args.cpus)
+        print(args)
+#        multiproc_logit(oPath,args.lof,args.infoFilter,args.phenoFile,args.cpus,args.test)
