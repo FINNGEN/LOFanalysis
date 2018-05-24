@@ -52,6 +52,7 @@ def return_pheno_data(iPath,pheno,lofString = 'hc_lof',f = phenoFile,test = True
     oPath = iPath + '/pheno_data/'
     make_sure_path_exists(oPath)
     oFile = oPath + lofString + '_' + pheno  + '_phenodata.txt'
+    print(pheno)
     phenoData = get_pheno_data(iPath,pheno,f,lofString)
     np.savetxt(oFile,phenoData,fmt = '%i')
     return None
