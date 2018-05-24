@@ -28,13 +28,17 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     if lofData is None:
         print('lofData missing, creating..')
         gene = 'TTLL10'
+        print(gene)
         lofData = get_lof_data(iPath,gene,lofString)
+        print('done.')
         
     if phenoData is None:
+        print('phenoData missing, creating..')
         pheno = phenoList[0]
         print(pheno)
         phenoData = get_pheno_data(iPath,pheno,f,lofString)
-        
+        print('done.')
+
 
     #now i upload the pc data,along with the samples
     if pcData is None:
@@ -63,7 +67,6 @@ def get_lof_data(iPath,gene,lofString = 'hc_lof'):
 
 
 def get_pheno_data(iPath,pheno,f = phenoFile,lofString = 'hc_lof'):
-    print('phenoData missing, creating..')
     
     data = return_column(pheno = pheno,f = f,dtype = float)
     phenoSamples= return_column(f =f,dtype =str)
@@ -75,7 +78,6 @@ def get_pheno_data(iPath,pheno,f = phenoFile,lofString = 'hc_lof'):
     phenoData = np.empty_like(samples,dtype = int)
     for i,sample in enumerate(samples):
         phenoData[i] = int(phenoDict[sample])
-    print('done.')
     return phenoData
 #####################################
 #--FIX FILES TO ORDER SAMPLE DATA---#

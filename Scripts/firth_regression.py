@@ -51,3 +51,7 @@ def fit_firth(y, X, start_vec = None, step_limit=1000, convergence_limit=0.0001)
         return_fit = intercept, beta, bse, fitll
 
     return return_fit
+
+
+def firth_likelihood(beta, logit):
+    return -(logit.loglike(beta) + 0.5*np.log(np.linalg.det(-logit.hessian(beta))))
