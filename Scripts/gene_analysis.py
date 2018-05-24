@@ -37,20 +37,22 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile
     print('pcData imported.')
     
     with open(oFile,'wt') as o:
-        o.write('\t'.join(shlex.split('gene logit_coeff_gene logit_pval_gene logit_coeff_pc1 logit_pval_pc1 logit_coeff_pc2 logit_pval_pc2 fischer_oddsratio fischer_pval')) + '\n')
+        o.write('\t'.join(shlex.split('gene lof_cases lof_controls no_lof_cases no_lof_controls logit_coeff_gene logit_pval_gene logit_coeff_pc1 logit_pval_pc1 logit_coeff_pc2 logit_pval_pc2 fischer_oddsratio fischer_pval ')) + '\n')
         geneList = get_gene_list(iPath,lofString)
         for gene in geneList[:2]:
             print(gene)
             o.write(gene + '\t')
             lofData = get_lof_data(iPath,gene,lofString)
-            logit_results,f_results = logistic_regression(iPath,lofString,pcData,phenoData,lofData,f,infoFilter)
+            logit_results,f_results,table = logistic_regression(iPath,lofString,pcData,phenoData,lofData,f,infoFilter)
             params = logit_results.params
             pvalues = logit_results.pvalues
             #add columns
             res = np.column_stack((params,pvalues))
             # flatten so first two elemts are from lof, next 2 pc1 etc.
             res = res.flatten()
-            oString = '\t'.join([str(elem) for elem in res[:6]])
+            countString =  '\t'.join([str(elem) for elem in table.flatten()])
+            o.write(countString + '\t')
+            oString =  '\t'.join([str(elem) for elem in res[:6]])
             o.write( oString + '\t')
             o.write( '\t'.join([str(elem) for elem in f_results]))
             o.write('\n')
