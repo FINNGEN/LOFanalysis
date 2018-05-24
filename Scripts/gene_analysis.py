@@ -114,11 +114,13 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
 
     # here i apply the info score filter
     lofData[lofData > infoFilter] = 1
+    lofData = lofData.astype(int)
     y = phenoData
     X = np.c_[lofData,pcData]     
 
     #logit regression
     logit_results = None
+    # don't run test if there are no lof cases
     if lofData.sum() == 0:
         pass
     else:
