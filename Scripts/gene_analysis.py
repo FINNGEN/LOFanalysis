@@ -14,7 +14,7 @@ bashPath = rootPath + 'tmp_scripts/'
 # REQUIRED FILES
 phenoList = np.loadtxt(dataPath + 'pheno-list.txt',usecols = [0],dtype = str,skiprows = 1)
 phenoFile = dataPath + 'FINNGEN_PHENOTYPES_DF1_V4_2018_03_27.txt.gz'
-phenoFile = dataPath + 'FINNGEN_PHENOTYPES_DF1_2018_03_01.txt'
+#phenoFile = dataPath + 'FINNGEN_PHENOTYPES_DF1_2018_03_01.txt'
 eigenvecPath = dataPath + '10pc.eigenvec'
 
 
@@ -103,9 +103,11 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
                 # i create a dict that stores the info for each sample so i can then rearrange them in the pc sample order
                 geneDict = dd()
                 line = line.strip().split('\t')
+                #gene info
                 gene = line[0]
                 sys.stdout.write('processing gene %s \r'%(gene)),
                 sys.stdout.flush()
+                # sample data
                 data = line[1:]
                 assert len(data) == len(lofSamples)
                 # store sample Data
