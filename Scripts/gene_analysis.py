@@ -40,7 +40,6 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     if pcData is None:
         print('importing pcData...')
         pcPath = iPath + lofString + '_pcs.txt'
-        pcSamples =return_pc_samples(iPath)
         pcData = np.loadtxt(pcPath,dtype = float,usecols = range(1,11))
 
     # here i apply the info score filter
