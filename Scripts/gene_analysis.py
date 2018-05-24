@@ -26,9 +26,10 @@ eigenvecPath = dataPath + '10pc.eigenvec'
 
 
 
-def multiproc_logit(iPath,lofString='hc_lof',infoFilter = 0.9,f = phenoFile,proc = cpus):
-    
-    params  = list(product([iPath],phenoList[:20],[lofString],[infoFilter],[f]))
+def multiproc_logit(iPath,lofString='hc_lof',infoFilter = 0.9,f = phenoFile,proc = cpus,test = True):
+
+    pList = phenoList if Test is False else phenoList[:cpus]
+    params  = list(product([iPath],pList,[lofString],[infoFilter],[f],[test]))
     pool = multiprocessing.Pool(proc)
     pool.map(logit_wrapper,params)
     pool.close()
@@ -36,7 +37,7 @@ def multiproc_logit(iPath,lofString='hc_lof',infoFilter = 0.9,f = phenoFile,proc
 
 def logit_wrapper(args):
     logistic_pheno(*args)
-def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile):
+def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile,test = True):
 
     oPath = iPath + '/fits/'
     make_sure_path_exists(oPath)
@@ -52,6 +53,8 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile
     with open(oFile,'wt') as o:
         o.write('\t'.join(shlex.split('gene lof_cases lof_controls no_lof_cases no_lof_controls logit_coeff_gene logit_pval_gene logit_coeff_pc1 logit_pval_pc1 logit_coeff_pc2 logit_pval_pc2 fischer_oddsratio fischer_pval ')) + '\n')
         geneList = get_gene_list(iPath,lofString)
+        if test is True:
+            geneList = geneList[:100]
         for gene in geneList:
             o.write(gene + '\t')
             lofData = get_lof_data(iPath,gene,lofString)
@@ -360,5 +363,5 @@ if __name__ == '__main__':
     
     
     if args.command == "logit":
-        print(args)
-#        multiproc_logit(oPath,args.lof,args.infoFilter,args.phenoFile,args.cpus,args.test)
+
+        multiproc_logit(oPath,args.lof,args.infoFilter,args.phenoFile,args.cpus,args.test)
