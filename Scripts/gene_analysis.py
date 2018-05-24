@@ -5,6 +5,7 @@ from collections import defaultdict as dd
 import statsmodels.api as sm
 from firth_regression import fit_firth
 import sys
+import shlex
 from scipy.stats import fisher_exact
 from file_utils import make_sure_path_exists
 from scipy import stats
@@ -24,8 +25,20 @@ eigenvecPath = dataPath + '10pc.eigenvec'
 
 def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile):
 
-    phenoData = get_pheno_data(iPath,pheno,f,lofString)
+    oPath = iPath + '/fits/'
+    make_sure_path_exists(oPath)
+    oFile = oPath + 'pheno_results.txt'
     
+    phenoData = get_pheno_data(iPath,pheno,f,lofString)
+    pcData = np.loadtxt(pcPath,dtype = float,usecols = range(1,11))
+
+    with open(oFile,'wt') as o:
+        o.write('\t'.join(shlex.split('gene logit_coeff_gene logit_pval_gene logit_coeff_pc1 logit_pval_pc1 logit_coeff_pc2 logit_pval_pc2 fischer_oddsratio fischer_pval')))
+        geneList = get_gene_list(iPath,lofString)
+        for gene in geneList:
+#            lofData = get_lof_data(iPath,gene,lofString)
+ #           logit_results,f_results = logistic_regression(iPath,lofString,pcData,phenoDict,lofData,f,infoFilter)
+            
     
     return None
 def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = None,lofData= None,f = phenoFile,infoFilter = 0):
@@ -59,30 +72,30 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     lofData[lofData > infoFilter] = 1
     y = phenoData
     X = np.c_[lofData,pcData]     
+
     #logit regression
     logit_model=sm.Logit(y,X)
-    result=logit_model.fit()
-    #info
+    logit_results=logit_model.fit()
+
+    #fischer test
     samples = len(phenoData)
-    
+    # get lof counts for cases
     phenoMask = (phenoData >0)
     cases = phenoMask.sum()
     lofCases = int(lofData[phenoMask].sum())
     nolofCases = cases - lofCases
-
+    # get lof counts for controls
     phenoMask = (phenoData == 0)
     controls = phenoMask.sum()
     lofControls = int(lofData[phenoMask].sum())
     nolofControls = controls - lofControls
-    
+    # do fischer test
     table = np.empty((2,2),dtype = int)
     table[0] = [lofCases,lofControls]
     table[1] = [nolofCases,nolofControls]
-    oddsratio,f_pval = fischer_exact(table)
+    f_results = fischer_exact(table)
 
-    oPath = iPath + '/fits/'
-    make_sure_path_exists(oPath)
-    return result,table
+    return logit_results,f_results
 
 def get_lof_data(iPath,gene,lofString = 'hc_lof'):
     with open(iPath + lofString + '_gene_to_filtered_samples.tsv','rt') as i:
