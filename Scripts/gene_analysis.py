@@ -42,7 +42,7 @@ def return_pheno_data(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoF
     make_sure_path_exists(oPath)
     oFile = oPath + lofString + '_' + pheno  + '_phenodata.txt'
     phenoData = get_pheno_data(iPath,pheno,f,lofString)
-    np.savetxt(oFile,phenoDict,fmt = '%i')
+    np.savetxt(oFile,phenoData,fmt = '%i')
     return None
     
 def logit_wrapper(args):
