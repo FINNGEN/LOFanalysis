@@ -49,7 +49,8 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     X = np.c_[lofData,pcData]     
     logit_model=sm.Logit(y,X)
     result=logit_model.fit()
-    return result
+    firth = firth_regression(y,X)
+    return result,firth
 
 def get_lof_data(iPath,gene,lofString = 'hc_lof'):
     with open(iPath + lofString + '_gene_to_filtered_samples.tsv','rt') as i:
