@@ -49,7 +49,7 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile
             o.write(countString + '\t')
             
             # write logit_results
-            resArray = ['NA'*6]
+            resArray = ['NA']*6
             if logit_results is not None:
                  params = logit_results.params
                  pvalues = logit_results.pvalues
