@@ -5,6 +5,8 @@ from collections import defaultdict as dd
 import statsmodels.api as sm
 from firth_regression import fit_firth
 import sys
+from scipy import stats
+stats.chisqprob = lambda chisq, df: stats.chi2.sf(chisq, df)
 
 rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
 dataPath = rootPath + 'Data/'
