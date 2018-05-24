@@ -22,7 +22,7 @@ def fit_firth(y, X, start_vec = None, step_limit=1000, convergence_limit=0.0001)
         H = np.matmul(np.dot(rootW, X), H)
 
         # penalised score
-        U = np.matmul(np.transpose(X), p.values - pi + np.multiply(np.diagonal(H), 0.5 - pi))
+        U = np.matmul(np.transpose(X), pi.values - pi + np.multiply(np.diagonal(H), 0.5 - pi))
         new_beta = beta_iterations[i] + np.matmul(var_covar_mat, U)
 
         # step halving
