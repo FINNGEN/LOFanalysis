@@ -350,9 +350,9 @@ if __name__ == '__main__':
     parser_logit.add_argument("--cpus",type = int, help = 'Number of cores to use', default = cpus)
     
     args = parser.parse_args()
+    oPath = (args.oPath + '/' + args.lof +'/').replace('//','/')
 
     if args.command == "fix-samples":
-        oPath = (args.oPath + '/' + args.lof +'/').replace('//','/')
         filter_pcs(oPath,args.lof,args.phenoFile,args.pcPath)
         reorder_lof_matrix(oPath,args.lof)
     
