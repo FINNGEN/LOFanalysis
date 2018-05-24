@@ -335,12 +335,12 @@ if __name__ == '__main__':
                         help="path to eigenvec file",required = False,default = eigenvecPath)
     parser.add_argument("--lof", type= str,
                         help="type of lof filter",required = True )
+    parser_fix_samples.add_argument("--oPath", type= str,help="Path to folder where to output",default = ".")
 
     subparsers = parser.add_subparsers(help='help for subcommand',dest ="command")
 
     # create the parser for the generate_variants command
     parser_fix_samples = subparsers.add_parser('fix-samples', help='fix files in order to match shared samples')
-    parser_fix_samples.add_argument("--oPath", type= str,help="Path to folder where to output",default = ".")
 
 
 
