@@ -39,10 +39,12 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile
     with open(oFile,'wt') as o:
         o.write('\t'.join(shlex.split('gene logit_coeff_gene logit_pval_gene logit_coeff_pc1 logit_pval_pc1 logit_coeff_pc2 logit_pval_pc2 fischer_oddsratio fischer_pval')) + '\n')
         geneList = get_gene_list(iPath,lofString)
-        for gene in geneList:
+        for gene in geneList[:2]:
             o.write(gene + '\n')
-#            lofData = get_lof_data(iPath,gene,lofString)
- #           logit_results,f_results = logistic_regression(iPath,lofString,pcData,phenoDict,lofData,f,infoFilter)
+            lofData = get_lof_data(iPath,gene,lofString)
+            logit_results,f_results = logistic_regression(iPath,lofString,pcData,phenoDict,lofData,f,infoFilter)
+            coeff = logit_results.params
+            pvals
             
     
     return None
@@ -98,7 +100,7 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     table = np.empty((2,2),dtype = int)
     table[0] = [lofCases,lofControls]
     table[1] = [nolofCases,nolofControls]
-    f_results = fischer_exact(table)
+    f_results = fisher_exact(table)
 
     return logit_results,f_results
 
