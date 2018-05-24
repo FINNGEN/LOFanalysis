@@ -1,4 +1,4 @@
-import statsmodels.api as sm
+import statsmodels.api as smf
 import numpy as np
 
 def fit_firth(y, X, start_vec = None, step_limit=1000, convergence_limit=0.0001):
