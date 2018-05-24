@@ -107,11 +107,6 @@ def write_genelists(iPath,chunks = cpus,lofString = 'hc_lof'):
     for i,chunk in enumerate(chunkList):
         np.savetxt(chunkPath + 'gene_chunk_'+str(i) + '.txt',chunk,fmt = '%s')
                         
-
-
-    
-
-
     
 def return_gene_columns(gene,iPath,g2v,headerVariants,lofString = 'hc_lof'):
     """
@@ -156,9 +151,6 @@ def get_variant_to_gene_dict(iPath,lofString = 'hc_lof'):
             gene = v2g[variant]
             g2v[gene].append(variant)
     return g2v
-
-
-
 
 
 
