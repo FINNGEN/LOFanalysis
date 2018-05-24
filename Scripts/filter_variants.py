@@ -125,10 +125,12 @@ def return_gene_columns(gene,iPath,g2v,headerVariants,lofString = 'hc_lof'):
     print(gene,geneColumns)
 
     #import sample data keeping columns of gene
-    vData = np.loadtxt(matrixPath,dtype = float,usecols = geneColumns,skiprows =1 )
+    vData = np.loadtxt(matrixPath,dtype = str,usecols = geneColumns,skiprows =1 )
+    vData[vData =='NA'] = 0
+    vData = vData.astype(int)
     if len(geneColumns) > 1:
         #sum across variants and check if >1
-        vData = np.max(vData,axis = 1)
+        vData = np.max(vData,axis = 1).astype(bool).astype(int)
     
     return vData
 
