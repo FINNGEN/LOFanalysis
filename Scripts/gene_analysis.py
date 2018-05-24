@@ -44,15 +44,20 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile
             o.write(gene + '\t')
             lofData = get_lof_data(iPath,gene,lofString)
             logit_results,f_results,table = logistic_regression(iPath,lofString,pcData,phenoData,lofData,f,infoFilter)
-            params = logit_results.params
-            pvalues = logit_results.pvalues
-            #add columns
-            res = np.column_stack((params,pvalues))
-            # flatten so first two elemts are from lof, next 2 pc1 etc.
-            res = res.flatten()
+            # write counts of lof/no_lof
             countString =  '\t'.join([str(elem) for elem in table.flatten()])
             o.write(countString + '\t')
-            oString =  '\t'.join([str(elem) for elem in res[:6]])
+            # write logit_results
+            resArray = np.ones(6)*-1
+            if logit_results is not None:
+                 params = logit_results.params
+                 pvalues = logit_results.pvalues
+                 #add columns
+                 res = np.column_stack((params,pvalues))
+                 # flatten so first two elemts are from lof, next 2 pc1 etc.
+                 resArray = res.flatten()[:6]
+                 
+            oString =  '\t'.join([str(elem) for elem in resArray])
             o.write( oString + '\t')
             o.write( '\t'.join([str(elem) for elem in f_results]))
             o.write('\n')
@@ -93,9 +98,11 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     X = np.c_[lofData,pcData]     
 
     #logit regression
-    logit_model=sm.Logit(y,X)
-    logit_results=logit_model.fit()
-
+    try:
+        logit_model=sm.Logit(y,X)
+        logit_results=logit_model.fit()
+    except:
+        logit_results = None
     #fischer test
     samples = len(phenoData)
     # get lof counts for cases
