@@ -125,7 +125,7 @@ def return_gene_columns(gene,iPath,g2v,headerVariants,lofString = 'hc_lof'):
     vData = vData.astype(int)
     if len(geneColumns) > 1:
         #sum across variants and check if >1
-        vData = np.max(vData,axis = 1).astype(bool).astype(int)
+        vData = np.sum(vData,axis = 1).astype(bool).astype(int)
     
     return vData
 
