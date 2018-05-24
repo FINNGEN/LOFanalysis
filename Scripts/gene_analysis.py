@@ -66,6 +66,8 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile
             o.write(countString + '\t')
             
             # write logit_results
+            resArray = ['NA']*6
+
             try:
                  params = logit_results.params
                  pvalues = logit_results.pvalues
@@ -74,7 +76,6 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile
                  # flatten so first two elemts are from lof, next 2 pc1 etc.
                  resArray = res.flatten()[:6]
             except:
-                resArray = ['NA']*6                 
             oString =  '\t'.join([str(elem) for elem in resArray])
             o.write( oString + '\t')
             o.write( '\t'.join([str(elem) for elem in f_results]))
@@ -116,11 +117,15 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     X = np.c_[lofData,pcData]     
 
     #logit regression
-    try:
-        logit_model=sm.Logit(y,X)
-        logit_results=logit_model.fit(full_output = 0,disp = 0)
-    except:
-        logit_results = None
+    logit_results = None
+    if lofData.sum() == 0:
+        pass
+    else:
+        try:
+            logit_model=sm.Logit(y,X)
+            logit_results=logit_model.fit(full_output = 0,disp = 0)
+        except:
+            pass
     #fischer test
     samples = len(phenoData)
     # get lof counts for cases
