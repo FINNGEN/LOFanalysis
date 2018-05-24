@@ -26,12 +26,12 @@ eigenvecPath = dataPath + '10pc.eigenvec'
 
 
 
-def multiproc_logit(iPath,lofString='hc_lof',infoFilter = 0.9,f = phenoFile,proc = cpus,test = True):
+def multiproc_logit(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = True):
 
     pList = phenoList if test is False else phenoList[:proc]
     pList = phenoList
     print(len(pList))
-    params  = list(product([iPath],pList,[lofString],[infoFilter],[f],[test]))
+    params  = list(product([iPath],pList,[lofString],[f],[test]))
     pool = multiprocessing.Pool(proc)
     pool.map(logit_wrapper,params)
     pool.close()
@@ -59,12 +59,12 @@ def return_pheno_data(iPath,pheno,lofString = 'hc_lof',f = phenoFile,test = True
     
 def logit_wrapper(args):
     logistic_pheno(*args)
-def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile,test = True):
+def logistic_pheno(iPath,pheno,lofString = 'hc_lof',f = phenoFile,test = True):
 
     oPath = iPath + '/fits/'
     make_sure_path_exists(oPath)
-    oFile = oPath + lofString + '_' + pheno +'_' + str(infoFilter) + '_pheno_results.txt'
-
+    oFile = oPath + lofString + '_' + pheno + '_pheno_results.txt'
+ 
     print(pheno)
     phenoData = get_pheno_data(iPath,pheno,f,lofString)
     print('phenoData imported')
@@ -82,7 +82,7 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile
             print(pheno,i,gene)
             o.write(gene + '\t')
             lofData = get_lof_data(iPath,gene,lofString)
-            logit_results,f_results,table = logistic_regression(iPath,lofString,pcData,phenoData,lofData,f,infoFilter)
+            logit_results,f_results,table = logistic_regression(iPath,lofString,pcData,phenoData,lofData,f)
             # write counts of lof/no_lof
             countString =  '\t'.join([str(elem) for elem in table.flatten()])
             o.write(countString + '\t')
@@ -107,7 +107,7 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile
             
     
     return None
-def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = None,lofData= None,f = phenoFile,infoFilter = 0):
+def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = None,lofData= None,f = phenoFile):
     '''
     Returns the logistic regression for the lof + pcs vs pheno.
     phenoDict and lofDictmap samples to their respective value. I need it in order to build arrays that in sync with the pc data
@@ -134,10 +134,7 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
         pcPath = iPath + lofString + '_pcs.txt'
         pcData = np.loadtxt(pcPath,dtype = float,usecols = range(1,11))
 
-    # here i apply the info score filter
-    lofData[lofData > infoFilter] = 1
-    lofData[lofData <= infoFilter] = 0
-    lofData = lofData.astype(int)
+   
     y = phenoData
     X = np.c_[lofData,pcData]     
 
@@ -178,7 +175,7 @@ def get_lof_data(iPath,gene,lofString = 'hc_lof'):
         for line in i:
              line = line.strip().split('\t')
              if line[0] == gene:
-                 lofData = np.array(line[1:],dtype = float)
+                 lofData = np.array(line[1:],dtype = int)
                  break
             
     return lofData
@@ -386,7 +383,7 @@ if __name__ == '__main__':
 
     # create the parser for the generate_variants command
     parser_logit = subparsers.add_parser('logit', help='do logit analysis')
-    parser_logit.add_argument("--infoFilter",type = float, help = 'INFO SCORE filter above which lof is considered',default = 0.9)
+   
     parser_logit.add_argument("--cpus",type = int, help = 'Number of cores to use', default = cpus)
     parser_logit.add_argument('--test',action = 'store_true',help = 'Flag to run small chunks')
 
@@ -407,7 +404,7 @@ if __name__ == '__main__':
     
     if args.command == "logit":
 
-        multiproc_logit(oPath,args.lof,args.infoFilter,args.phenoFile,args.cpus,args.test)
+        multiproc_logit(oPath,args.lof,args.phenoFile,args.cpus,args.test)
 
     if args.command == "write-pheno":
 
