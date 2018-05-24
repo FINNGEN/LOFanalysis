@@ -49,7 +49,7 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     X = np.c_[lofData,pcData]     
     logit_model=sm.Logit(y,X)
     result=logit_model.fit()
-    firth = firth_regression(y,X)
+    firth = fit_firth(y,X)
     return result,firth
 
 def get_lof_data(iPath,gene,lofString = 'hc_lof'):
