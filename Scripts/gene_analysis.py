@@ -98,7 +98,7 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile
                  resArray = res.flatten()[:6]
             except:
                 resArray = ['NA']*6
-
+            
             oString =  '\t'.join([str(elem) for elem in resArray])
             o.write( oString + '\t')
             o.write( '\t'.join([str(elem) for elem in f_results]))
@@ -132,7 +132,7 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     if pcData is None:
         print('importing pcData...')
         pcPath = iPath + lofString + '_pcs.txt'
-        pcData = np.loadtxt(pcPath,dtype = float,usecols = range(1,11))
+        pcData = np.loadtxt(pcPath,dtype = float,usecols = range(1,10))
 
     # here i apply the info score filter
     lofData[lofData > infoFilter] = 1
