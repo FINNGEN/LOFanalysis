@@ -58,6 +58,7 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile
             geneList = geneList[:100]
         print(len(geneList))
         for gene in geneList:
+            print(pheno,gene)
             o.write(gene + '\t')
             lofData = get_lof_data(iPath,gene,lofString)
             logit_results,f_results,table = logistic_regression(iPath,lofString,pcData,phenoData,lofData,f,infoFilter)
