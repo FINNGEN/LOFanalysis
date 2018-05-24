@@ -42,10 +42,12 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile
         for gene in geneList[:2]:
             o.write(gene + '\t')
             lofData = get_lof_data(iPath,gene,lofString)
-            logit_results,f_results = logistic_regression(iPath,lofString,pcData,phenoDict,lofData,f,infoFilter)
+            logit_results,f_results = logistic_regression(iPath,lofString,pcData,phenoData,lofData,f,infoFilter)
             params = logit_results.params
             pvalues = logit_results.pvalues
+            #add columns
             res = np.column_stack((coeff,pvalues))
+            # flatten so first two elemts are from lof, next 2 pc1 etc.
             res = res.flatten()
             oString = '\t'.join([str(elem) for elem in res[:6]])
             o.write( oString + '\t')
