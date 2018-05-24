@@ -37,6 +37,14 @@ def multiproc_logit(iPath,lofString='hc_lof',infoFilter = 0.9,f = phenoFile,proc
     pool.close()
 
 
+def return_pheno_data(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile,test = True):
+    oPath = iPath + '/pheno_data/'
+    make_sure_path_exists(oPath)
+    oFile = oPath + lofString + '_' + pheno  + '_phenodata.txt'
+    phenoData = get_pheno_data(iPath,pheno,f,lofString)
+    np.savetxt(oFile,phenoDict,fmt = '%i'
+    return None
+    
 def logit_wrapper(args):
     logistic_pheno(*args)
 def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile,test = True):
