@@ -28,7 +28,8 @@ eigenvecPath = dataPath + '10pc.eigenvec'
 
 def multiproc_logit(iPath,lofString='hc_lof',infoFilter = 0.9,f = phenoFile,proc = cpus,test = True):
 
-    pList = phenoList if test is False else phenoList[:proc]
+    #pList = phenoList if test is False else phenoList[:proc]
+    pList = phenoList
     print(len(pList))
     params  = list(product([iPath],pList,[lofString],[infoFilter],[f],[test]))
     pool = multiprocessing.Pool(proc)
