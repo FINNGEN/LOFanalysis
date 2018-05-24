@@ -55,12 +55,22 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     logit_model=sm.Logit(y,X)
     result=logit_model.fit()
     #info
+    samples = len(phenoData)
+    
     phenoMask = (phenoData >0)
     cases = phenoMask.sum()
-    lofCases = lofData[phenoMask].sum()
+    lofCases = int(lofData[phenoMask].sum())
+    nolofCases = cases - lofCases
+
+    phenoMask = (phenoData == 0)
+    controls = phenoMask.sum()
+    lofControls = int(lofData[phenoMask].sum())
+    nolofControls = controls - lofControls
     
-    
-    return result,cases,lofCases
+    table = np.empty((2,2),dtype = int)
+    table[0] = [lofCases,lofControls]
+    table[1] = [nolofCases,nolofControls]
+    return result,table
 
 def get_lof_data(iPath,gene,lofString = 'hc_lof'):
     with open(iPath + lofString + '_gene_to_filtered_samples.tsv','rt') as i:
