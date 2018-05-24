@@ -66,7 +66,6 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile
             o.write(countString + '\t')
             
             # write logit_results
-            resArray = ['NA']*6
 
             try:
                  params = logit_results.params
@@ -76,6 +75,8 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile
                  # flatten so first two elemts are from lof, next 2 pc1 etc.
                  resArray = res.flatten()[:6]
             except:
+                resArray = ['NA']*6
+
             oString =  '\t'.join([str(elem) for elem in resArray])
             o.write( oString + '\t')
             o.write( '\t'.join([str(elem) for elem in f_results]))
