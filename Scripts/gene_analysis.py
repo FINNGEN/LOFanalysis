@@ -35,28 +35,7 @@ def multiproc_logit(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = Tr
     pool = multiprocessing.Pool(proc)
     pool.map(logit_wrapper,params)
     pool.close()
-    
-def multiproc_write_pheno(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = True):
-
-    pList = phenoList if test is False else phenoList[:proc]
-    print(len(pList))
-    params  = list(product([iPath],pList,[lofString],[f],[test]))
-    pool = multiprocessing.Pool(proc)
-    pool.map(pheno_wrapper,params)
-    pool.close()
-
-def pheno_wrapper(args):
-    return_pheno_data(*args)
-
-def return_pheno_data(iPath,pheno,lofString = 'hc_lof',f = phenoFile,test = True):
-    oPath = iPath + '/pheno_data/'
-    make_sure_path_exists(oPath)
-    oFile = oPath + lofString + '_' + pheno  + '_phenodata.txt'
-    print(pheno)
-    phenoData = get_pheno_data(iPath,pheno,f,lofString)
-    np.savetxt(oFile,phenoData,fmt = '%i')
-    return None
-    
+ 
 def logit_wrapper(args):
     logistic_pheno(*args)
 def logistic_pheno(iPath,pheno,lofString = 'hc_lof',f = phenoFile,test = True):
