@@ -55,7 +55,7 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     logit_model=sm.Logit(y,X)
     result=logit_model.fit()
     #info
-    phenoMask = (phenoDict >0)
+    phenoMask = (phenoData >0)
     cases = phenoMask.sum()
     lofCases = lofData[mask].sum()
     
