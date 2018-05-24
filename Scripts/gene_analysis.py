@@ -29,6 +29,7 @@ eigenvecPath = dataPath + '10pc.eigenvec'
 def multiproc_logit(iPath,lofString='hc_lof',infoFilter = 0.9,f = phenoFile,proc = cpus,test = True):
 
     pList = phenoList if Test is False else phenoList[:cpus]
+    print(len(pList))
     params  = list(product([iPath],pList,[lofString],[infoFilter],[f],[test]))
     pool = multiprocessing.Pool(proc)
     pool.map(logit_wrapper,params)
@@ -55,6 +56,7 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile
         geneList = get_gene_list(iPath,lofString)
         if test is True:
             geneList = geneList[:100]
+        print(len(geneList))
         for gene in geneList:
             o.write(gene + '\t')
             lofData = get_lof_data(iPath,gene,lofString)
