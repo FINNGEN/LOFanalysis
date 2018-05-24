@@ -46,7 +46,7 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile
             params = logit_results.params
             pvalues = logit_results.pvalues
             #add columns
-            res = np.column_stack((coeff,pvalues))
+            res = np.column_stack((params,pvalues))
             # flatten so first two elemts are from lof, next 2 pc1 etc.
             res = res.flatten()
             oString = '\t'.join([str(elem) for elem in res[:6]])
