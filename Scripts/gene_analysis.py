@@ -62,15 +62,15 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile
             o.write(countString + '\t')
             
             # write logit_results
-            resArray = ['NA']*6
-            if logit_results is not None:
+            try:
                  params = logit_results.params
                  pvalues = logit_results.pvalues
                  #add columns
                  res = np.column_stack((params,pvalues))
                  # flatten so first two elemts are from lof, next 2 pc1 etc.
                  resArray = res.flatten()[:6]
-                 
+            except:
+                resArray = ['NA']*6                 
             oString =  '\t'.join([str(elem) for elem in resArray])
             o.write( oString + '\t')
             o.write( '\t'.join([str(elem) for elem in f_results]))
