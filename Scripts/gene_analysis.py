@@ -10,6 +10,8 @@ from scipy.stats import fisher_exact
 from file_utils import make_sure_path_exists
 from scipy import stats
 stats.chisqprob = lambda chisq, df: stats.chi2.sf(chisq, df)
+import multiprocessing
+cpus = multiprocessing.cpu_count()
 
 rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
 dataPath = rootPath + 'Data/'
@@ -23,11 +25,21 @@ eigenvecPath = dataPath + '10pc.eigenvec'
 
 
 
+def multiproc_logit(iPath,lofString='hc_lof',infoFilter = 0.9,f = phenoFile,proc = cpus):
+    
+    params  = list(product([iPath],phenoList[:20],[lofString],[infoFilter],[f]))
+    pool = multiprocessing.Pool(proc)
+    pool.map(logit_wrapper,params)
+    pool.close()
+
+
+def logit_wrapper(args):
+    logistic_pheno(*args)
 def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile):
 
     oPath = iPath + '/fits/'
     make_sure_path_exists(oPath)
-    oFile = oPath + pheno +'_pheno_results.txt'
+    oFile = oPath + pheno +'_' + str(infoFilter) + '_pheno_results.txt'
 
     print(pheno)
     phenoData = get_pheno_data(iPath,pheno,f,lofString)
