@@ -36,7 +36,7 @@ def multiproc_logit(iPath,lofString='hc_lof',infoFilter = 0.9,f = phenoFile,proc
     pool.map(logit_wrapper,params)
     pool.close()
     
-def multiproc_write_pheno(iPath,lofString='hc_lof',infoFilter = 0.9,f = phenoFile,proc = cpus,test = True):
+def multiproc_write_pheno(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = True):
 
    
 
@@ -44,7 +44,7 @@ def multiproc_write_pheno(iPath,lofString='hc_lof',infoFilter = 0.9,f = phenoFil
     print(len(pList))
     params  = list(product([iPath],pList,[lofString],[infoFilter],[f],[test]))
     pool = multiprocessing.Pool(proc)
-    pool.map(logit_wrapper,params)
+    pool.map(pheno_wrapper,params)
     pool.close()
 
 def pheno_wrapper(args):
