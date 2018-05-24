@@ -47,8 +47,9 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',infoFilter = 0,f = phenoFile
             # write counts of lof/no_lof
             countString =  '\t'.join([str(elem) for elem in table.flatten()])
             o.write(countString + '\t')
+            
             # write logit_results
-            resArray = np.ones(6)*-1
+            resArray = ['NA'*6]
             if logit_results is not None:
                  params = logit_results.params
                  pvalues = logit_results.pvalues
