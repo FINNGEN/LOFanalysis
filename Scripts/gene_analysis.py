@@ -40,7 +40,7 @@ def multiproc_logit_gene(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test
 
     print(len(pList),' phenotypes')
     geneList = get_info_score_gene_list(iPath,lofString,infoFilter)
-        print(len(geneList))
+    print(len(geneList))
     geneList= geneList if test is False else geneList[:proc]
         
 
@@ -108,7 +108,9 @@ def logistic_gene(iPath,gene,lofString = 'hc_lof',f = phenoFile,test = True,info
             o.write( '\t'.join([str(elem) for elem in f_results]))
             o.write('\n')
     return None
- 
+
+
+
 def logit_wrapper(args):
     logistic_pheno(*args)
     
