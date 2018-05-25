@@ -35,6 +35,62 @@ def multiproc_logit(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = Tr
     pool = multiprocessing.Pool(proc)
     pool.map(logit_wrapper,params)
     pool.close()
+
+def logit_wrapper_gene(args):
+    logistic_pheno(*args)
+    
+def logistic_gene(iPath,gene,lofString = 'hc_lof',f = phenoFile,test = True,infoFilter = 0.9):
+    '''
+    Function that is ultimately passed to the multiprocessing pool. It loops through all genes given a phenotype. With test  it only works with a small chunk of genes
+    '''
+    oPath = iPath + '/fits/'
+    make_sure_path_exists(oPath)
+    oFile = oPath + lofString + '_' + pheno + '_' + str(infoFilter) + '_gene_results.txt'
+ 
+    print(pheno)
+ 
+    pcPath = iPath + lofString + '_pcs.txt'
+    pcData = np.loadtxt(pcPath,dtype = float,usecols = range(1,11))
+    print('pcData loaded.')
+    
+    with open(oFile,'wt') as o:
+        o.write('\t'.join(shlex.split('gene lof_cases lof_controls no_lof_cases no_lof_controls logit_coeff_gene logit_pval_gene logit_coeff_pc1 logit_pval_pc1 logit_coeff_pc2 logit_pval_pc2 fischer_oddsratio fischer_pval ')) + '\n')
+
+        for i,pheno in enumerate(phenoList):
+            #print(pheno,i,gene)
+            o.write(pheno + '\t')
+            phenoDataPath = iPath + '/pheno_data/'
+            make_sure_path_exists(phenoDataPath)
+            phenoSave = phenoDataPath + lofString + '_' + pheno  + '_phenodata.txt'
+            try:
+                phenoData = np.loadtxt(phenoSave,dtype = int)
+                print('phenoData loaded')        
+            except:
+                phenoData = get_pheno_data(iPath,pheno,f,lofString)
+                np.savetxt(phenoSave,phenoData,fmt = '%i')
+                print('phenoData imported')        
+
+            logit_results,f_results,table = logistic_regression(iPath,lofString,pcData,phenoData,lofData,f)
+            # write counts of lof/no_lof
+            countString =  '\t'.join([str(elem) for elem in table.flatten()])
+            o.write(countString + '\t')
+            
+            try:
+                 params = logit_results.params
+                 pvalues = logit_results.pvalues
+                 #add columns
+                 res = np.column_stack((params,pvalues))
+                 # flatten so first two elemts are from lof, next 2 pc1 etc.
+                 resArray = res.flatten()[:6]
+            except:
+                resArray = ['NA']*6
+                
+            # write logit_results            
+            oString =  '\t'.join([str(elem) for elem in resArray])
+            o.write( oString + '\t')
+            o.write( '\t'.join([str(elem) for elem in f_results]))
+            o.write('\n')
+    return None
  
 def logit_wrapper(args):
     logistic_pheno(*args)
