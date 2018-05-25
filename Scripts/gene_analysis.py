@@ -9,6 +9,7 @@ import shlex
 from itertools import product
 from scipy.stats import fisher_exact
 from file_utils import make_sure_path_exists
+from filter_variants import get_variant_to_gene_dict
 from scipy import stats
 stats.chisqprob = lambda chisq, df: stats.chi2.sf(chisq, df)
 import multiprocessing
@@ -178,6 +179,13 @@ def get_pheno_data(iPath,pheno,f = phenoFile,lofString = 'hc_lof'):
         phenoData[i] = int(phenoDict[sample])
     return phenoData
 
+def get_info_score_gene_list(iPath,lofString = 'hc_lof',infoFilter = 0.9):
+
+    g2v = get_variant_to_gene_dict(iPath,lofString = 'hc_lof')
+    infoDict = pickle.load(open(dataPath + lofString + '_infoDict.p','rb'))
+    geneList = [gene for gene in g2v if max(infoDict[variant] for variant in infoDict[gene]) > infoFilter]
+    return geneList
+    
 def get_gene_list(iPath,lofString = 'hc_lof'):
 
     oFile = iPath + lofString + "_genelist.txt"
@@ -189,10 +197,7 @@ def get_gene_list(iPath,lofString = 'hc_lof'):
         np.savetxt(oFile,geneList,fmt = '%s')
     return geneList
 
-def get_infoDict(lofString):
-    import pickle
-    infoDict = pickle.load(open(dataPath + lofString + '_infoDict.p','rb'))
-    return infoDict
+
 #####################################
 #--FIX FILES TO ORDER SAMPLE DATA---#
 #####################################
