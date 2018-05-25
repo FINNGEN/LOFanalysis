@@ -160,7 +160,7 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     return logit_results,f_results,table
 
 def get_lof_data(iPath,gene,lofString = 'hc_lof'):
-    with open(iPath + lofString + '_gene_to_filtered_samples.tsv','rt') as i:
+    with open(iPath + lofString + '_gene_to_filtered_samples.tsv','rt',os.O_NONBLOCK) as i:
         for line in i:
              line = line.strip().split('\t')
              if line[0] == gene:
