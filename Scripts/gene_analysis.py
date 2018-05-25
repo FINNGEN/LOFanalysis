@@ -425,5 +425,5 @@ if __name__ == '__main__':
     
     
     if args.command == "logit":
-        multiproc_logit_gene(oPath,args.lof,args.phenoFile,args.cpus,args.test,args.infoFilter)
+        multiproc_logit(oPath,args.lof,args.phenoFile,args.cpus,args.test,args.infoFilter)
 
