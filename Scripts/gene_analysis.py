@@ -182,7 +182,7 @@ def get_info_score_gene_list(iPath,lofString = 'hc_lof',infoFilter = 0.9):
     Given a lof and infoFilter it returns the list of genes for that lof that all variants above infoFilter
     '''
     import pickle
-    g2v = get_variant_to_gene_dict(iPath,lofString = 'hc_lof')
+    g2v = get_variant_to_gene_dict(iPath,lofString)
     infoDict = pickle.load(open(dataPath + lofString + '_infoDict.p','rb'))
     geneList = [gene for gene in g2v if np.min([infoDict[variant] for variant in g2v[gene]]) > infoFilter]
     return geneList
