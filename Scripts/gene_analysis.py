@@ -183,7 +183,7 @@ def get_info_score_gene_list(iPath,lofString = 'hc_lof',infoFilter = 0.9):
     import pickle
     g2v = get_variant_to_gene_dict(iPath,lofString = 'hc_lof')
     infoDict = pickle.load(open(dataPath + lofString + '_infoDict.p','rb'))
-    geneList = [gene for gene in g2v if max(infoDict[variant] for variant in infoDict[gene]) > infoFilter]
+    geneList = [gene for gene in g2v if np.max([infoDict[variant] for variant in g2v[gene]]) > infoFilter]
     return geneList
     
 def get_gene_list(iPath,lofString = 'hc_lof'):
