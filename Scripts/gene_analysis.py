@@ -82,11 +82,9 @@ def logistic_gene(iPath,gene,lofString = 'hc_lof',f = phenoFile,test = True,info
             phenoSave = phenoDataPath + lofString + '_' + pheno  + '_phenodata.txt'
             try:
                 phenoData = np.loadtxt(phenoSave,dtype = int)
-                print('phenoData loaded')        
             except:
                 phenoData = get_pheno_data(iPath,pheno,f,lofString)
                 np.savetxt(phenoSave,phenoData,fmt = '%i')
-                print('phenoData imported')        
 
             logit_results,f_results,table = logistic_regression(iPath,lofString,pcData,phenoData,lofData,f)
             # write counts of lof/no_lof
@@ -427,5 +425,5 @@ if __name__ == '__main__':
     
     
     if args.command == "logit":
-        multiproc_logit(oPath,args.lof,args.phenoFile,args.cpus,args.test,args.infoFilter)
+        multiproc_logit_gene(oPath,args.lof,args.phenoFile,args.cpus,args.test,args.infoFilter)
 
