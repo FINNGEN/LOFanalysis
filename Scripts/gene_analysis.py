@@ -190,6 +190,7 @@ def get_gene_list(iPath,lofString = 'hc_lof'):
     return geneList
 
 def get_infoDict(lofString):
+    import pickle
     infoDict = pickle.load(open(dataPath + lofString + '_infoDict.p','rb'))
     return infoDict
 #####################################
