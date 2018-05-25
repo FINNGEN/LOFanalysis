@@ -27,11 +27,10 @@ eigenvecPath = dataPath + '10pc.eigenvec'
 
 
 
-def multiproc_logit(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = True):
+def multiproc_logit(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = True,infoFilter = 0.9):
 
     pList = phenoList if test is False else phenoList[:proc]
-    pList = phenoList
-    print(len(pList))
+    print(len(pList),' phenotypes')
     params  = list(product([iPath],pList,[lofString],[f],[test]))
     pool = multiprocessing.Pool(proc)
     pool.map(logit_wrapper,params)
@@ -39,11 +38,13 @@ def multiproc_logit(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = Tr
  
 def logit_wrapper(args):
     logistic_pheno(*args)
-def logistic_pheno(iPath,pheno,lofString = 'hc_lof',f = phenoFile,test = True):
-
+def logistic_pheno(iPath,pheno,lofString = 'hc_lof',f = phenoFile,test = True,infoFilter = 0.9):
+    '''
+    Function that is ultimately passed to the multiprocessing pool. It loops through all genes given a phenotype. With test  it only works with a small chunk of genes
+    '''
     oPath = iPath + '/fits/'
     make_sure_path_exists(oPath)
-    oFile = oPath + lofString + '_' + pheno + '_pheno_results.txt'
+    oFile = oPath + lofString + '_' + pheno + '_' + str(infoFilter) + '_pheno_results.txt'
  
     print(pheno)
     phenoData = get_pheno_data(iPath,pheno,f,lofString)
@@ -54,9 +55,10 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',f = phenoFile,test = True):
     
     with open(oFile,'wt') as o:
         o.write('\t'.join(shlex.split('gene lof_cases lof_controls no_lof_cases no_lof_controls logit_coeff_gene logit_pval_gene logit_coeff_pc1 logit_pval_pc1 logit_coeff_pc2 logit_pval_pc2 fischer_oddsratio fischer_pval ')) + '\n')
-        geneList = get_gene_list(iPath,lofString)
+
+        geneList = get_info_score_gene_list(iPath,lofString,infoFilter)
         if test is True:
-            geneList = geneList[:100]
+            geneList = geneList[:20]
         print(len(geneList))
         for i,gene in enumerate(geneList):
             print(pheno,i,gene)
@@ -340,7 +342,7 @@ if __name__ == '__main__':
     parser_logit = subparsers.add_parser('logit', help='do logit analysis')  
     parser_logit.add_argument("--cpus",type = int, help = 'Number of cores to use', default = cpus)
     parser_logit.add_argument('--test',action = 'store_true',help = 'Flag to run small chunks')
-
+    parser_logit.add_argument('--infoFilter',type = float,default = 0.9, help = 'info score filter value')
     args = parser.parse_args()
     oPath = (args.oPath + '/' + args.lof +'/').replace('//','/')
 
@@ -350,9 +352,5 @@ if __name__ == '__main__':
     
     
     if args.command == "logit":
+        multiproc_logit(oPath,args.lof,args.phenoFile,args.cpus,args.test,args.infoFilter)
 
-        multiproc_logit(oPath,args.lof,args.phenoFile,args.cpus,args.test)
-
-    if args.command == "write-pheno":
-
-        multiproc_write_pheno(oPath,args.lof,args.phenoFile,args.cpus,args.test)
