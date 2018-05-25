@@ -43,7 +43,7 @@ def multiproc_logit_gene(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test
     geneList= geneList if test is False else geneList[:proc]
         
 
-    params  = list(product([iPath],pList,[lofString],[f],[test]))
+    params  = list(product([iPath],geneList,[lofString],[f],[test]))
     pool = multiprocessing.Pool(proc)
     pool.map(logit_wrapper,params)
     pool.close()
