@@ -9,7 +9,7 @@ import pickle
 import shlex
 import sys
 from subprocess import Popen, PIPE,call
-from file_utils import make_sure_path_exists,return_header_variants,split_array_chunk
+from file_utils import make_sure_path_exists,return_header_variants,split_array_chunk,read_header
 import multiprocessing
 cpus = multiprocessing.cpu_count()
 
@@ -243,24 +243,6 @@ def create_info_file(annotatedFile,lofString = 'hc_lof'):
                     
         pickle.dump(infoDict,open(dataPath + lofString + '_infoDict.p','wb'))
                     
-def read_header(header = None,lofString = "hc_lof"):
-    '''
-    Reads the first line of the variants.gz file and returns the position of the Info score
-    '''
-    
-    if header == None:
-        with gzip.open(annotatedVariants,'rt') as i:
-    
-            header = i.readline()
-            header = header.strip().split('\t')
-
-            
-    infoPos = [i for i,elem in enumerate(header) if 'INFO_' in elem]
-    lofPos = [i for i,elem in enumerate(header) if  elem == lofString][0]
-    avgPos = [i for i,elem in enumerate(header) if 'INFO' == elem][0]
-    genePos =  [i for i,elem in enumerate(header) if  elem == "gene"][0]
-    return infoPos,lofPos,avgPos,genePos
-
 
 
 if __name__ == '__main__':

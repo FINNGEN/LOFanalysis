@@ -8,7 +8,7 @@ import sys
 import shlex
 from itertools import product
 from scipy.stats import fisher_exact
-from file_utils import make_sure_path_exists
+from file_utils import make_sure_path_exists,return_column
 from filter_variants import get_variant_to_gene_dict
 from scipy import stats
 stats.chisqprob = lambda chisq, df: stats.chi2.sf(chisq, df)
@@ -314,39 +314,7 @@ def return_lof_samples(iPath,lofString = 'hc_lof'):
 #--PARSE THE PHENOTYPE FILE--#
 ##############################
 
-def return_column(pheno = 'FINNGENID',f = phenoFile,dtype = 'f8'):
 
-    header = return_header(f =f )
-    for i,elem in enumerate(header):
-        if str(elem) == pheno:
-            phenocol = i
-    idcol = 0
-    if f.split('.')[-1] == 'txt':
-        i = open(f,'rb')
-    elif f.split('.')[-1] == 'gz':
-        i = gzip.open(f,'rb')
-
-    column = np.genfromtxt(i,usecols = (phenocol,),delimiter = ('\t'),skip_header=1,dtype = dtype)
-    i.close()
-    return column
-
-
-
-
-def return_header(f = phenoFile):
-    '''
-    Reads the header of the pheno file
-    '''
-    if f.split('.')[-1] == 'txt':
-        i = open(f,'rt')
-
-    elif f.split('.')[-1] == 'gz':
-        i = gzip.open(f,'rt')
-    
-    header = i.readline()
-    header = header.strip().split('\t')
-    i.close()
-    return header
 
 
 

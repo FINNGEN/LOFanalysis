@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import gzip
 
 def make_sure_path_exists(path):
     import errno
@@ -38,3 +39,56 @@ from subprocess import call
 
 def git_pull():
     call(shlex.split('git pull'))
+
+
+def read_header(header = None,lofString = "hc_lof"):
+    '''
+    Reads the first line of the variants.gz file and returns the position of the Info score
+    '''
+    
+    if header == None:
+        with gzip.open(annotatedVariants,'rt') as i:
+    
+            header = i.readline()
+            header = header.strip().split('\t')
+
+            
+    infoPos = [i for i,elem in enumerate(header) if 'INFO_' in elem]
+    lofPos = [i for i,elem in enumerate(header) if  elem == lofString][0]
+    avgPos = [i for i,elem in enumerate(header) if 'INFO' == elem][0]
+    genePos =  [i for i,elem in enumerate(header) if  elem == "gene"][0]
+    return infoPos,lofPos,avgPos,genePos
+
+def return_column(pheno = 'FINNGENID',f = phenoFile,dtype = 'f8'):
+
+    header = return_header(f =f )
+    for i,elem in enumerate(header):
+        if str(elem) == pheno:
+            phenocol = i
+    idcol = 0
+    if f.split('.')[-1] == 'txt':
+        i = open(f,'rb')
+    elif f.split('.')[-1] == 'gz':
+        i = gzip.open(f,'rb')
+
+    column = np.genfromtxt(i,usecols = (phenocol,),delimiter = ('\t'),skip_header=1,dtype = dtype)
+    i.close()
+    return column
+
+
+
+
+def return_header(f = phenoFile):
+    '''
+    Reads the header of the pheno file
+    '''
+    if f.split('.')[-1] == 'txt':
+        i = open(f,'rt')
+
+    elif f.split('.')[-1] == 'gz':
+        i = gzip.open(f,'rt')
+    
+    header = i.readline()
+    header = header.strip().split('\t')
+    i.close()
+    return header
