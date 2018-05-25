@@ -182,21 +182,13 @@ def get_pheno_data(iPath,pheno,f = phenoFile,lofString = 'hc_lof'):
     return phenoData
 
 def get_info_score_gene_list(iPath,lofString = 'hc_lof',infoFilter = 0.9):
+    '''
+    Given a lof and infoFilter it returns the list of genes for that lof that all variants above infoFilter
+    '''
     import pickle
     g2v = get_variant_to_gene_dict(iPath,lofString = 'hc_lof')
     infoDict = pickle.load(open(dataPath + lofString + '_infoDict.p','rb'))
-    geneList = [gene for gene in g2v if np.max([infoDict[variant] for variant in g2v[gene]]) > infoFilter]
-    return geneList
-    
-def get_gene_list(iPath,lofString = 'hc_lof'):
-
-    oFile = iPath + lofString + "_genelist.txt"
-    try:
-        geneList = np.loadtxt(oFile,dtype = str)
-    except:
-        oMatrix = iPath + lofString + "_gene_to_filtered_samples.tsv"
-        geneList = np.loadtxt(oMatrix,usecols = [0], skiprows = 1,dtype = str)
-        np.savetxt(oFile,geneList,fmt = '%s')
+    geneList = [gene for gene in g2v if np.min([infoDict[variant] for variant in g2v[gene]]) > infoFilter]
     return geneList
 
 
