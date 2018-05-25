@@ -61,6 +61,8 @@ def logistic_gene(iPath,gene,lofString = 'hc_lof',f = phenoFile,test = True,info
     oFile = oPath + lofString + '_' + gene + '_' + str(infoFilter) + '_gene_results.txt'
  
     print(gene)
+    lofData = get_lof_data(iPath,gene,lofString)
+
  
     pcPath = iPath + lofString + '_pcs.txt'
     pcData = np.loadtxt(pcPath,dtype = float,usecols = range(1,11))
