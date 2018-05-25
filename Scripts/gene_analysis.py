@@ -38,9 +38,8 @@ def multiproc_logit(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = Tr
 
 def multiproc_logit_gene(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = True,infoFilter = 0.9):
 
-    print(len(pList),' phenotypes')
     geneList = get_info_score_gene_list(iPath,lofString,infoFilter)
-    print(len(geneList))
+    print(len(geneList),' genes')
     geneList= geneList if test is False else geneList[:proc]
         
 
