@@ -57,9 +57,11 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',f = phenoFile,test = True,in
         o.write('\t'.join(shlex.split('gene lof_cases lof_controls no_lof_cases no_lof_controls logit_coeff_gene logit_pval_gene logit_coeff_pc1 logit_pval_pc1 logit_coeff_pc2 logit_pval_pc2 fischer_oddsratio fischer_pval ')) + '\n')
 
         geneList = get_info_score_gene_list(iPath,lofString,infoFilter)
+        print(len(geneList))
         if test is True:
             geneList = geneList[:20]
         print(len(geneList))
+
         for i,gene in enumerate(geneList):
             print(pheno,i,gene)
             o.write(gene + '\t')
@@ -69,8 +71,6 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',f = phenoFile,test = True,in
             countString =  '\t'.join([str(elem) for elem in table.flatten()])
             o.write(countString + '\t')
             
-            # write logit_results
-
             try:
                  params = logit_results.params
                  pvalues = logit_results.pvalues
@@ -80,15 +80,15 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',f = phenoFile,test = True,in
                  resArray = res.flatten()[:6]
             except:
                 resArray = ['NA']*6
-            
+                
+            # write logit_results            
             oString =  '\t'.join([str(elem) for elem in resArray])
             o.write( oString + '\t')
             o.write( '\t'.join([str(elem) for elem in f_results]))
             o.write('\n')
-                                
-            
-    
     return None
+
+
 def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = None,lofData= None,f = phenoFile):
     '''
     Returns the logistic regression for the lof + pcs vs pheno.
@@ -108,19 +108,15 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
         print(pheno)
         phenoData = get_pheno_data(iPath,pheno,f,lofString)
         print('done.')
-
-
     #now i upload the pc data,along with the samples
     if pcData is None:
         print('importing pcData...')
         pcPath = iPath + lofString + '_pcs.txt'
         pcData = np.loadtxt(pcPath,dtype = float,usecols = range(1,11))
-
    
+    #LOGIT REGRESSION
     y = phenoData
-    X = np.c_[lofData,pcData]     
-
-    #logit regression
+    X = np.c_[lofData,pcData]      
     logit_results = None
     # don't run test if there are no lof cases
     if lofData.sum() == 0:
@@ -131,7 +127,8 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
             logit_results=logit_model.fit(full_output = 0,disp = 0)
         except:
             pass
-    #fischer test
+        
+    #FISHER TEST
     samples = len(phenoData)
     # get lof counts for cases
     phenoMask = (phenoData >0)
@@ -149,7 +146,6 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     table[1] = [nolofCases,nolofControls]
     f_results = fisher_exact(table)
 
-    
     return logit_results,f_results,table
 
 def get_lof_data(iPath,gene,lofString = 'hc_lof'):
