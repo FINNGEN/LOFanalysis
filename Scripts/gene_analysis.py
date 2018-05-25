@@ -52,13 +52,13 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',f = phenoFile,test = True,in
     oFile = phenoDataPath + lofString + '_' + pheno  + '_phenodata.txt'
     try:
         phenoData = np.loadtxt(oFile,dtype = int)
-
+        print('phenoData loaded')        
     except:
         phenoData = get_pheno_data(iPath,pheno,f,lofString)
         np.savetxt(oFile,phenoData,fmt = '%i')
+        print('phenoData imported')        
         
-        
-    print('phenoData imported')
+
     pcPath = iPath + lofString + '_pcs.txt'
     pcData = np.loadtxt(pcPath,dtype = float,usecols = range(1,11))
     print('pcData imported.')
