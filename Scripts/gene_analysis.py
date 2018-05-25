@@ -38,6 +38,7 @@ def multiproc_logit(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = Tr
  
 def logit_wrapper(args):
     logistic_pheno(*args)
+    
 def logistic_pheno(iPath,pheno,lofString = 'hc_lof',f = phenoFile,test = True,infoFilter = 0.9):
     '''
     Function that is ultimately passed to the multiprocessing pool. It loops through all genes given a phenotype. With test  it only works with a small chunk of genes
@@ -67,12 +68,13 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',f = phenoFile,test = True,in
 
         geneList = get_info_score_gene_list(iPath,lofString,infoFilter)
         print(len(geneList))
+        
         if test is True:
             geneList = geneList[:20]
         print(len(geneList))
 
         for i,gene in enumerate(geneList):
-            print(pheno,i,gene)
+            #print(pheno,i,gene)
             o.write(gene + '\t')
             lofData = get_lof_data(iPath,gene,lofString)
             logit_results,f_results,table = logistic_regression(iPath,lofString,pcData,phenoData,lofData,f)
