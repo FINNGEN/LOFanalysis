@@ -228,7 +228,7 @@ def create_info_file(annotatedFile,lofString = 'hc_lof'):
         print('filtering ' + lofString +  ' variants...')
         with gzip.open(annotatedFile,'rt') as i,open(lofPath,'wt') as o,open(snpsPath,'wt') as oo:
             infoPos,lofPos,avgPos,genePos = read_header(i.readline().strip().split('\t'),lofString )
-            infoDict = dd() # dict that store the info score of the variant
+            infoDict = dd_str() # dict that store the info score of the variant
             for line in i:
                 line = line.strip().split('\t')
                 variant = line[0]
@@ -240,7 +240,7 @@ def create_info_file(annotatedFile,lofString = 'hc_lof'):
                     oo.write(variant.replace(':','_')+ '\n')
                     infoDict[variant] = float(avgInfo)
                     
-        pickle.dump(open(dataPath + lofString + '_infoDict.p','rb'),infoDict)
+        pickle.dump(open(dataPath + lofString + '_infoDict.p','wb'),infoDict)
                     
 def read_header(header = None,lofString = "hc_lof"):
     '''
