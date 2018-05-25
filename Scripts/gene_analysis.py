@@ -49,7 +49,7 @@ def multiproc_logit_gene(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test
     pool.close()
 
 def logit_wrapper_gene(args):
-    logistic_pheno(*args)
+    logistic_gene(*args)
     
 def logistic_gene(iPath,gene,lofString = 'hc_lof',f = phenoFile,test = True,infoFilter = 0.9):
     '''
