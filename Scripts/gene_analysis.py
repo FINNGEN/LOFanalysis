@@ -59,7 +59,6 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',f = phenoFile,test = True,in
         phenoData = get_pheno_data(iPath,pheno,f,lofString)
         np.savetxt(oFile,phenoData,fmt = '%i')
 
-    return 1
     phenoData = get_pheno_data(iPath,pheno,f,lofString)
     print('phenoData imported')
     pcPath = iPath + lofString + '_pcs.txt'
