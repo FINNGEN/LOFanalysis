@@ -2,6 +2,11 @@ import os
 import numpy as np
 import gzip
 
+rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
+dataPath = rootPath + 'Data/'
+# REQUIRED FILES
+phenoFile = dataPath + 'FINNGEN_PHENOTYPES_DF1_V4_2018_03_27.txt.gz'
+
 def make_sure_path_exists(path):
     import errno
     try:
