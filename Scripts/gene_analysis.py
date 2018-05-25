@@ -370,16 +370,13 @@ if __name__ == '__main__':
 
 
 
-    # create the parser for the generate_variants command
+    # create the parser for the logit command
     parser_logit = subparsers.add_parser('logit', help='do logit analysis')
    
     parser_logit.add_argument("--cpus",type = int, help = 'Number of cores to use', default = cpus)
     parser_logit.add_argument('--test',action = 'store_true',help = 'Flag to run small chunks')
 
-        # create the parser for the generate_variants command
-    parser_pheno = subparsers.add_parser('write-pheno', help='write phenoData')
-    parser_pheno.add_argument("--cpus",type = int, help = 'Number of cores to use', default = cpus)
-    parser_pheno.add_argument('--test',action = 'store_true',help = 'only runs one pheno per cpu passed')
+   
 
 
 
