@@ -71,7 +71,7 @@ def logistic_gene(iPath,gene,lofString = 'hc_lof',f = phenoFile,test = True,info
 
         if test is True:
             pList = phenoList[:20]
-        print(len(geneList))
+        print(len(pList))
 
         for i,pheno in enumerate(pList):
             #print(pheno,i,gene)
