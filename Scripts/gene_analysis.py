@@ -188,6 +188,10 @@ def get_gene_list(iPath,lofString = 'hc_lof'):
         geneList = np.loadtxt(oMatrix,usecols = [0], skiprows = 1,dtype = str)
         np.savetxt(oFile,geneList,fmt = '%s')
     return geneList
+
+def get_infoDict(lofString):
+    infoDict = pickle.load(open(dataPath + lofString + '_infoDict.p','rb'))
+    return infoDict
 #####################################
 #--FIX FILES TO ORDER SAMPLE DATA---#
 #####################################
