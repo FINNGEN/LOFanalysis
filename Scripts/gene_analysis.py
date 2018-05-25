@@ -49,13 +49,13 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',f = phenoFile,test = True,in
     print(pheno)
     phenoDataPath = iPath + '/pheno_data/'
     make_sure_path_exists(phenoDataPath)
-    oFile = phenoDataPath + lofString + '_' + pheno  + '_phenodata.txt'
+    phenoSave = phenoDataPath + lofString + '_' + pheno  + '_phenodata.txt'
     try:
-        phenoData = np.loadtxt(oFile,dtype = int)
+        phenoData = np.loadtxt(phenoSave,dtype = int)
         print('phenoData loaded')        
     except:
         phenoData = get_pheno_data(iPath,pheno,f,lofString)
-        np.savetxt(oFile,phenoData,fmt = '%i')
+        np.savetxt(phenoSave,phenoData,fmt = '%i')
         print('phenoData imported')        
 
 
