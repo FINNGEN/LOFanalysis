@@ -36,6 +36,19 @@ def multiproc_logit(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = Tr
     pool.map(logit_wrapper,params)
     pool.close()
 
+def multiproc_logit_gene(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = True,infoFilter = 0.9):
+
+    print(len(pList),' phenotypes')
+    geneList = get_info_score_gene_list(iPath,lofString,infoFilter)
+        print(len(geneList))
+    geneList= geneList if test is False else geneList[:proc]
+        
+
+    params  = list(product([iPath],pList,[lofString],[f],[test]))
+    pool = multiprocessing.Pool(proc)
+    pool.map(logit_wrapper,params)
+    pool.close()
+
 def logit_wrapper_gene(args):
     logistic_pheno(*args)
     
@@ -45,7 +58,7 @@ def logistic_gene(iPath,gene,lofString = 'hc_lof',f = phenoFile,test = True,info
     '''
     oPath = iPath + '/fits/'
     make_sure_path_exists(oPath)
-    oFile = oPath + lofString + '_' + pheno + '_' + str(infoFilter) + '_gene_results.txt'
+    oFile = oPath + lofString + '_' + gene + '_' + str(infoFilter) + '_gene_results.txt'
  
     print(pheno)
  
@@ -56,7 +69,11 @@ def logistic_gene(iPath,gene,lofString = 'hc_lof',f = phenoFile,test = True,info
     with open(oFile,'wt') as o:
         o.write('\t'.join(shlex.split('gene lof_cases lof_controls no_lof_cases no_lof_controls logit_coeff_gene logit_pval_gene logit_coeff_pc1 logit_pval_pc1 logit_coeff_pc2 logit_pval_pc2 fischer_oddsratio fischer_pval ')) + '\n')
 
-        for i,pheno in enumerate(phenoList):
+        if test is True:
+            pList = phenoList[:20]
+        print(len(geneList))
+
+        for i,pheno in enumerate(pList):
             #print(pheno,i,gene)
             o.write(pheno + '\t')
             phenoDataPath = iPath + '/pheno_data/'
