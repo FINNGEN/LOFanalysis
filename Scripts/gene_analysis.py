@@ -45,7 +45,7 @@ def multiproc_logit_gene(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test
 
     params  = list(product([iPath],geneList,[lofString],[f],[test]))
     pool = multiprocessing.Pool(proc)
-    pool.map(logit_wrapper,params)
+    pool.map(logit_wrapper_gene,params)
     pool.close()
 
 def logit_wrapper_gene(args):
