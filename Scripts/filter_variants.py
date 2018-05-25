@@ -236,8 +236,9 @@ def create_info_file(annotatedFile,lofString = 'hc_lof'):
                 gene = line[genePos]
                 avgInfo = line[avgPos]
                 if (lof in lofFilterList):
-                    o.write(variant.replace(':','_') + '\t' + gene + '\n')
-                    oo.write(variant.replace(':','_')+ '\n')
+                    variant =variant.replace(':','_') 
+                    o.write(variant + '\t' + gene + '\n')
+                    oo.write(variant + '\n')
                     infoDict[variant] = float(avgInfo)
                     
         pickle.dump(infoDict,open(dataPath + lofString + '_infoDict.p','wb'))
