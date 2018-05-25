@@ -61,7 +61,7 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',f = phenoFile,test = True,in
 
     pcPath = iPath + lofString + '_pcs.txt'
     pcData = np.loadtxt(pcPath,dtype = float,usecols = range(1,11))
-    print('pcData imported.')
+    print('pcData loaded.')
     
     with open(oFile,'wt') as o:
         o.write('\t'.join(shlex.split('gene lof_cases lof_controls no_lof_cases no_lof_controls logit_coeff_gene logit_pval_gene logit_coeff_pc1 logit_pval_pc1 logit_coeff_pc2 logit_pval_pc2 fischer_oddsratio fischer_pval ')) + '\n')
