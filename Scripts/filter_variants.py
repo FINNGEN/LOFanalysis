@@ -240,7 +240,7 @@ def create_info_file(annotatedFile,lofString = 'hc_lof'):
                     oo.write(variant.replace(':','_')+ '\n')
                     infoDict[variant] = float(avgInfo)
                     
-        pickle.dump(open(dataPath + lofString + '_infoDict.p','wb'),infoDict)
+        pickle.dump(infoDict,open(dataPath + lofString + '_infoDict.p','wb'))
                     
 def read_header(header = None,lofString = "hc_lof"):
     '''
