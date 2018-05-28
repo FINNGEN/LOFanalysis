@@ -34,10 +34,7 @@ def logit_gene(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = True,in
     '''
     In order to seepd up reading from disk, I multiproc the pheno data within a gene.
     '''
-    oPath = iPath + '/fits/'
-    make_sure_path_exists(oPath)
-    oFile = oPath + lofString + '_' + gene + '_' + str(infoFilter) + '_gene_results.txt'
-
+ 
     geneList = get_info_score_gene_list(iPath,lofString,infoFilter)
     print(len(geneList))
     gList = geneList if test is False else geneList[:10]  
