@@ -24,13 +24,13 @@ def write_final_file(iPath,lofString = 'hc_lof'):
             with open(f,'rt') as i:
                 next(i)
                 for line in i:
-                    line = line.split('\t')
-                    odds = line[-2]
-                    line[-2] = str(round(float(odds),5))
-                    pval = line[-1]
-                    line[-1] = format_e(float(pval))
-                    line = '\t'.join(line)
-                    o.write(gene + '\t' + line + '\n')
+                   # line = line.split('\t')
+                   # odds = line[-2]
+                   # line[-2] = str(round(float(odds),5))
+                   # pval = line[-1]
+                   # line[-1] = format_e(float(pval))
+                   # line = '\t'.join(line)
+                    o.write(gene + '\t' + line )
 
     oFile =  iPath + lofString + '_gene_summary_ordered.txt'
     cmd = 'echo "gene\tpheno\tlof_cases\tlof_controls\tno_lof_cases\tno_lof_controls\todds ratio\tpval " > ' + oFile +  ' && cat ' +filePath + ' | sort -k8 >> ' + oFile + ' && head -n11 ' + oFile + ' > '+iPath+'temp.txt'
