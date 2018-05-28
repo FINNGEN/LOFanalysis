@@ -49,6 +49,7 @@ def write_final_file(iPath,lofString = 'hc_lof'):
         for line in i:
             line = line.split('\t')
             odds = line[-2]
+            print(odds)
             line[-2] = str(round(float(odds),5))
             pval = line[-1]
             line[-1] = format_e(float(pval))
