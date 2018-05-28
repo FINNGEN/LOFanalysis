@@ -30,8 +30,9 @@ def write_final_file(iPath,lofString = 'hc_lof'):
                     pval = line[-1]
                     line[-1] = format_e(float(pval))
                     o.write(gene + '\t' + line)
-    
-    cmd = 'cat ' +filePath + ' | sort -k8 > ' + iPath + lofString + '_gene_summary_ordered.txt'
+
+    oFile =  iPath + lofString + '_gene_summary_ordered.txt'
+    cmd = 'echo gene lof_cases lof_controls no_lof_cases no_lof_controls fischer_oddsratio fischer_pval > ' + oFile +  ' && cat ' +filePath + ' | sort -k8 >> ' + oFile
 
     shPath = bashPath +  'filter_lof_matrix.sh'
 
