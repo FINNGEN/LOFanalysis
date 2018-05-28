@@ -14,6 +14,8 @@ from scipy import stats
 stats.chisqprob = lambda chisq, df: stats.chi2.sf(chisq, df)
 import multiprocessing
 cpus = multiprocessing.cpu_count()
+import pandas as pd
+
 
 rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
 dataPath = rootPath + 'Data/'
@@ -107,12 +109,13 @@ def logistic_gene(iPath,lofData,pcData,pheno,lofString = 'hc_lof',f = phenoFile)
     Function that is ultimately passed to the multiprocessing pool. It loops through all genes given a phenotype. With test  it only works with a small chunk of genes
     '''
  
-    print(pheno)            
     phenoDataPath = iPath + '/pheno_data/'
     make_sure_path_exists(phenoDataPath)
     phenoSave = phenoDataPath + lofString + '_' + pheno  + '_phenodata.txt'
     try:
-        phenoData = np.loadtxt(phenoSave,dtype = int)
+        phenoData = pd.read_csv('/home/pete/results/hc_lof/pheno_data/hc_lof_AB1_ARTHROPOD_phenodata.txt').values.flatten()
+        print(pheno)            
+
     except:
         phenoData = get_pheno_data(iPath,pheno,f,lofString)
         np.savetxt(phenoSave,phenoData,fmt = '%i')
