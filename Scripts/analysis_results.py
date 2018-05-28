@@ -22,6 +22,7 @@ def write_final_file(iPath,lofString = 'hc_lof'):
             gene = f.split(lofString)[-1].split('_')[1]
             print(gene)
             with open(f,'rt') as i:
+                next(i)
                 for line in i:
                     o.write(gene + '\t' + line)
     
