@@ -45,7 +45,7 @@ def logit_gene(iPath,lofString='hc_lof',gene = 'TTLL10',f = phenoFile,proc = cpu
     print(len(geneList))
 
     for gene in geneList:
-        gene_proc(iPath,pList,lofString,gene,f,proc,infoFilter)
+        gene_proc(iPath,pList,lofString,gene,f,proc)
 
 def gene_proc(iPath,phenoList,lofString='hc_lof',gene = 'TTLL10',f = phenoFile,proc = cpus):
     '''
@@ -108,8 +108,7 @@ def logistic_gene(iPath,lofData,pcData,pheno,lofString = 'hc_lof',f = phenoFile)
     Function that is ultimately passed to the multiprocessing pool. It loops through all genes given a phenotype. With test  it only works with a small chunk of genes
     '''
  
-   
-            
+    print(pheno)            
     phenoDataPath = iPath + '/pheno_data/'
     make_sure_path_exists(phenoDataPath)
     phenoSave = phenoDataPath + lofString + '_' + pheno  + '_phenodata.txt'
