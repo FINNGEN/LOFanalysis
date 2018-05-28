@@ -20,8 +20,7 @@ def write_final_file(iPath,lofString = 'hc_lof'):
         for f in fileList:
             gene = f.split('most_severe')[-1].split('_')[1]
             print(gene,filePath)
-            with open(filePath,'rt') as i:
+            with open(f,'rt') as i:
                 for line in i:
-                    print(line)
                     o.write(gene + '\t' + line)
     
