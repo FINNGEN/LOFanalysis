@@ -98,7 +98,7 @@ def logistic_gene(iPath,lofData,pheno,lofString = 'hc_lof',f = phenoFile):
         np.savetxt(phenoSave,phenoData,fmt = '%i')
         
     f_results,table = f_test(phenoData,lofData)
-    return pheno,results,f_results,table
+    return pheno,f_results,table
           
 
 #####################
