@@ -75,7 +75,10 @@ def gene_proc(iPath,phenoList,lofString='hc_lof',gene = 'TTLL10',f = phenoFile,p
             o.write(pheno + '\t')
             # write counts of lof/no_lof
             countString =  '\t'.join([str(elem) for elem in table.flatten()])
-            o.write(countString + '\n')
+            o.write(countString + '\t')
+            o.write( '\t'.join([str(elem) for elem in f_results]))
+            o.write('\n')
+            
         
     return None
 
