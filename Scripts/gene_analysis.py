@@ -40,7 +40,7 @@ def logit_gene(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = True,in
     geneList = get_info_score_gene_list(iPath,lofString,infoFilter)
     print(len(geneList))
     gList = geneList if test is False else geneList[:10]  
-    print(len(gList),' genotypes')
+    print(len(gList),' genes')
 
     # load pcData
     pcPath = iPath + lofString + '_pcs.txt'
