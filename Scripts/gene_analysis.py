@@ -103,7 +103,7 @@ def gene_proc(iPath,phenoList,lofString='hc_lof',gene = 'TTLL10',f = phenoFile,p
 
 
 def gene_wrapper(args):
-    logistic_gene(*args)
+    return logistic_gene(*args)
 def logistic_gene(iPath,lofData,pcData,pheno,lofString = 'hc_lof',f = phenoFile):
     '''
     Function that is ultimately passed to the multiprocessing pool. It loops through all genes given a phenotype. With test  it only works with a small chunk of genes
