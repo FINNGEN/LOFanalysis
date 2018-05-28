@@ -25,7 +25,7 @@ def write_final_file(iPath,lofString = 'hc_lof'):
                 for line in i:
                     o.write(gene + '\t' + line)
     
-    cmd = 'head most_severe_gene_summary.txt  |  cut -f-2,8 | sort -k3 > ' + iPath + lofString + '_gene_summary_ordered.txt'
+    cmd = 'head ' +filePath + ' |  cut -f-2,8 | sort -k3 > ' + iPath + lofString + '_gene_summary_ordered.txt'
 
     shPath = bashPath +  'filter_lof_matrix.sh'
 
