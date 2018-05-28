@@ -22,5 +22,6 @@ def write_final_file(iPath,lofString = 'hc_lof'):
             print(gene,filePath)
             with open(filePath,'rt') as i:
                 for line in i:
+                    print(line)
                     o.write(gene + '\t' + line)
     
