@@ -42,7 +42,7 @@ def logit_gene(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = True,in
 
     pList = phenoList if test is False else phenoList[:proc]
     for gene in gList:
-        gene_proc(iPath,pList,lofString,gene,f,proc,test)
+        gene_proc(iPath,pList,lofString,gene,f,proc)
 
 def gene_proc(iPath,phenoList,lofString='hc_lof',gene = 'TTLL10',f = phenoFile,proc = cpus):
     '''
