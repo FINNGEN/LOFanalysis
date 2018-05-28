@@ -24,6 +24,11 @@ def write_final_file(iPath,lofString = 'hc_lof'):
             with open(f,'rt') as i:
                 next(i)
                 for line in i:
+                    line = line.split('\t')
+                    odds = line[-2]
+                    line[-2] = str(round(float(odds),5))
+                    pval = line[-1]
+                            
                     o.write(gene + '\t' + line)
     
     cmd = 'cat ' +filePath + ' | sort -k8 > ' + iPath + lofString + '_gene_summary_ordered.txt'
@@ -36,3 +41,8 @@ def write_final_file(iPath,lofString = 'hc_lof'):
 
     call(['chmod','+x',shPath])
     call(shPath,shell = True)
+
+
+def format_e(n):
+    a = '%E' % n
+    return a.split('E')[0].rstrip('0').rstrip('.') + 'E' + a.split('E')[1]
