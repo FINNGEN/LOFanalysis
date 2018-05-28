@@ -42,17 +42,11 @@ def logit_gene(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = True,in
     gList = geneList if test is False else geneList[:10]  
     print(len(gList),' genes')
 
-    # load pcData
-    pcPath = iPath + lofString + '_pcs.txt'
-    pcData = np.loadtxt(pcPath,dtype = float,usecols = range(1,11))
-    print('pcData loaded.')
-
-    
     pList = phenoList if test is False else phenoList[:proc]
     for gene in gList:
-        gene_proc(iPath,pList,pcData,lofString,gene,f,proc)
+        gene_proc(iPath,pList,lofString,gene,f,proc)
 
-def gene_proc(iPath,phenoList,pcData,lofString='hc_lof',gene = 'TTLL10',f = phenoFile,proc = cpus):
+def gene_proc(iPath,phenoList,lofString='hc_lof',gene = 'TTLL10',f = phenoFile,proc = cpus):
     '''
     For a single gene, multiproc the phenodata
     '''
@@ -67,7 +61,7 @@ def gene_proc(iPath,phenoList,pcData,lofString='hc_lof',gene = 'TTLL10',f = phen
     lofData = get_lof_data(iPath,gene,lofString)
  
     # list of params to loop
-    params  = list(product([iPath],[lofData],[pcData],phenoList,[lofString],[f]))
+    params  = list(product([iPath],[lofData],phenoList,[lofString],[f]))
     pool = multiprocessing.Pool(proc)
     results = pool.map(gene_wrapper,params)
     pool.close()
@@ -88,7 +82,7 @@ def gene_proc(iPath,phenoList,pcData,lofString='hc_lof',gene = 'TTLL10',f = phen
 
 def gene_wrapper(args):
     return logistic_gene(*args)
-def logistic_gene(iPath,lofData,pcData,pheno,lofString = 'hc_lof',f = phenoFile):
+def logistic_gene(iPath,lofData,pheno,lofString = 'hc_lof',f = phenoFile):
     '''
     Function that is ultimately passed to the multiprocessing pool. It loops through all genes given a phenotype. With test  it only works with a small chunk of genes
     '''
