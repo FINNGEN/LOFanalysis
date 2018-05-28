@@ -453,4 +453,4 @@ if __name__ == '__main__':
     if args.command == "logit":
 #        multiproc_logit(oPath,args.lof,args.phenoFile,args.cpus,args.test,args.infoFilter)
 
-        logit_gene(oPath,args.lofString,args.phenoFile,args.cpus,args.test,args.infoFilter):
+        logit_gene(oPath,args.lofString,args.phenoFile,args.cpus,args.test,args.infoFilter)
