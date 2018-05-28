@@ -73,32 +73,16 @@ def gene_proc(iPath,phenoList,pcData,lofString='hc_lof',gene = 'TTLL10',f = phen
     pool.close()
     
     with open(oFile,'wt') as o:
-        o.write('\t'.join(shlex.split('gene lof_cases lof_controls no_lof_cases no_lof_controls logit_coeff_gene logit_pval_gene logit_coeff_pc1 logit_pval_pc1 logit_coeff_pc2 logit_pval_pc2 fischer_oddsratio fischer_pval ')) + '\n')
+        o.write('\t'.join(shlex.split('gene lof_cases lof_controls no_lof_cases no_lof_controls fischer_oddsratio fischer_pval ')) + '\n')
 
         for entry in results:
-            pheno,logit_results,f_results,table = entry
+            f_results,table = entry
             #print(pheno,i,gene)
             o.write(pheno + '\t')
             # write counts of lof/no_lof
             countString =  '\t'.join([str(elem) for elem in table.flatten()])
-            o.write(countString + '\t')
-            
-            try:
-                params = logit_results.params
-                pvalues = logit_results.pvalues
-                #add columns
-                res = np.column_stack((params,pvalues))
-                # flatten so first two elemts are from lof, next 2 pc1 etc.
-                resArray = res.flatten()[:6]
-            except:
-                resArray = ['NA']*6
-                
-            # write logit_results            
-            oString =  '\t'.join([str(elem) for elem in resArray])
-            o.write( oString + '\t')
-            o.write( '\t'.join([str(elem) for elem in f_results]))
-            o.write('\n')
-
+            o.write(countString + '\n')
+        
     return None
 
 
@@ -118,9 +102,8 @@ def logistic_gene(iPath,lofData,pcData,pheno,lofString = 'hc_lof',f = phenoFile)
     except:
         phenoData = get_pheno_data(iPath,pheno,f,lofString)
         np.savetxt(phenoSave,phenoData,fmt = '%i')
-
-
-    logit_results,f_results,table = logistic_regression(iPath,lofString,pcData,phenoData,lofData,f)
+        
+    logit_results,f_results,table = f_test(phenoData,lofData)
     return pheno,logit_results,f_results,table
           
 
@@ -258,7 +241,27 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     table[1] = [nolofCases,nolofControls]
     f_results = fisher_exact(table)
 
+                                    
     return logit_results,f_results,table
+
+def f_test(phenoData,lofData):
+    # get lof counts for cases
+    phenoMask = (phenoData >0)
+    cases = phenoMask.sum()
+    lofCases = int(lofData[phenoMask].sum())
+    nolofCases = cases - lofCases
+    # get lof counts for controls
+    phenoMask = (phenoData == 0)
+    controls = phenoMask.sum()
+    lofControls = int(lofData[phenoMask].sum())
+    nolofControls = controls - lofControls
+    # do fischer test
+    table = np.empty((2,2),dtype = int)
+    table[0] = [lofCases,lofControls]
+    table[1] = [nolofCases,nolofControls]
+    f_results = fisher_exact(table)
+
+    return f_results,table
 
 def get_lof_data(iPath,gene,lofString = 'hc_lof'):
     with open(iPath + lofString + '_gene_to_filtered_samples.tsv','rt',os.O_NONBLOCK) as i:
