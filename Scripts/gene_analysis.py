@@ -70,7 +70,7 @@ def gene_proc(iPath,phenoList,lofString='hc_lof',gene = 'TTLL10',f = phenoFile,p
         o.write('\t'.join(shlex.split('gene lof_cases lof_controls no_lof_cases no_lof_controls fischer_oddsratio fischer_pval ')) + '\n')
 
         for entry in results:
-            f_results,table = entry
+            pheno,f_results,table = entry
             #print(pheno,i,gene)
             o.write(pheno + '\t')
             # write counts of lof/no_lof
@@ -97,8 +97,8 @@ def logistic_gene(iPath,lofData,pheno,lofString = 'hc_lof',f = phenoFile):
         phenoData = get_pheno_data(iPath,pheno,f,lofString)
         np.savetxt(phenoSave,phenoData,fmt = '%i')
         
-    logit_results,f_results,table = f_test(phenoData,lofData)
-    return pheno,logit_results,f_results,table
+    f_results,table = f_test(phenoData,lofData)
+    return pheno,results,f_results,table
           
 
 #####################
