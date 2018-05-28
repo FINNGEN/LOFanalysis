@@ -178,7 +178,7 @@ def logistic_pheno(iPath,pheno,lofString = 'hc_lof',f = phenoFile,test = True,in
             #print(pheno,i,gene)
             o.write(gene + '\t')
             lofData = get_lof_data(iPath,gene,lofString)
-            assert lofData.shape == phenoData.shape
+            print(lofData.shape,phenoData.shape)
             logit_results,f_results,table = logistic_regression(iPath,lofString,pcData,phenoData,lofData,f)
             # write counts of lof/no_lof
             countString =  '\t'.join([str(elem) for elem in table.flatten()])
