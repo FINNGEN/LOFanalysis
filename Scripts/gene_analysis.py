@@ -113,7 +113,7 @@ def logistic_gene(iPath,lofData,pcData,pheno,lofString = 'hc_lof',f = phenoFile)
     make_sure_path_exists(phenoDataPath)
     phenoSave = phenoDataPath + lofString + '_' + pheno  + '_phenodata.txt'
     try:
-        phenoData = pd.read_csv('/home/pete/results/hc_lof/pheno_data/hc_lof_AB1_ARTHROPOD_phenodata.txt').values.flatten()
+        phenoData = pd.read_csv('/home/pete/results/hc_lof/pheno_data/hc_lof_' + pheno + '_ARTHROPOD_phenodata.txt').values.flatten()
         print(pheno)            
 
     except:
