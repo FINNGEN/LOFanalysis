@@ -30,7 +30,7 @@ eigenvecPath = dataPath + '10pc.eigenvec'
 #####################
 
 
-def logit_gene(iPath,lofString='hc_lof',gene = 'TTLL10',f = phenoFile,proc = cpus,test = True,infoFilter = 0.9):
+def logit_gene(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = True,infoFilter = 0.9):
     '''
     In order to seepd up reading from disk, I multiproc the pheno data within a gene.
     '''
@@ -451,5 +451,6 @@ if __name__ == '__main__':
     
     
     if args.command == "logit":
-        multiproc_logit(oPath,args.lof,args.phenoFile,args.cpus,args.test,args.infoFilter)
+#        multiproc_logit(oPath,args.lof,args.phenoFile,args.cpus,args.test,args.infoFilter)
 
+        logit_gene(oPath,args.lofString,args.phenoFile,args.cpus,args.test,args.infoFilter):
