@@ -58,7 +58,7 @@ def write_final_file(iPath,lofString = 'hc_lof'):
     with open(iPath + 'temp.txt','wt') as o :
         o.write("gene\tpheno\tlof_cases\tlof_controls\tno_lof_cases\tno_lof_controls\todds ratio\tpval\n")
         for line in resLines:
-            o.write(line)
+            o.write(line + '\n')
 def format_e(n):
     a = '%E' % n
     return a.split('E')[0].rstrip('0').rstrip('.') + 'E' + a.split('E')[1]
