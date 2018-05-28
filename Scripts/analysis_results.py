@@ -28,7 +28,7 @@ def write_final_file(iPath,lofString = 'hc_lof'):
                     odds = line[-2]
                     line[-2] = str(round(float(odds),5))
                     pval = line[-1]
-                            
+                    line[-1] = format_e(float(pval))
                     o.write(gene + '\t' + line)
     
     cmd = 'cat ' +filePath + ' | sort -k8 > ' + iPath + lofString + '_gene_summary_ordered.txt'
