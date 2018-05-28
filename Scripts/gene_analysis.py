@@ -114,7 +114,6 @@ def logistic_gene(iPath,lofData,pcData,pheno,lofString = 'hc_lof',f = phenoFile)
     phenoSave = phenoDataPath + lofString + '_' + pheno  + '_phenodata.txt'
     try:
         phenoData = pd.read_csv(phenoSave,header = None).values.flatten()
-        print(pheno)            
 
     except:
         phenoData = get_pheno_data(iPath,pheno,f,lofString)
