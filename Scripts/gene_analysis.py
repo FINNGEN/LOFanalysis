@@ -55,7 +55,7 @@ def gene_proc(iPath,phenoList,lofString='hc_lof',gene = 'TTLL10',f = phenoFile,p
     # where to write_Results
     oPath = iPath + '/gene_fits/'
     make_sure_path_exists(oPath)
-    oFile = oPath + lofString + '_' + gene + '_' + str(infoFilter) + '_gene_results.txt'
+    oFile = oPath + lofString + '_' + gene +  '_gene_results.txt'
 
     # load lofData
     print(gene)
