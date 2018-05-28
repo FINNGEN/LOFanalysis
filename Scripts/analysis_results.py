@@ -33,7 +33,7 @@ def write_final_file(iPath,lofString = 'hc_lof'):
                     o.write(gene + '\t' + line )
 
     oFile =  iPath + lofString + '_gene_summary_ordered.txt'
-    cmd = ' cat ' +filePath + ' | sort -k8 >> ' + oFile + ' && head -n11 ' + oFile + ' > '+iPath+'temp.txt'
+    cmd = ' cat ' +filePath + ' | sort -k8 > ' + oFile + ' && head -n11 ' + oFile + ' > '+iPath+'temp.txt'
 
     shPath = bashPath +  'gene_results.sh'
 
