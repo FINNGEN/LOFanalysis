@@ -9,6 +9,7 @@ from file_utils import make_sure_path_exists,return_header_variants,split_array_
 
 
 rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
+bashPath = rootPath + 'tmp_scripts/'
 
 
 def write_final_file(iPath,lofString = 'hc_lof'):
@@ -20,7 +21,17 @@ def write_final_file(iPath,lofString = 'hc_lof'):
         for f in fileList:
             gene = f.split('most_severe')[-1].split('_')[1]
             print(gene,filePath)
-            with open(f,'rt') as i:
+            with open(,f'rt') as i:
                 for line in i:
                     o.write(gene + '\t' + line)
     
+    cmd = 'head most_severe_gene_summary.txt  |  cut -f-2,8 | sort -k3 > ' + iPath + lofString + '_gene_summary_ordered.txt'
+
+    shPath = bashPath +  'filter_lof_matrix.sh'
+
+    with open(shPath,'wt') as o:
+        o.write(' #!/bin/bash\n')
+        o.write(cmd)
+
+    call(['chmod','+x',shPath])
+    call(shPath,shell = True)
