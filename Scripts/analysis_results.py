@@ -33,7 +33,7 @@ def write_final_file(iPath,lofString = 'hc_lof'):
                     o.write(gene + '\t' + line + '\n')
 
     oFile =  iPath + lofString + '_gene_summary_ordered.txt'
-    cmd = 'echo gene    lof_cases    lof_controls    no_lof_cases    no_lof_controls    fischer_oddsratio    fischer_pval > ' + oFile +  ' && cat ' +filePath + ' | sort -k8 >> ' + oFile
+    cmd = 'echo "gene\tlof_cases\tlof_controls\tno_lof_cases\tno_lof_controls\tfisher_oddsratio\tfisher_pval > ' + oFile +  ' && cat ' +filePath + ' | sort -k8 >> ' + oFile
 
     shPath = bashPath +  'filter_lof_matrix.sh'
 
