@@ -44,7 +44,19 @@ def write_final_file(iPath,lofString = 'hc_lof'):
     call(['chmod','+x',shPath])
     call(shPath,shell = True)
 
-
+    with open(iPath + 'temp.txt','rt') as i :
+        resLines = []
+        for line in i:
+            line = line.split('\t')
+            odds = line[-2]
+            line[-2] = str(round(float(odds),5))
+            pval = line[-1]
+            line[-1] = format_e(float(pval))
+            line = '\t'.join(line)
+            resLines.append(line)
+    with open(iPath + 'temp.txt','wt') as o :
+        for line in resLines:
+            o.write(line)
 def format_e(n):
     a = '%E' % n
     return a.split('E')[0].rstrip('0').rstrip('.') + 'E' + a.split('E')[1]
