@@ -38,14 +38,14 @@ def logit_gene(iPath,lofString='hc_lof',gene = 'TTLL10',f = phenoFile,proc = cpu
     make_sure_path_exists(oPath)
     oFile = oPath + lofString + '_' + gene + '_' + str(infoFilter) + '_gene_results.txt'
 
-    pList = phenoList if test is False else phenoList[:proc]
-    print(len(pList),' phenotypes')
-
     geneList = get_info_score_gene_list(iPath,lofString,infoFilter)
     print(len(geneList))
+    gList = geneList if test is False else geneList[:10]  
+    print(len(gList),' genotypes')
 
-    for gene in geneList:
-        gene_proc(iPath,pList,lofString,gene,f,proc)
+    pList = phenoList if test is False else phenoList[:proc]
+    for gene in gList:
+        gene_proc(iPath,pList,lofString,gene,f,proc,test)
 
 def gene_proc(iPath,phenoList,lofString='hc_lof',gene = 'TTLL10',f = phenoFile,proc = cpus):
     '''
