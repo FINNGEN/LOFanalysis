@@ -46,6 +46,7 @@ def write_final_file(iPath,lofString = 'hc_lof'):
     
     with open(iPath + 'temp.txt','rt') as i :
         resLines = []
+        next(i)
         for line in i:
             line = line.split('\t')
             odds = line[-2]
