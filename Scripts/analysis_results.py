@@ -19,8 +19,8 @@ def write_final_file(iPath,lofString = 'hc_lof'):
     filePath = iPath + lofString + '_gene_summary.txt'
     with open(filePath,'wt') as o:
         for f in fileList:
-            gene = f.split('most_severe')[-1].split('_')[1]
-            print(gene,filePath)
+            gene = f.split(lofString)[-1].split('_')[1]
+            print(gene)
             with open(f,'rt') as i:
                 for line in i:
                     o.write(gene + '\t' + line)
