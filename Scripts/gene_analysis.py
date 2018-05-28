@@ -25,8 +25,109 @@ phenoList = np.loadtxt(dataPath + 'pheno-list.txt',usecols = [0],dtype = str,ski
 phenoFile = dataPath + 'FINNGEN_PHENOTYPES_DF1_V4_2018_03_27.txt.gz'
 eigenvecPath = dataPath + '10pc.eigenvec'
 
+#####################
+#--GENE  MULTIPROC--#
+#####################
 
 
+def logit_gene(iPath,lofString='hc_lof',gene = 'TTLL10',f = phenoFile,proc = cpus,test = True,infoFilter = 0.9):
+    '''
+    In order to seepd up reading from disk, I multiproc the pheno data within a gene.
+    '''
+    oPath = iPath + '/fits/'
+    make_sure_path_exists(oPath)
+    oFile = oPath + lofString + '_' + gene + '_' + str(infoFilter) + '_gene_results.txt'
+
+    pList = phenoList if test is False else phenoList[:proc]
+    print(len(pList),' phenotypes')
+
+    geneList = get_info_score_gene_list(iPath,lofString,infoFilter)
+    print(len(geneList))
+
+    for gene in geneList:
+        gene_proc(iPath,pList,lofString,gene,f,proc,infoFilter)
+
+def gene_proc(iPath,phenoList,lofString='hc_lof',gene = 'TTLL10',f = phenoFile,proc = cpus,infoFilter = 0.9):
+    '''
+    For a single gene, multiproc the phenodata
+    '''
+
+    # where to write_Results
+    oPath = iPath + '/gene_fits/'
+    make_sure_path_exists(oPath)
+    oFile = oPath + lofString + '_' + gene + '_' + str(infoFilter) + '_gene_results.txt'
+
+    # load lofData
+    print(gene)
+    lofData = get_lof_data(iPath,gene,lofString)
+    # load pcData
+    pcPath = iPath + lofString + '_pcs.txt'
+    pcData = np.loadtxt(pcPath,dtype = float,usecols = range(1,11))
+    print('pcData loaded.')
+
+    
+
+    params  = list(product([iPath],[lofData],[pcData],pList,[lofString],[f]))
+    pool = multiprocessing.Pool(proc)
+    results = pool.map(gene_wrapper,params)
+    pool.close()
+    
+    with open(oFile,'wt') as o:
+        o.write('\t'.join(shlex.split('gene lof_cases lof_controls no_lof_cases no_lof_controls logit_coeff_gene logit_pval_gene logit_coeff_pc1 logit_pval_pc1 logit_coeff_pc2 logit_pval_pc2 fischer_oddsratio fischer_pval ')) + '\n')
+
+        for entry in results:
+            pheno,logit_results,f_results,table = results
+            #print(pheno,i,gene)
+            o.write(pheno + '\t')
+            # write counts of lof/no_lof
+            countString =  '\t'.join([str(elem) for elem in table.flatten()])
+            o.write(countString + '\t')
+            
+            try:
+                params = logit_results.params
+                pvalues = logit_results.pvalues
+                #add columns
+                res = np.column_stack((params,pvalues))
+                # flatten so first two elemts are from lof, next 2 pc1 etc.
+                resArray = res.flatten()[:6]
+            except:
+                resArray = ['NA']*6
+                
+            # write logit_results            
+            oString =  '\t'.join([str(elem) for elem in resArray])
+            o.write( oString + '\t')
+            o.write( '\t'.join([str(elem) for elem in f_results]))
+            o.write('\n')
+
+    return None
+
+
+def gene_wrapper(args):
+    logistic_gene(*args)
+def logistic_gene(iPath,loFdata,pcData,pheno,lofString = 'hc_lof',f = phenoFile):
+    '''
+    Function that is ultimately passed to the multiprocessing pool. It loops through all genes given a phenotype. With test  it only works with a small chunk of genes
+    '''
+ 
+   
+            
+    phenoDataPath = iPath + '/pheno_data/'
+    make_sure_path_exists(phenoDataPath)
+    phenoSave = phenoDataPath + lofString + '_' + pheno  + '_phenodata.txt'
+    try:
+        phenoData = np.loadtxt(phenoSave,dtype = int)
+    except:
+        phenoData = get_pheno_data(iPath,pheno,f,lofString)
+        np.savetxt(phenoSave,phenoData,fmt = '%i')
+
+    logit_results,f_results,table = logistic_regression(iPath,lofString,pcData,phenoData,lofData,f)
+    return pheno,logit_results,f_results,table
+          
+    
+
+#####################
+#--PHENO MULTIPROC--#
+#####################
 def multiproc_logit(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = True,infoFilter = 0.9):
 
     pList = phenoList if test is False else phenoList[:proc]
