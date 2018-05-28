@@ -47,7 +47,7 @@ def logit_gene(iPath,lofString='hc_lof',gene = 'TTLL10',f = phenoFile,proc = cpu
     for gene in geneList:
         gene_proc(iPath,pList,lofString,gene,f,proc,infoFilter)
 
-def gene_proc(iPath,phenoList,lofString='hc_lof',gene = 'TTLL10',f = phenoFile,proc = cpus,infoFilter = 0.9):
+def gene_proc(iPath,phenoList,lofString='hc_lof',gene = 'TTLL10',f = phenoFile,proc = cpus):
     '''
     For a single gene, multiproc the phenodata
     '''
@@ -65,9 +65,8 @@ def gene_proc(iPath,phenoList,lofString='hc_lof',gene = 'TTLL10',f = phenoFile,p
     pcData = np.loadtxt(pcPath,dtype = float,usecols = range(1,11))
     print('pcData loaded.')
 
-    
-
-    params  = list(product([iPath],[lofData],[pcData],pList,[lofString],[f]))
+    # list of params to loop
+    params  = list(product([iPath],[lofData],[pcData],phenoList,[lofString],[f]))
     pool = multiprocessing.Pool(proc)
     results = pool.map(gene_wrapper,params)
     pool.close()
