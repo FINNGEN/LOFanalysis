@@ -33,7 +33,7 @@ def write_final_file(iPath,lofString = 'hc_lof'):
                     o.write(gene + '\t' + line )
 
     oFile =  iPath + lofString + '_gene_summary_ordered.txt'
-    cmd = 'echo "gene\tpheno\tlof_cases\tlof_controls\tno_lof_cases\tno_lof_controls\todds ratio\tpval " > ' + oFile +  ' && cat ' +filePath + ' | sort -k8 >> ' + oFile + ' && head -n11 ' + oFile + ' > '+iPath+'temp.txt'
+    cmd = ' cat ' +filePath + ' | sort -k8 >> ' + oFile + ' && head -n11 ' + oFile + ' > '+iPath+'temp.txt'
 
     shPath = bashPath +  'gene_results.sh'
 
@@ -43,19 +43,19 @@ def write_final_file(iPath,lofString = 'hc_lof'):
 
     call(['chmod','+x',shPath])
     call(shPath,shell = True)
-
+    
     with open(iPath + 'temp.txt','rt') as i :
         resLines = []
         for line in i:
             line = line.split('\t')
             odds = line[-2]
-            print(odds)
             line[-2] = str(round(float(odds),5))
             pval = line[-1]
             line[-1] = format_e(float(pval))
             line = '\t'.join(line)
             resLines.append(line)
     with open(iPath + 'temp.txt','wt') as o :
+        o.write("gene\tpheno\tlof_cases\tlof_controls\tno_lof_cases\tno_lof_controls\todds ratio\tpval\n")
         for line in resLines:
             o.write(line)
 def format_e(n):
