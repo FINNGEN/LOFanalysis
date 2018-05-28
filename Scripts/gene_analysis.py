@@ -67,7 +67,7 @@ def gene_proc(iPath,phenoList,lofString='hc_lof',gene = 'TTLL10',f = phenoFile,p
     pool.close()
     
     with open(oFile,'wt') as o:
-        o.write('\t'.join(shlex.split('gene lof_cases lof_controls no_lof_cases no_lof_controls fischer_oddsratio fischer_pval ')) + '\n')
+        o.write('\t'.join(shlex.split('gene lof_cases lof_controls no_lof_cases no_lof_controls odds ratio fischer_pval ')) + '\n')
 
         for entry in results:
             pheno,f_results,table = entry
