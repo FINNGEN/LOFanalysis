@@ -14,6 +14,6 @@ rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
 def write_final_file(iPath,lofString = 'hc_lof'):
 
     oPath = iPath + '/gene_fits/'
-    fileList = [p for p in get_filepaths(oPath)]
+    fileList = [p for p in get_filepaths(oPath) if p.endswith('_gene_results.txt')]
     return fileList
     
