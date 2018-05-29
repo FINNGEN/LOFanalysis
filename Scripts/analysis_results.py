@@ -26,7 +26,7 @@ def write_final_file(iPath,lofString = 'hc_lof'):
                 for line in i:
                     line = line.split('\t')
                     odds = float(line[-2])
-                    pval = float(line[1])
+                    pval = float(line[-1])
                     if (odds > 1) & (pval < 0.0000000001):
                         line = '\t'.join(line)
                         o.write(gene + '\t' + line )
