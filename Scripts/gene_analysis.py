@@ -223,14 +223,14 @@ def logistic_regression(iPath,lofString = 'hc_lof',pcData = None,phenoData = Non
     #FISHER TEST
     samples = len(phenoData)
     # get lof counts for cases
-    phenoMask = (phenoData >0)
-    cases = phenoMask.sum()
-    lofCases = int(lofData[phenoMask].sum())
+    caseMask = (phenoData >0)
+    cases = caseMask.sum()
+    lofCases = int(lofData[caseMask].sum())
     nolofCases = cases - lofCases
     # get lof counts for controls
-    phenoMask = (phenoData == 0)
-    controls = phenoMask.sum()
-    lofControls = int(lofData[phenoMask].sum())
+    controlMask = (phenoData == 0)
+    controls = controlMask.sum()
+    lofControls = int(lofData[controlMask].sum())
     nolofControls = controls - lofControls
     # do fischer test
     table = np.empty((2,2),dtype = int)

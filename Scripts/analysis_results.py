@@ -24,13 +24,15 @@ def write_final_file(iPath,lofString = 'hc_lof'):
             with open(f,'rt') as i:
                 next(i)
                 for line in i:
-                   # line = line.split('\t')
-                   # odds = line[-2]
+                    line = line.split('\t')
+                    odds = float(line[-2])
+                    if odds > 1:
+                        o.write(gene + '\t' + line )
                    # line[-2] = str(round(float(odds),5))
                    # pval = line[-1]
                    # line[-1] = format_e(float(pval))
                    # line = '\t'.join(line)
-                    o.write(gene + '\t' + line )
+
 
     oFile =  iPath + lofString + '_gene_summary_ordered.txt'
     cmd = '  sort -g -k8 '+filePath+ ' > ' + oFile + ' && head -n11 ' + oFile + ' > '+iPath+'temp.txt'
