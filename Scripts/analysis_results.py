@@ -72,6 +72,6 @@ def keep_single_pheno(iPath,lofString = 'hc_lof'):
 
     oFile =  iPath + lofString + '_gene_summary_ordered.txt'
     genes = np.loadtxt(oFile,dtype = str,usecols = [0])
-    from colection import Counter
+    from collection import Counter
     c = Counter(genes)
     return [gene for gene in c if c[gene] ==1]
