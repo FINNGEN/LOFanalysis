@@ -26,7 +26,8 @@ def write_final_file(iPath,lofString = 'hc_lof'):
                 for line in i:
                     line = line.split('\t')
                     odds = float(line[-2])
-                    if odds > 1:
+                    pval = float(line[1])
+                    if (odds >) 1 & (pval < 0.0000000001):
                         line = '\t'.join(line)
                         o.write(gene + '\t' + line )
                    # line[-2] = str(round(float(odds),5))
@@ -65,3 +66,8 @@ def write_final_file(iPath,lofString = 'hc_lof'):
 def format_e(n):
     a = '%E' % n
     return a.split('E')[0].rstrip('0').rstrip('.') + 'E' + a.split('E')[1]
+
+
+def keep_single_pheno():
+
+    oFile =  iPath + lofString + '_gene_summary_ordered.txt'
