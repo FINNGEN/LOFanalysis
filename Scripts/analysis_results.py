@@ -71,3 +71,5 @@ def format_e(n):
 def keep_single_pheno():
 
     oFile =  iPath + lofString + '_gene_summary_ordered.txt'
+    genes = np.loadtxt(oFile,dtype = str,usecols = [0])
+    return genes
