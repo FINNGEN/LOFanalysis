@@ -47,18 +47,21 @@ def write_final_file(iPath,lofString = 'hc_lof'):
 
     call(['chmod','+x',shPath])
     call(shPath,shell = True)
-    
+
+    genes = keep_single_pheno(iPath,lofString)
     with open(iPath + 'temp.txt','rt') as i :
         resLines = []
         next(i)
         for line in i:
             line = line.split('\t')
+            gene = line[0]
             odds = line[-2]
             line[-2] = str(round(float(odds),5))
             pval = line[-1]
             line[-1] = format_e(float(pval))
             line = '\t'.join(line)
-            resLines.append(line)
+            if gene in genes:
+                resLines.append(line)
     with open(iPath + 'temp.txt','wt') as o :
         o.write("gene\tpheno\tlof_cases\tlof_controls\tno_lof_cases\tno_lof_controls\todds ratio\tpval\n")
         for line in resLines:
