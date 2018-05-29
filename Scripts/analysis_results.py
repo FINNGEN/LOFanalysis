@@ -76,6 +76,7 @@ def format_e(n):
 def keep_single_pheno(iPath,lofString = 'hc_lof'):
 
     oFile =  iPath + lofString + '_gene_summary_ordered.txt'
+    print(oFile)
     genes = np.loadtxt(oFile,dtype = str,usecols = [0])
     from collections import Counter
     c = Counter(genes)
