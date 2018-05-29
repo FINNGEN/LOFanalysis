@@ -68,7 +68,7 @@ def format_e(n):
     return a.split('E')[0].rstrip('0').rstrip('.') + 'E' + a.split('E')[1]
 
 
-def keep_single_pheno():
+def keep_single_pheno(iPath,lofString = 'hc_lof'):
 
     oFile =  iPath + lofString + '_gene_summary_ordered.txt'
     genes = np.loadtxt(oFile,dtype = str,usecols = [0])
