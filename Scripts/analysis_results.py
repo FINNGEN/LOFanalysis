@@ -49,6 +49,7 @@ def write_final_file(iPath,lofString = 'hc_lof'):
     call(shPath,shell = True)
 
     genes = keep_single_pheno(iPath,lofString)
+    print(genes)
     with open(iPath + 'temp.txt','rt') as i :
         resLines = []
         next(i)
