@@ -85,6 +85,10 @@ def multiproc_write_pheno(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,tes
 def pheno_wrapper(args):
     return_pheno_data(*args)
 
+##############################
+#--PARSE THE PHENOTYPE FILE--#
+##############################
+
 def return_pheno_data(iPath,pheno,lofString = 'hc_lof',f = phenoFile,test = True):
     oPath = iPath + '/pheno_data/'
     make_sure_path_exists(oPath)
