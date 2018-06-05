@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import gzip
+from collections import defaultdict
 
 rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
 dataPath = rootPath + 'Data/'
