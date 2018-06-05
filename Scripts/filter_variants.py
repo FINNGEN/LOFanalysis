@@ -36,7 +36,7 @@ def write_gene_matrix(iPath,lofString = 'hc_lof'):
         print("gene to sample matrix already generated.")
         overwrite = input('Do you want to overwrite(Y)?')
 
-    if overwrite != 'Y':
+    if overwrite == 'Y':
         g2v = get_variant_to_gene_dict(iPath,lofString)
         matrixPath = iPath + 'plink_files/'+ lofString + matrixName
         headerVariants = return_header_variants(matrixPath)
