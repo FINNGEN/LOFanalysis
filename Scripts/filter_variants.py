@@ -99,7 +99,7 @@ def write_genelists(iPath,chunks = cpus,lofString = 'hc_lof'):
         np.savetxt(chunkPath + 'gene_chunk_'+str(i) + '.txt',chunk,fmt = '%s')
                         
     
-def return_gene_columns(gene,iPath,g2v,headerVariants,lofString = 'hc_lof'):
+def return_gene_columns_alt(gene,iPath,g2v,headerVariants,lofString = 'hc_lof'):
     """
     Given a gene it loops through the header of the matrix file and returns the columns where variants belong to the gene
 
@@ -129,7 +129,7 @@ def return_gene_columns(gene,iPath,g2v,headerVariants,lofString = 'hc_lof'):
     return vData
 
 
-def return_gene_columns_alt(gene,iPath,g2v,headerVariants,samples,lofString = 'hc_lof'):
+def return_gene_columns(gene,iPath,g2v,headerVariants,samples,lofString = 'hc_lof'):
     """
     Given a gene it loops through the header of the matrix file and returns the columns where variants belong to the gene. Now i'm adding the feauture to have instead of 1s the highest info score for the batch the sample belongs to.
 
