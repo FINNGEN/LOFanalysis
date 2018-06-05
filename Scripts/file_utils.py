@@ -14,6 +14,11 @@ bashPath = rootPath + 'tmp_scripts/'
 for path in [dataPath,bashPath]:
     make_sure_path_exists(path)
 
+def dd(tp):
+    return defaultdict(tp)
+def dd_str():
+    return defaultdict(str)
+    
 def make_sure_path_exists(path):
     import errno
     try:
