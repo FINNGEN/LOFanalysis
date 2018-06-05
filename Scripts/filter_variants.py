@@ -183,23 +183,31 @@ def write_info_score_matrix_sample(iPath,samplePath,lofString='hc_lof'):
     I build an analogue matrix so that instead of 1s and 0s we have the info_score of the sample
     '''
 
-    matrixPath = iPath + '/plink_files/'+ lofString + matrixName
-    samples = np.loadtxt(matrixPath,usecols = [0],dtype = str,skiprows = 1)
-    
-    s2b = sample_to_batch_dict(samplePath)
+    print('generating sample to variant info score matrix...')
+    oFile = iPath + '/misc/'
+    make_sure_path_exists(oFile)
+    oFile += lofString + '_info_variant_matrix.tsv'
 
-    headerVariants = return_header_variants(matrixPath)
+    if os.path.isfile(oFile):
+        print('matrix already generated')
+
+    else:
+        matrixPath = iPath + '/plink_files/'+ lofString + matrixName
+        samples = np.loadtxt(matrixPath,usecols = [0],dtype = str,skiprows = 1)
     
-    vDict =  variant_is_dict(annotatedVariants,iPath,lofString)
+        s2b = sample_to_batch_dict(samplePath)
+
+        headerVariants = return_header_variants(matrixPath)
+    
+        vDict =  variant_is_dict(annotatedVariants,iPath,lofString)
         
-    with open(iPath + lofString + '_info_variant_matrix.tsv','wt') as o:
-        for sample in samples:
-            batch = s2b[sample]
-            line = [sample]
-            for variant in headerVariants:
-                line.append(vDict[variant][batch])
-            o.write('\t'.join(line) + '\n')
-                
+        with open(oFile,'wt') as o:
+            for sample in samples:
+                batch = s2b[sample]
+                line = [sample]
+                for variant in headerVariants:
+                    line.append(vDict[variant][batch])
+                o.write('\t'.join(line) + '\n')                
     return None
 
 
@@ -210,6 +218,7 @@ def generate_matrix(iPath,lofString = 'hc_lof'):
     """
     Returns variant x sample matrix with 1s where variant is present
     """
+
     iPath += '/plink_files/'
     iFile = iPath +lofString
     oFile = iFile + matrixName
