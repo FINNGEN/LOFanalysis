@@ -163,23 +163,34 @@ def return_gene_columns_alt(gene,iPath,g2v,headerVariants,samples,lofString = 'h
 
     assert idata.shape == vData.shape
 
-    prod = vData*iData
+    res = vData*iData
     if len(geneColumns) > 1:
         #sum across variants and check if >1
-        vData = np.max(prod,axis = 1)
+        res = np.max(res,axis = 1)
    
-    return vData
+    return res
 
-def write_info_score_matrix_sample(samples,iPath,headerVariants,vDict = None,s2b = None,lofString='hc_lof'):
+
+
+#######################
+#--GENERATING MATRIX--#
+#######################
+
+
+
+def write_info_score_matrix_sample(iPath,samplePath,lofString='hc_lof'):
     '''
     I build an analogue matrix so that instead of 1s and 0s we have the info_score of the sample
     '''
-    if s2b is None:
-        samplePath = dataPath + 'sample_info.txt'
-        s2b = sample_to_batch_dict(samplePath)
+
+    matrixPath = iPath + '/plink_files/'+ lofString + matrixName
+    samples = np.loadtxt(matrixPath,usecols = [0],dtype = str,skiprows = 1)
     
-    if vDict is None:
-        vDict =  variant_is_dict(annotatedVariants,iPath,lofString)
+    s2b = sample_to_batch_dict(samplePath)
+
+    headerVariants = return_header_variants(matrixPath)
+    
+    vDict =  variant_is_dict(annotatedVariants,iPath,lofString)
         
     with open(iPath + lofString + '_info_variant_matrix.tsv','wt') as o:
         for sample in samples:
@@ -191,10 +202,6 @@ def write_info_score_matrix_sample(samples,iPath,headerVariants,vDict = None,s2b
                 
     return None
 
-
-#######################
-#--GENERATING MATRIX--#
-#######################
 
 # THIS PIPELINE GENERATES THE FIRST STEP OF THE PROCESS
 # the output is a variant to sample matrix with 1/2/0/NA as entries
@@ -307,7 +314,7 @@ if __name__ == '__main__':
     parser_matrix.add_argument("--oPath", type= str,help="Path to folder where to output",default = ".")
     parser_matrix.add_argument("--lof", type= str,help="type of lof filter",required = True )
     parser_matrix.add_argument("--geno", type= float,help="genotype call rate for plink",default = 0.9 )
-
+    parser_logit.add_argument("--samplePath", default = dataPath + 'sample_info.txt'
 
     
     args = parser.parse_args()
@@ -321,6 +328,7 @@ if __name__ == '__main__':
         plink_filter(args.plinkPath,oPath,args.geno,args.lof)
         # build the plink lof matrix
         generate_matrix(oPath,args.lof)
+        write_info_score_matrix_sample(oPath,args.samplePath,args.lof)
         #from the plink matrix merge variants into genes
-        do_chunks(oPath,args.lof)
-        write_gene_matrix(oPath,args.lof)
+        #do_chunks(oPath,args.lof)
+        #write_gene_matrix(oPath,args.lof)

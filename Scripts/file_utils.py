@@ -165,7 +165,10 @@ def variant_is_dict(annVariants = annotatedVariants,iPath ='/home/pete/results/h
     I can use this dictionary to retreieve the info score for the samples
     '''
 
-    picklePath = iPath + lofString + '_vDict.p'
+    picklePath = iPath + '/misc/'
+    make_sure_path_exists(picklePath)
+
+    picklePath += lofString +'_vDict.p'
     print('loading/generating dict[variant][batch] = INFO_SCORE dict -->' + picklePath)
     try:
         vDict = pickle.load(open(picklePath,'rb'))
