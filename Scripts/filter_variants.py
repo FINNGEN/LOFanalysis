@@ -9,7 +9,7 @@ import pickle
 import shlex
 import sys
 from subprocess import Popen, PIPE,call
-from file_utils import make_sure_path_exists,return_header_variants,split_array_chunk,read_header
+from file_utils import make_sure_path_exists,return_header_variants,split_array_chunk,read_header,get_variant_to_gene_dict
 import multiprocessing
 cpus = multiprocessing.cpu_count()
 
@@ -110,7 +110,13 @@ def write_genelists(iPath,chunks = cpus,lofString = 'hc_lof'):
     
 def return_gene_columns(gene,iPath,g2v,headerVariants,lofString = 'hc_lof'):
     """
-    Loops through the header of the matrix file and returns the columns where variants belong to the gene
+    Given a gene it loops through the header of the matrix file and returns the columns where variants belong to the gene
+
+    # INPUTS
+    - gene
+
+    # OUTPUTS
+    - column(s) of the matrix for the gene
     """
     geneVariants = g2v[gene]
 
@@ -132,33 +138,15 @@ def return_gene_columns(gene,iPath,g2v,headerVariants,lofString = 'hc_lof'):
     return vData
 
 
-def get_variant_to_gene_dict(iPath,lofString = 'hc_lof'):
-    '''
-    Reads the plink snplist and returns a gene to variant dictionary 
-    '''
-    #get variant to gene mapping from full list of variants
-    bFile = iPath + 'plink_files/'+lofString 
-
-    v2g = dd(str)
-    with open(dataPath + lofString + '_variants.txt','rt') as i:
-        for line in i:
-            variant,gene = line.strip().split('\t')
-            v2g[variant] = gene
-
-    # read snplist of filtered plink file and keep gene to variant list dictionary
-    g2v = dd(list)
-    with open(bFile + '.snplist','rt') as i:
-        for line in i:
-            variant = line.strip()
-            gene = v2g[variant]
-            g2v[gene].append(variant)
-    return g2v
-
 
 
 #######################
 #--GENERATING MATRIX--#
 #######################
+
+# THIS PIPELINE GENERATES THE FIRST STEP OF THE PROCESS
+# the output is a variant to sample matrix with 1/2/0/NA as entries
+
 def generate_matrix(iPath,lofString = 'hc_lof'):
     """
     Returns variant x sample matrix with 1s where variant is present
@@ -208,6 +196,7 @@ def plink_filter(filePath,oPath,geno = 0.9,lofString = "hc_lof"):
 def create_info_file(annotatedFile,lofString = 'hc_lof'):
     '''
     Creates a lof_variants.txt with variants that carry lof along with their genes. 
+    It also creates a infoDict, i.e. a dictionary that stores the average info score of the variant
     '''
 
     if lofString == 'hc_lof':
