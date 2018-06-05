@@ -2,6 +2,7 @@ import os
 import numpy as np
 import gzip
 from collections import defaultdict
+import pickle
 
 rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
 dataPath = rootPath + 'Data/'
