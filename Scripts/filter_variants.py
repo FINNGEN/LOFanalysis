@@ -215,7 +215,7 @@ def generate_matrix(iPath,lofString = 'hc_lof'):
     Returns variant x sample matrix with 1s where variant is present
     """
 
-    iPath += 'plink_files/'
+    iPath += '/plink_files/'
     iFile = iPath +lofString
     oFile = iFile + matrixName
 

@@ -184,50 +184,5 @@ def sample_to_batch_ditc(filePath = dataPath + 'sample_info.txt'):
     return s2b
 
 
-def variant_is_dict(annVariants = annotatedVariants,iPath ='/home/pete/results/hc_lof/',lofString = "hc_lof" ):
-    
-    '''
-    Read the annotated_variants and returns a dict[variant][batch] = INFO_SCORE for teh variants that are in the snplist.
-    I can use this dictionary to retreieve the info score for the samples
-    '''
-
-    picklePath = iPath + lofString + '_vDict.p'
-    print('loading/generating dict[variant][batch] = INFO_SCORE dict -->' + picklePath)
-    try:
-        vDict = pickle.load(open(picklePath,'rb'))
-    except:
-        snplist = iPath + '/plink_files/' +lofString + '.snplist'
-
-        print('data missing, generating..')
-        variants = np.loadtxt(snplist,dtype = str)   
-        vDict = defaultdict(dd_str)
-        with gzip.open(annVariants,'rt') as i:
-            #read header
-            header = i.readline().strip().split('\t')
-            infoPos,lofPos,avgPos,genePos = read_header(header)
-            #return position of batches 
-            batches = header[infoPos[0]:infoPos[-1]+1]
-            #return batches
-            batches = [batch.split('INFO_')[1].split('_R1')[0] for batch in batches]
-            pickle.dump(batches,open(dataPath + 'ourbatches.p','wb'))
-        
-            startPos = infoPos[0]
-            rangebatches = np.arange(len(batches))
-            assert len(batches) == len(infoPos)
-
-            #loop variants
-            for line in i:
-                line = line.strip().split('\t')
-                variant = line[0].replace(':','_')
-                if variant in variants:
-                    for b in rangebatches:
-                        batch = batches[b]
-                        vDict[variant][batch] = line[startPos + b]
-
-        pickle.dump(vDict,open(picklePath,'wb'))
-
-    return vDict
-
-
 
 

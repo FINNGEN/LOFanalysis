@@ -8,9 +8,9 @@ from scipy.stats import fisher_exact
 from file_utils import make_sure_path_exists,return_column
 from file_utils import dataPath
 from filter_variants import get_variant_to_gene_dict
+import pandas as pd
 import multiprocessing
 cpus = multiprocessing.cpu_count()
-import pandas as pd
 
 
 
