@@ -13,8 +13,6 @@ rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
 dataPath = rootPath + 'Data/'
 annotatedVariants =  dataPath + 'annotated_variants.gz'
 bashPath = rootPath + 'tmp_scripts/'
-for path in [dataPath,bashPath]:
-    make_sure_path_exists(path)
 
 def dd(tp):
     return defaultdict(tp)
@@ -28,6 +26,9 @@ def make_sure_path_exists(path):
     except OSError as exception:
         if exception.errno != errno.EEXIST:
             raise                
+
+for path in [dataPath,bashPath]:
+    make_sure_path_exists(path)
 
 def return_header_variants(matrixPath):
     '''
