@@ -161,7 +161,7 @@ def return_gene_columns(gene,iPath,g2v,headerVariants,samples,lofString = 'hc_lo
     infoPath = iPath + '/misc/' + lofString + '_info_variant_matrix.tsv'
     iData = np.loadtxt(infoPath,dtype = float,usecols = geneColumns)
 
-    assert idata.shape == vData.shape
+    assert iData.shape == vData.shape
 
     res = vData*iData
     if len(geneColumns) > 1:
