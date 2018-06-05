@@ -158,7 +158,7 @@ def return_gene_columns(gene,iPath,g2v,headerVariants,samples,lofString = 'hc_lo
     vData = vData.astype(float)
 
     # import info score data from same columns
-    infoPath = iPath + '/misc/' lofString + '_info_variant_matrix.tsv'
+    infoPath = iPath + '/misc/' + lofString + '_info_variant_matrix.tsv'
     iData = np.loadtxt(infoPath,dtype = float,usecols = geneColumns)
 
     assert idata.shape == vData.shape
