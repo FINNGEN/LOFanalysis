@@ -69,7 +69,7 @@ def multi_wrapper_func(args):
         
 def multiprocess_func(chunkInt,iPath,lofString):
     '''
-    
+    Function that takes a chunk of gene and writes the output matrix
     '''
     chunkPath = iPath + '/gene_chunks/'
     chunkFile = chunkPath + 'matrix_chunk_' + str(chunkInt) + '.tsv'
@@ -155,13 +155,19 @@ def return_gene_columns_alt(gene,iPath,g2v,headerVariants,samples,lofString = 'h
     #import sample data keeping columns of gene
     vData = np.loadtxt(matrixPath,dtype = str,usecols = geneColumns,skiprows =1 )
     vData[vData =='NA'] = 0
-    vData = vData.astype(int)
+    vData = vData.astype(float)
+
+    # import info score data from same columns
+    infoPath = iPath + lofString + '_info_variant_matrix.tsv'
+    iData = np.loadtxt(infoPath,dtype = float,usecols = geneColumns)
+
+    assert idata.shape == vData.shape
+
+    prod = vData*iData
     if len(geneColumns) > 1:
         #sum across variants and check if >1
-        vData = np.sum(vData,axis = 1)
-
-    vData = vData.astype(bool).astype(int)
-    
+        vData = np.max(prod,axis = 1)
+   
     return vData
 
 def write_info_score_matrix_sample(samples,iPath,headerVariants,vDict = None,s2b = None,lofString='hc_lof'):
@@ -170,7 +176,7 @@ def write_info_score_matrix_sample(samples,iPath,headerVariants,vDict = None,s2b
     '''
     if s2b is None:
         samplePath = dataPath + 'sample_info.txt'
-        s2b = sample_to_batch_dict(samplePath )
+        s2b = sample_to_batch_dict(samplePath)
     
     if vDict is None:
         vDict =  variant_is_dict(annotatedVariants,iPath,lofString)
