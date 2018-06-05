@@ -314,8 +314,7 @@ if __name__ == '__main__':
     parser_matrix.add_argument("--oPath", type= str,help="Path to folder where to output",default = ".")
     parser_matrix.add_argument("--lof", type= str,help="type of lof filter",required = True )
     parser_matrix.add_argument("--geno", type= float,help="genotype call rate for plink",default = 0.9 )
-    parser_logit.add_argument("--samplePath", type = str,help ='path to file with info about sample and batches ',default = dataPath + 'sample_info.txt'
-
+    parser_logit.add_argument("--samplePath", type = str,help ='path to file with info about sample and batches ',default = dataPath + 'sample_info.txt')
     
     args = parser.parse_args()
 
