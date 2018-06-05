@@ -170,7 +170,7 @@ def write_info_score_matrix_sample(samples,iPath,headerVariants,vDict = None,s2b
     '''
     if s2b is None:
         samplePath = dataPath + 'sample_info.txt'
-        s2b = sample_to_batch_ditc(samplePath )
+        s2b = sample_to_batch_dict(samplePath )
     
     if vDict is None:
         vDict =  variant_is_dict(annotatedVariants,iPath,lofString)
