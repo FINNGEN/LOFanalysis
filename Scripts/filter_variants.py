@@ -9,6 +9,7 @@ import pickle
 import shlex
 import sys
 from subprocess import Popen, PIPE,call
+from file_utils import rootPath,dataPath,annotatedVariants,bashPath
 from file_utils import make_sure_path_exists,return_header_variants,split_array_chunk,read_header,get_variant_to_gene_dict
 import multiprocessing
 cpus = multiprocessing.cpu_count()

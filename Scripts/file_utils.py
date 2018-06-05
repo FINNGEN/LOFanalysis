@@ -6,6 +6,13 @@ rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
 dataPath = rootPath + 'Data/'
 # REQUIRED FILES
 phenoFile = dataPath + 'FINNGEN_PHENOTYPES_DF1_V4_2018_03_27.txt.gz'
+rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
+
+dataPath = rootPath + 'Data/'
+annotatedVariants =  dataPath + 'annotated_variants.gz'
+bashPath = rootPath + 'tmp_scripts/'
+for path in [dataPath,bashPath]:
+    make_sure_path_exists(path)
 
 def make_sure_path_exists(path):
     import errno
@@ -81,8 +88,6 @@ def return_column(pheno = 'FINNGENID',f = phenoFile,dtype = 'f8'):
     column = np.genfromtxt(i,usecols = (phenocol,),delimiter = ('\t'),skip_header=1,dtype = dtype)
     i.close()
     return column
-
-
 
 
 def return_header(f = phenoFile):
