@@ -178,7 +178,7 @@ def write_info_score_matrix_sample(samples,iPath,headerVariants,vDict = None,s2b
     with open(iPath + lofString + '_info_variant_matrix.tsv','wt') as o:
         for sample in samples:
             batch = s2b[sample]
-            line = [batch]
+            line = [sample]
             for variant in headerVariants:
                 line.append(vDict[variant][batch])
             o.write('\t'.join(line) + '\n')
