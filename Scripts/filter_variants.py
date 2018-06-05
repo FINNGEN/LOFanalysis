@@ -31,10 +31,12 @@ def write_gene_matrix(iPath,lofString = 'hc_lof'):
     Merges the chunks
     '''
     oFile = iPath + lofString + "_gene_to_sample.tsv"
+    overwrite = False
     if os.path.isfile(oFile):
         print("gene to sample matrix already generated.")
+        overwrite = input('Do you want to overwrite(Y)?')
 
-    else:
+    if overwrite != 'Y':
         g2v = get_variant_to_gene_dict(iPath,lofString)
         matrixPath = iPath + 'plink_files/'+ lofString + matrixName
         headerVariants = return_header_variants(matrixPath)
