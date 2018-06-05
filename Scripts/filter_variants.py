@@ -3,31 +3,21 @@ import os
 import gzip
 from operator import itemgetter
 import shutil
-from collections import defaultdict
 from itertools import product
 import pickle
 import shlex
 import sys
 from subprocess import Popen, PIPE,call
 from file_utils import rootPath,dataPath,annotatedVariants,bashPath
-from file_utils import make_sure_path_exists,return_header_variants,split_array_chunk,read_header,get_variant_to_gene_dict
+from file_utils import make_sure_path_exists,return_header_variants,split_array_chunk,read_header,get_variant_to_gene_dict,dd_str
 import multiprocessing
 cpus = multiprocessing.cpu_count()
 
 plink = shutil.which('plink')
 
-rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
-dataPath = rootPath + 'Data/'
-annotatedVariants =  dataPath + 'annotated_variants.gz'
-bashPath = rootPath + 'tmp_scripts/'
-for path in [dataPath,bashPath]:
-    make_sure_path_exists(path)
 
 
-def dd(tp):
-    return defaultdict(tp)
-def dd_str():
-    return defaultdict(str)
+
 lofName = "filtered_lof"
 matrixName = "_variantmatrix.tsv"
 
@@ -139,6 +129,61 @@ def return_gene_columns(gene,iPath,g2v,headerVariants,lofString = 'hc_lof'):
     return vData
 
 
+def return_gene_columns_alt(gene,iPath,g2v,headerVariants,samples,lofString = 'hc_lof'):
+    """
+    Given a gene it loops through the header of the matrix file and returns the columns where variants belong to the gene. Now i'm adding the feauture to have instead of 1s the highest info score for the batch the sample belongs to.
+
+    # INPUTS
+    - gene
+    - iPath : inputPath
+    - g2v: gene to variant dictionary
+    - headerVariants: list of variants to be included.
+    - samples: list of samples in order,i.e. the first column of the matrix
+
+    # OUTPUTS
+    - column(s) of the matrix for the gene
+    """
+
+    # path of the matrix file
+    matrixPath = iPath + '/plink_files/'+ lofString + matrixName
+    # return index of colums if variant belongs to gene
+    data = [(i+1,variant) for i,variant in enumerate(headerVariants) if variant in g2v[gene]]
+    geneColumns = [elem[0] for elem in data]
+    variants = [elem[1] for elem in data]
+    print(gene,geneColumns,variants)
+
+    #import sample data keeping columns of gene
+    vData = np.loadtxt(matrixPath,dtype = str,usecols = geneColumns,skiprows =1 )
+    vData[vData =='NA'] = 0
+    vData = vData.astype(int)
+    if len(geneColumns) > 1:
+        #sum across variants and check if >1
+        vData = np.sum(vData,axis = 1)
+
+    vData = vData.astype(bool).astype(int)
+    
+    return vData
+
+def write_info_score_matrix_sample(samples,iPath,headerVariants,vDict = None,s2b = None,lofString='hc_lof'):
+    '''
+    I build an analogue matrix so that instead of 1s and 0s we have the info_score of the sample
+    '''
+    if s2b is None:
+        samplePath = dataPath + 'sample_info.txt'
+        s2b = sample_to_batch_ditc(samplePath )
+    
+    if vDict is None:
+        vDict =  variant_is_dict(annotatedVariants,iPath,lofString)
+        
+    with open(iPath + lofString + '_info_variant_matrix.tsv','wt') as o:
+        for sample in samples:
+            batch = s2b[sample]
+            line = [batch]
+            for variant in headerVariants:
+                line.append(vDict[variant][batch])
+            o.write('\t'.join(line) + '\n')
+                
+    return None
 
 
 #######################
