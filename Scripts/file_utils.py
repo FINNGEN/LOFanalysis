@@ -203,7 +203,7 @@ def variant_is_dict(annVariants = annotatedVariants,iPath ='/home/pete/results/h
 
 
 
-def sample_to_batch_ditc(filePath = dataPath + 'sample_info.txt'):
+def sample_to_batch_dict(filePath = dataPath + 'sample_info.txt'):
     '''
     Given timo's file maps a sample to a batch. requires a conversion on the fly due to slightly different names between his batch names and ours. Need to pass our batches and use difflib
     '''
