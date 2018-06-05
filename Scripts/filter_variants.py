@@ -200,7 +200,7 @@ def write_info_score_matrix_sample(iPath,samplePath,lofString='hc_lof'):
         headerVariants = return_header_variants(matrixPath)
     
         vDict =  variant_is_dict(annotatedVariants,iPath,lofString)
-        
+        print('data loaded. writing matrix...')
         with open(oFile,'wt') as o:
             for sample in samples:
                 batch = s2b[sample]
@@ -338,5 +338,5 @@ if __name__ == '__main__':
         generate_matrix(oPath,args.lof)
         write_info_score_matrix_sample(oPath,args.samplePath,args.lof)
         #from the plink matrix merge variants into genes
-        #do_chunks(oPath,args.lof)
-        #write_gene_matrix(oPath,args.lof)
+        do_chunks(oPath,args.lof)
+        write_gene_matrix(oPath,args.lof)
