@@ -1,31 +1,22 @@
 import numpy as np
 import os
-import gzip
 from collections import defaultdict as dd
-import statsmodels.api as sm
-from firth_regression import fit_firth
 import sys
 import shlex
 from itertools import product
 from scipy.stats import fisher_exact
 from file_utils import make_sure_path_exists,return_column
+from file_utils import dataPath
 from filter_variants import get_variant_to_gene_dict
-from scipy import stats
-stats.chisqprob = lambda chisq, df: stats.chi2.sf(chisq, df)
 import multiprocessing
 cpus = multiprocessing.cpu_count()
 import pandas as pd
 
 
-rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
-dataPath = rootPath + 'Data/'
-annotatedVariants =  dataPath + 'annotated_variants.gz'
-bashPath = rootPath + 'tmp_scripts/'
 
 # REQUIRED FILES
 phenoList = np.loadtxt(dataPath + 'pheno-list.txt',usecols = [0],dtype = str,skiprows = 1)
 phenoFile = dataPath + 'FINNGEN_PHENOTYPES_DF1_V4_2018_03_27.txt.gz'
-eigenvecPath = dataPath + '10pc.eigenvec'
 
 #####################
 #--GENE  MULTIPROC--#
@@ -174,7 +165,6 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
     Shuffles the column of the gene_lof_matrix so that the ordering of shared samples is the same as in the eigenvec file
     '''
     
-
     iMatrix = iPath + lofString + "_gene_to_sample.tsv"
     oMatrix = iPath + lofString + "_gene_to_filtered_samples.tsv"
 
@@ -185,63 +175,38 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
         lofSamples = return_lof_samples(iPath,lofString)
         with open(iMatrix,'rt') as i,open(oMatrix ,'wt') as o:
             for line in i:
-                # i create a dict that stores the info for each sample so i can then rearrange them in the pc sample order
-                geneDict = dd()
                 line = line.strip().split('\t')
-                #gene info
-                gene = line[0]
-                sys.stdout.write('processing gene %s \r'%(gene)),
-                sys.stdout.flush()
-                # sample data
-                data = line[1:]
-                assert len(data) == len(lofSamples)
-                # store sample Data
-                for j,sample in enumerate(lofSamples):
-                    geneDict[sample] = data[j]
-                # write new line
-                newLine = gene +'\t'
-                newLine += '\t'.join([geneDict[tmpSample] for tmpSample in samples]) # based on pc data order!
+                # i create a dict that stores the info for each sample so i can then rearrange them in the pc sample order
+                newline = process_line(line,lofSamples,samples)
                 o.write(newLine + '\n')
 
 
-        
-def return_pc_samples(iPath,lofString = 'hc_lof'):
-
-    pcPath = iPath + lofString + '_pcs.txt'
-    pcSamples = np.loadtxt(pcPath,dtype = str,usecols = [0])
-    return pcSamples
-    
-    
-def filter_pcs(iPath,lofString='hc_lof',f = phenoFile,pcPath = eigenvecPath):
-    '''
-    Filters the eigenvec file to keep only samples that are shared across all files
-    '''
-
-    pcFile = iPath + lofString + '_pcs.txt'
-    print('filtering pcs to shared samples --> ' + pcFile)
-    if os.path.isfile(pcFile):
-        print('principal components already filtered')
-    else:
-        samples = get_shared_samples(iPath,lofString,f, pcPath)
-        print('samples loaded.')
-        with open(pcPath,'rt') as i,open(pcFile,'wt') as o:
-            for line in i:
-                sample = line.strip().split(' ')[0]
-                if sample in samples:
-                    o.write(line)
-
-
-
+def process_line(line,lofSsamples,samples):
+    geneDict = dd()
+    #gene info
+    gene = line[0]
+    sys.stdout.write('processing gene %s \r'%(gene)),
+    sys.stdout.flush()
+    # sample data
+    data = line[1:]
+    assert len(data) == len(lofSamples)
+    # store sample Data
+    for j,sample in enumerate(lofSamples):
+        geneDict[sample] = data[j]
+        # write new line
+    newLine = gene +'\t'
+    newline += '\t'.join([geneDict[tmpSample] for tmpSample in samples]) # based on pc data order!
+    return newline
 
 ###############################
 #----RETURN SHARED SAMPLES----#
 ###############################
 
-#Here I save an np.array with the shared samples based on the order in which they appear in the eigenvector data
+#Here I save an np.array with the shared samples based on the order in which they appear in the matrix
 
 def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenvecPath):
     '''
-    Returns and saves the samples shared across all files and it returns them in the order of the pc file.
+    Returns and saves the samples shared across all files and it returns them in the order of the lofMatrix.
     After the first reordering, the function will always load the same order of samples
     '''
     sharedPath = iPath +lofString + '_shared_samples.txt'
@@ -249,23 +214,15 @@ def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenve
         finalSamples = np.loadtxt(sharedPath,dtype = str)
     else:
         print('importing all samples..')
-       
-
-        def return_pc_original_samples(pcPath = eigenvecPath):
-            return np.loadtxt(pcPath,dtype = str,usecols = [0])
-       
-        pcSamples = return_pc_original_samples(pcPath)
         lofSamples = return_lof_samples(iPath,lofString)
         phenoSamples = return_column(f =f,dtype = str)
         print('done')
         sampleLists = [pcSamples,lofSamples,phenoSamples]
-        samples = set(sampleLists[0])
-        for sampleList in sampleLists[1:]:
-            samples = samples.intersection(sampleList)
-
+        samples = set(lofSamples)
+        samples = samples.intersection(phenoSamples)
         samples = np.array(list(samples))
         print('set of samples calculated')
-        finalSamples = [s for s in pcSamples if s in samples]
+        finalSamples = [s for s in lofSamples if s in samples]
         np.savetxt(sharedPath,finalSamples,fmt ='%s')
     return finalSamples
 
@@ -275,10 +232,6 @@ def return_lof_samples(iPath,lofString = 'hc_lof'):
     with open(matrixPath,'rt') as i:
         samples =i.readline().strip().split('\t')[1:]
     return np.array(samples)
-
-##############################
-#--PARSE THE PHENOTYPE FILE--#
-##############################
 
 
 
@@ -291,8 +244,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Analyze lof data")
     parser.add_argument("--phenoFile", type= str,
                         help="path to phenotype file",required = False,default = phenoFile)
-    parser.add_argument("--pcPath", type= str,
-                        help="path to eigenvec file",required = False,default = eigenvecPath)
     parser.add_argument("--lof", type= str,
                         help="type of lof filter",required = True )
     parser.add_argument("--oPath", type= str,help="Path to folder where to output",default = ".")
@@ -311,7 +262,6 @@ if __name__ == '__main__':
     oPath = (args.oPath + '/' + args.lof +'/').replace('//','/')
 
     if args.command == "fix-samples":
-        filter_pcs(oPath,args.lof,args.phenoFile,args.pcPath)
         reorder_lof_matrix(oPath,args.lof)
     
     

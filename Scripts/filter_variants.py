@@ -168,12 +168,6 @@ def return_gene_columns(gene,iPath,g2v,headerVariants,samples,lofString = 'hc_lo
 
 
 
-#######################
-#--GENERATING MATRIX--#
-#######################
-
-
-
 def write_info_score_matrix_sample(iPath,samplePath,lofString='hc_lof'):
     '''
     I build an analogue matrix so that instead of 1s and 0s we have the info_score of the sample
@@ -207,6 +201,12 @@ def write_info_score_matrix_sample(iPath,samplePath,lofString='hc_lof'):
     return None
 
 
+#######################
+#--GENERATING MATRIX--#
+#######################
+
+
+
 # THIS PIPELINE GENERATES THE FIRST STEP OF THE PROCESS
 # the output is a variant to sample matrix with 1/2/0/NA as entries
 
@@ -215,7 +215,7 @@ def generate_matrix(iPath,lofString = 'hc_lof'):
     Returns variant x sample matrix with 1s where variant is present
     """
 
-    iPath += '/plink_files/'
+    iPath += 'plink_files/'
     iFile = iPath +lofString
     oFile = iFile + matrixName
 

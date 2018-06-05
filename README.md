@@ -26,7 +26,6 @@ The result is a file called `$lof_gene_to_sample.tsv` matrix where each row is t
 
 This script producedes the logit regression on data based on phenotypes.
 
-For this run we need the following data:\
-* the pc data, organized in a file where the first columns are samples and the rest are space separated floats.
+For this run we need the following data:
 * a phenotype file, where the first columns are samples and the columns are the various phenotypes 
 * pheno-list.txt a file with the list of phenotypes that need to be run 
