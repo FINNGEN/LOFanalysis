@@ -119,7 +119,7 @@ def return_gene_columns_alt(gene,iPath,g2v,headerVariants,lofString = 'hc_lof'):
 
     #import sample data keeping columns of gene
     vData = np.loadtxt(matrixPath,dtype = str,usecols = geneColumns,skiprows =1 )
-    vData = np.isin(vData,['1','2']).astype(float) # boolean if lof or not
+    vData = np.isin(vData,['1','2']).astype(int) # boolean if lof or not
 
     if len(geneColumns) > 1:
         #sum across variants and check if >1
@@ -155,16 +155,16 @@ def return_gene_columns(gene,iPath,g2v,headerVariants,samples,lofString = 'hc_lo
 
     #import sample data keeping columns of gene
     vData = np.loadtxt(matrixPath,dtype = str,usecols = geneColumns,skiprows =1 )
-    vData = np.isin(vData,['1','2']).astype(float) # boolean if lof or not
+    vData = np.isin(vData,['1','2']) # boolean if lof or not
 
     # import info score data from same columns
     infoPath = iPath + '/misc/' + lofString + '_info_variant_matrix.tsv'
     iData = np.loadtxt(infoPath,dtype = float,usecols = geneColumns)
     #return maximum info_score value
-    return  np.max(vData*iData,axis = 1)
-
-
-    
+    res = vData*iData
+    if len(geneColumns) > 1:
+        res=  np.max(res,axis = 1)
+    return res
 
 
 
