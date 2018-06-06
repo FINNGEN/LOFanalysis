@@ -194,7 +194,7 @@ def process_line(line,lofSamples,samples):
         geneDict[sample] = data[j]
     # keep only lines of samples that belong to the shared sample list
     newLine = gene +'\t'+ '\t'.join([geneDict[tmpSample] for tmpSample in samples]) # based on lof data order!     
-    return newline
+    return newLine
 
 ###############################
 #----RETURN SHARED SAMPLES----#
