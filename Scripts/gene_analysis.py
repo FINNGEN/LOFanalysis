@@ -204,7 +204,7 @@ def process_line(line,lofSsamples,samples):
 
 #Here I save an np.array with the shared samples based on the order in which they appear in the matrix
 
-def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenvecPath):
+def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile):
     '''
     Returns and saves the samples shared across all files and it returns them in the order of the lofMatrix.
     After the first reordering, the function will always load the same order of samples
