@@ -5,9 +5,8 @@ import sys
 import shlex
 from itertools import product
 from scipy.stats import fisher_exact
-from file_utils import make_sure_path_exists,return_column
+from file_utils import make_sure_path_exists,return_column, get_variant_to_gene_dict
 from file_utils import dataPath
-from filter_variants import get_variant_to_gene_dict
 import pandas as pd
 import multiprocessing
 cpus = multiprocessing.cpu_count()
