@@ -28,7 +28,7 @@ def write_gene_matrix(iPath,lofString):
     Merges the chunks
     '''
     oFile = iPath + lofString + "_gene_to_sample.tsv"
-    sFile = iPath + lofString + "_samplelist.txxt"
+    sFile = iPath + lofString + "_samplelist.txt"
     if os.path.isfile(oFile):
         print("gene to sample matrix already generated.")
 
