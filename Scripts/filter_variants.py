@@ -36,7 +36,7 @@ def write_gene_matrix(iPath,lofString):
         g2v = get_variant_to_gene_dict(iPath,lofString)
         matrixPath = iPath + 'plink_files/'+ lofString + matrixName
         headerVariants = return_header_variants(matrixPath)
-        samples =  np.loadtxt(matrixPath,dtype = str,usecols =[0])
+        samples =  np.loadtxt(matrixPath,dtype = str,usecols =[0])[1:]
         
         with open(oFile,'wt') as f,open(sFile,'wt') as s:
             s.write("\t".join(samples) + '\n')
