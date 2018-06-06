@@ -37,7 +37,7 @@ def write_gene_matrix(iPath,lofString):
         matrixPath = iPath + 'plink_files/'+ lofString + matrixName
         headerVariants = return_header_variants(matrixPath)
         samples =  np.loadtxt(matrixPath,dtype = str,usecols =[0])[1:]
-        np.savetxt(sFile,sample,fmt ='%s')
+        np.savetxt(sFile,samples,fmt ='%s')
         with open(oFile,'wt') as f:
             chunkPath = iPath + '/gene_chunks/'
             for i in range(cpus):
