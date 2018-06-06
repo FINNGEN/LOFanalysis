@@ -99,7 +99,7 @@ def write_genelists(iPath,lofString,chunks = cpus):
 
 
 
-def return_gene_columns(gene,iPath,g2v,headerVariants,samples,lofString = 'hc_lof'):
+def return_gene_columns(gene,iPath,g2v,headerVariants,lofString):
     """
     Given a gene it loops through the header of the matrix file and returns the columns where variants belong to the gene. Now i'm adding the feauture to have instead of 1s the highest info score for the batch the sample belongs to.
 
@@ -108,7 +108,6 @@ def return_gene_columns(gene,iPath,g2v,headerVariants,samples,lofString = 'hc_lo
     - iPath : inputPath
     - g2v: gene to variant dictionary
     - headerVariants: list of variants to be included.
-    - samples: list of samples in order,i.e. the first column of the matrix
 
     # OUTPUTS
     - column(s) of the matrix for the gene
@@ -140,7 +139,7 @@ def return_gene_columns(gene,iPath,g2v,headerVariants,samples,lofString = 'hc_lo
 
 
 
-def write_info_score_matrix_sample(iPath,samplePath,lofString='hc_lof'):
+def write_info_score_matrix_sample(iPath,samplePath,lofString):
     '''
     I build an analogue matrix so that instead of 1s and 0s we have the info_score of the sample
     '''
