@@ -15,9 +15,6 @@ cpus = multiprocessing.cpu_count()
 
 plink = shutil.which('plink')
 
-
-
-
 lofName = "filtered_lof"
 matrixName = "_variantmatrix.tsv"
 
@@ -26,7 +23,7 @@ matrixName = "_variantmatrix.tsv"
 #--MERGE VARIANTS INTO GENES--#
 ###############################
 
-def write_gene_matrix(iPath,lofString = 'hc_lof'):
+def write_gene_matrix(iPath,lofString):
     '''
     Merges the chunks
     '''
@@ -52,14 +49,12 @@ def write_gene_matrix(iPath,lofString = 'hc_lof'):
                     for line in i:
                         f.write(line)
 
-def do_chunks(iPath,lofString = 'hc_lof'):
+def do_chunks(iPath,lofString):
     '''
     Merges the variant file in chunks and outputs a gene_to_sample matrix for each process.
     '''
-    write_genelists(iPath,lofString = lofString)
+    write_genelists(iPath,lofString)
 
-
- 
     params  = list(product(range(cpus),[iPath],[lofString]))
     pool = multiprocessing.Pool(cpus)
     pool.map(multi_wrapper_func,params)
@@ -70,7 +65,7 @@ def multi_wrapper_func(args):
         
 def multiprocess_func(chunkInt,iPath,lofString):
     '''
-    Function that takes a chunk of gene and writes the output matrix
+    Function that takes a chunk of genes and writes the output matrix
     '''
     chunkPath = iPath + '/gene_chunks/'
     chunkFile = chunkPath + 'matrix_chunk_' + str(chunkInt) + '.tsv'
@@ -88,8 +83,10 @@ def multiprocess_func(chunkInt,iPath,lofString):
                 gArray = np.concatenate((np.array([gene]),gData))
                 f.write("\t".join(gArray) + '\n')
     
-def write_genelists(iPath,chunks = cpus,lofString = 'hc_lof'):
-
+def write_genelists(iPath,lofString,chunks = cpus):
+    """
+    Splits the genelist into chunks
+    """
     chunkPath = iPath + '/gene_chunks/'
     make_sure_path_exists(chunkPath)
     g2v = get_variant_to_gene_dict(iPath,lofString)
@@ -99,35 +96,7 @@ def write_genelists(iPath,chunks = cpus,lofString = 'hc_lof'):
     for i,chunk in enumerate(chunkList):
         np.savetxt(chunkPath + 'gene_chunk_'+str(i) + '.txt',chunk,fmt = '%s')
                         
-    
-def return_gene_columns_alt(gene,iPath,g2v,headerVariants,lofString = 'hc_lof'):
-    """
-    Given a gene it loops through the header of the matrix file and returns the columns where variants belong to the gene
 
-    # INPUTS
-    - gene
-
-    # OUTPUTS
-    - column(s) of the matrix for the gene
-    """
-    geneVariants = g2v[gene]
-
-    matrixPath = iPath + '/plink_files/'+ lofString + matrixName
-
-    geneColumns = [i+1 for i,elem in enumerate(headerVariants) if elem in geneVariants]
-    print(gene,geneColumns)
-
-    #import sample data keeping columns of gene
-    vData = np.loadtxt(matrixPath,dtype = str,usecols = geneColumns,skiprows =1 )
-    vData = np.isin(vData,['1','2']).astype(int) # boolean if lof or not
-
-    if len(geneColumns) > 1:
-        #sum across variants and check if >1
-        vData = np.sum(vData,axis = 1)
-
-    vData = vData.astype(bool).astype(int)
-    
-    return vData
 
 
 def return_gene_columns(gene,iPath,g2v,headerVariants,samples,lofString = 'hc_lof'):
@@ -164,6 +133,9 @@ def return_gene_columns(gene,iPath,g2v,headerVariants,samples,lofString = 'hc_lo
     res = vData*iData
     if len(geneColumns) > 1:
         res=  np.max(res,axis = 1)
+        #sum across variants and check if >1
+        #vData = np.sum(vData,axis = 1)
+
     return res
 
 
