@@ -180,7 +180,7 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
                 o.write(newLine + '\n')
 
 
-def process_line(line,lofSsamples,samples):
+def process_line(line,lofSamples,samples):
     geneDict = dd()
     #gene info
     gene = line[0]
