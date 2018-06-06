@@ -28,7 +28,7 @@ def write_gene_matrix(iPath,lofString):
     Merges the chunks
     '''
     oFile = iPath + lofString + "_gene_to_sample.tsv"
-
+    sFile = iPath + lofString + "_samplelist.txxt"
     if os.path.isfile(oFile):
         print("gene to sample matrix already generated.")
 
@@ -38,9 +38,8 @@ def write_gene_matrix(iPath,lofString):
         headerVariants = return_header_variants(matrixPath)
         samples =  np.loadtxt(matrixPath,dtype = str,usecols =[0])
         
-        with open(oFile,'wt') as f:
-            f.write("\t".join(samples) + '\n')
-
+        with open(oFile,'wt') as f,open(sFile,'wt') as s:
+            s.write("\t".join(samples) + '\n')
             chunkPath = iPath + '/gene_chunks/'
             for i in range(cpus):
                 sys.stdout.write('\r merging chunk %i'%(i))
