@@ -186,15 +186,14 @@ def process_line(line,lofSamples,samples):
     gene = line[0]
     sys.stdout.write('processing gene %s \r'%(gene)),
     sys.stdout.flush()
-    # sample data
+    # store sample data in dict
     data = line[1:]
     assert len(data) == len(lofSamples)
     # store sample Data
     for j,sample in enumerate(lofSamples):
         geneDict[sample] = data[j]
-        # write new line
-    newLine = gene +'\t'
-    newline += '\t'.join([geneDict[tmpSample] for tmpSample in samples]) # based on pc data order!
+    # keep only lines of samples that belong to the shared sample list
+    newLine = gene +'\t'+ '\t'.join([geneDict[tmpSample] for tmpSample in samples]) # based on lof data order!     
     return newline
 
 ###############################
