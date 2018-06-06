@@ -1,5 +1,5 @@
 #!/bin/bash
 
-python gene_analysis.py  --lof most_severe --oPath ~/results/ logit 
-python gene_analysis.py  --lof hc_lof --oPath ~/results/ logit 
 
+python filter_variants.py --lof hc_lof generate-matrix --plinkPath ~/Data/hc_lof_data/chrom_merged --oPath ~/results/ --samplePath ~/LOFanalysis/Data/sample_info.txt 
+python filter_variants.py --lof most_severe generate-matrix --plinkPath ~/Data/most_severe_data/chrom_merged --oPath ~/results/ --samplePath ~/LOFanalysis/Data/sample_info.txt 
