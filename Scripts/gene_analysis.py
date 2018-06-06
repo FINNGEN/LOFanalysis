@@ -229,8 +229,7 @@ def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile):
 
 def return_lof_samples(iPath,lofString = 'hc_lof'):
     matrixPath =  iPath + lofString + "_gene_to_sample.tsv"
-    with open(matrixPath,'rt') as i:
-        samples =i.readline().strip().split('\t')[1:]
+    samples = pd.read_csv(matrixPath,nrows = 1,header = None).values.flatten()[0].split('\t')[1:]
     return np.array(samples)
 
 
