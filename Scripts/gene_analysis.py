@@ -176,7 +176,7 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
             for line in i:
                 line = line.strip().split('\t')
                 # i create a dict that stores the info for each sample so i can then rearrange them in the pc sample order
-                newline = process_line(line,lofSamples,samples)
+                newLine = process_line(line,lofSamples,samples)
                 o.write(newLine + '\n')
 
 
