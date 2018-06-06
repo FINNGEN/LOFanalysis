@@ -142,6 +142,14 @@ def return_gene_columns(gene,iPath,g2v,headerVariants,lofString):
 def write_info_score_matrix_sample(iPath,samplePath,lofString):
     '''
     I build an analogue matrix so that instead of 1s and 0s we have the info_score of the sample
+
+    # INPUTS
+    - path to data
+    - path to sample to batch data
+    - lof
+
+    # OUTPUTS
+    - sample to variant matrix with info score of sample's batch as a value
     '''
 
     print('generating sample to variant info score matrix...')
@@ -175,7 +183,6 @@ def write_info_score_matrix_sample(iPath,samplePath,lofString):
 #######################
 #--GENERATING MATRIX--#
 #######################
-
 
 
 # THIS PIPELINE GENERATES THE FIRST STEP OF THE PROCESS
@@ -276,19 +283,18 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Deal with lof variants")
     parser.add_argument("--annotatedFile", type= str,
                         help="path to annotatedFile",required = False,default =annotatedVariants )
+    parser.add_argument("--lof", type= str,
+                        help="type of lof filter",required = True )
 
     subparsers = parser.add_subparsers(help='help for subcommand',dest ="command")
 
     # create the parser for the generate_variants command
     parser_filter = subparsers.add_parser('filter', help='filter the variants')
-    parser_filter.add_argument("--lof", type= str,
-                        help="type of lof filter",required = True )
 
     # create the parser for the "command_2" command
     parser_matrix = subparsers.add_parser('generate-matrix', help='help for command_2')
     parser_matrix.add_argument("--plinkPath", type= str,help="Path to plink data (with name of bFile)",required = True)
     parser_matrix.add_argument("--oPath", type= str,help="Path to folder where to output",default = ".")
-    parser_matrix.add_argument("--lof", type= str,help="type of lof filter",required = True )
     parser_matrix.add_argument("--geno", type= float,help="genotype call rate for plink",default = 0.9 )
     parser_matrix.add_argument("--samplePath", type = str,help ='path to file with info about sample and batches ',default = dataPath + 'sample_info.txt')
     

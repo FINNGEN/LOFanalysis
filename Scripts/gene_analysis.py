@@ -211,17 +211,17 @@ def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile,pcPath = eigenve
     '''
     sharedPath = iPath +lofString + '_shared_samples.txt'
     if os.path.isfile(sharedPath):
-        finalSamples = np.loadtxt(sharedPath,dtype = str)
+        finalSamples = pd.read_csv(sharedPath,header = None,dtype = str).values.flatten()
+
     else:
         print('importing all samples..')
-        lofSamples = return_lof_samples(iPath,lofString)
-        phenoSamples = return_column(f =f,dtype = str)
+        lofSamples = set(return_lof_samples(iPath,lofString))
+        phenoSamples = set(return_column(f =f,dtype = str))
         print('done')
-        sampleLists = [pcSamples,lofSamples,phenoSamples]
-        samples = set(lofSamples)
-        samples = samples.intersection(phenoSamples)
-        samples = np.array(list(samples))
+        # merging of samples to create unique set
+        samples = list(lofSamples.intersection(phenoSamples))
         print('set of samples calculated')
+        # keep lof samples in order
         finalSamples = [s for s in lofSamples if s in samples]
         np.savetxt(sharedPath,finalSamples,fmt ='%s')
     return finalSamples
