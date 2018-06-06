@@ -37,9 +37,8 @@ def write_gene_matrix(iPath,lofString):
         matrixPath = iPath + 'plink_files/'+ lofString + matrixName
         headerVariants = return_header_variants(matrixPath)
         samples =  np.loadtxt(matrixPath,dtype = str,usecols =[0])[1:]
-        
-        with open(oFile,'wt') as f,open(sFile,'wt') as s:
-            s.write("\t".join(samples) + '\n')
+        np.savetxt(sFile,sample,fmt ='%s')
+        with open(oFile,'wt') as f:
             chunkPath = iPath + '/gene_chunks/'
             for i in range(cpus):
                 sys.stdout.write('\r merging chunk %i'%(i))
