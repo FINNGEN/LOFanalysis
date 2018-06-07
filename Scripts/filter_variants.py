@@ -10,6 +10,7 @@ import sys
 from subprocess import Popen, PIPE,call
 from file_utils import rootPath,dataPath,annotatedVariants,bashPath
 from file_utils import make_sure_path_exists,return_header_variants,split_array_chunk,read_header,get_variant_to_gene_dict,dd_str,sample_to_batch_dict,variant_is_dict
+import pandas as pd
 import multiprocessing
 cpus = multiprocessing.cpu_count()
 
