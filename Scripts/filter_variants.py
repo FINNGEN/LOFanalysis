@@ -26,7 +26,7 @@ def matrix_to_bool(iPath,lofString,infoScore=0.9):
     make_sure_path_exists(os.path.dirname(oFile))
     
     mFile = iPath + lofString + "_gene_to_sample.tsv"
-    genes =  pd.read_csv(mFile,dtype = str,header = None,sep = '\t').values.flatten()
+    genes =  pd.read_csv(mFile,dtype = str,header = None,sep = '\t',usecols = [0]).values.flatten()
     print('genes loaded.')
     with open(oFile,'wt') as o:
         for i,gene in enumerate(genes[:10]):
