@@ -19,6 +19,22 @@ lofName = "filtered_lof"
 matrixName = "_variantmatrix.tsv"
 
 
+
+def matrix_to_bool(iPath,lofString,infoScore=0.9):
+    oFile = iPath +'/matrix/' + lofString + '_gene_to_sample_' + str(infoScore) + '.tsv'
+    make_sure_path_exists(os.path.dirname(oFile))
+    
+    mFile = iPath + lofString + "_gene_to_sample.tsv"
+    genes =  pd.read_csv(matrixPath,dtype = str,header = None,sep = '\t').values.flatten()
+    with open(oFile,'wt') as o:
+        for i,gene in enumerate(genes[:10]):
+            line = pd.read_csv(matrixPath,nrows = 1,skiprows = i,header = None).values.flatten()[1:]
+            line = np.where(line < infoScore,0,1).astype(str)
+            line = np.concatenate(np.array([gene]),line)
+            o.write("\t".join(gArray) + '\n')
+
+    
+
 ###############################
 #--MERGE VARIANTS INTO GENES--#
 ###############################
