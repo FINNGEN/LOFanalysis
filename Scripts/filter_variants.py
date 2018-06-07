@@ -35,7 +35,7 @@ def matrix_to_bool(iPath,lofString,infoScore=0.9):
             line = pd.read_csv(mFile,nrows = 1,skiprows = i,header = None,dtype = str,sep = '\t').values.flatten()[1:].astype(float)
             line = np.where(line < infoScore,0,1).astype(str)
             line = np.concatenate((np.array([gene]),line))
-            o.write("\t".join(gArray) + '\n')
+            o.write("\t".join(line) + '\n')
 
     
 
