@@ -29,7 +29,7 @@ def matrix_to_bool(iPath,lofString,infoScore=0.9):
     genes =  pd.read_csv(mFile,dtype = str,header = None,sep = '\t',usecols = [0]).values.flatten()
     print('genes loaded.')
     with open(oFile,'wt') as o:
-        for i,gene in enumerate(genes[:10]):
+        for i,gene in enumerate(genes):
             sys.stdout.write('processing gene %s \r'%(gene)),
             sys.stdout.flush()
             line = pd.read_csv(mFile,nrows = 1,skiprows = i,header = None,dtype = str,sep = '\t').values.flatten()[1:].astype(float)
