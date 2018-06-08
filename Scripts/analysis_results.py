@@ -14,20 +14,28 @@ def scatter_file(lofString = 'hc_lof',infoFilter = 0.9):
 
     resultsPath = rootPath + '/tmp.txt'
     spaResults = '/home/pete/Data/SPA_data/SPA_results'
+    #FISHER RESULTS
     data = np.loadtxt(resultsPath,dtype = str, delimiter = '\t',usecols=[0,1])
     genes = data[:,0]
     phenotypes = data[:,1]
     fisherResults = np.loadtxt(resultsPath,dtype = str, delimiter = '\t',usecols=[-2,-1])
+    # CREATE CORRELATION
     pvals = np.empty((len(genes),2),dtype = float)
     oddsratio = np.empty_like(pvals)
     for i,gene in enumerate(genes):
         pheno = phenotypes[i]
+        print(gene,pheno)
         phenoResults = spaResults+'/'+ pheno + '-' + lofString + '_gene_to_sample_'+str(infoFilter) + '.txt.gz'
         with gzip.open(phenoResults,'rt') as i:
             for line in i:
                 line = line.split('\t')
                 if line[0] == gene:
-                    print(line)
+                    pval = float(line[1])
+                    odd = float(line[-2])
+                    pvals[i] = [fisherResults[i,0],pval]
+                    oddsratio[i] = [fisherResults[i,1],odd]
+
+    return pvals,oddsratio
 
                 
 def write_final_file(iPath,lofString = 'hc_lof'):
