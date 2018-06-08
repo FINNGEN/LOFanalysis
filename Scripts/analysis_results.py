@@ -12,11 +12,11 @@ from file_utils import rootPath,dataPath,annotatedVariants,bashPath
 
 def scatter_file():
 
-    resultsPath = rootPath + '/tmp/'
+    resultsPath = rootPath + '/tmp.txt'
     data = np.loadtxt(resultsPath,dtype = str, delimiter = '\t',usecols=[0,1])
     genes = data[:,0]
     phenotypes = data[:,1]
-                    
+    return genes,phenotypes
 
 def write_final_file(iPath,lofString = 'hc_lof'):
 
