@@ -21,6 +21,7 @@ def scatter_file(lofString = 'hc_lof',infoFilter = 0.9):
     fisherResults = np.loadtxt(resultsPath,dtype = float, delimiter = '\t',usecols=[-2,-1])
     # CREATE CORRELATION
     pvals = np.empty((len(genes),2),dtype = float)
+    return pvals
     oddsratio = np.empty_like(pvals)
     for i,gene in enumerate(genes):
         pheno = phenotypes[i]
