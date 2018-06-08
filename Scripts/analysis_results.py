@@ -9,10 +9,11 @@ from file_utils import make_sure_path_exists,return_header_variants,split_array_
 
 from file_utils import rootPath,dataPath,annotatedVariants,bashPath
 
+miscPath = rootPath+ '/misc/'
 
 def scatter_file(lofString = 'hc_lof',infoFilter = 0.9):
 
-    resultsPath = rootPath + '/tmp.txt'
+    resultsPath = miscPath + '/tmp.txt'
     spaResults = '/home/pete/Data/SPA_data/SPA_results'
     #FISHER RESULTS
     data = np.loadtxt(resultsPath,dtype = str, delimiter = '\t',usecols=[0,1])
@@ -34,8 +35,10 @@ def scatter_file(lofString = 'hc_lof',infoFilter = 0.9):
                     odd = float(line[-2])
                     pvals[j] = [fisherResults[j,1],pval]
                     oddsratio[j] = [fisherResults[j,0],odd]
-                    
-    return pvals,oddsratio
+
+    np.savetxt(miscPath + 'pvals.txt',pvals,fmt = '%f')
+    np.savetxt(miscPath + 'odds.txt',oddsratio,fmt = '%f')
+    return None
 
                 
 def write_final_file(iPath,lofString = 'hc_lof'):
