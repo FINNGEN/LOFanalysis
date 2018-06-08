@@ -37,7 +37,7 @@ def scatter_file(lofString = 'hc_lof',infoFilter = 0.9):
                     pvals[j] = [fisherResults[j,1],pval]
                     oddsratio[j] = [fisherResults[j,0],odd]
 
-    np.savetxt(miscPath + 'pvals.txt',pvals,fmt = '%f')
+    np.savetxt(miscPath + 'pvals.txt',pvals,fmt = '%E')
     np.savetxt(miscPath + 'odds.txt',oddsratio,fmt = '%f')
     return None
 
