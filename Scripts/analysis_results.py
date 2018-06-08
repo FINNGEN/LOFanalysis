@@ -19,7 +19,6 @@ def scatter_file(lofString = 'hc_lof',infoFilter = 0.9):
     genes = data[:,0]
     phenotypes = data[:,1]
     fisherResults = np.loadtxt(resultsPath,dtype = float, delimiter = '\t',usecols=[-2,-1])
-    return fisherResults
     # CREATE CORRELATION
     pvals = np.empty((len(genes),2),dtype = float)
     oddsratio = np.empty_like(pvals)
@@ -33,8 +32,8 @@ def scatter_file(lofString = 'hc_lof',infoFilter = 0.9):
                 if line[0] == gene:
                     pval = float(line[1])
                     odd = float(line[-2])
-                    pvals[i] = [fisherResults[i,0],pval]
-                    oddsratio[i] = [fisherResults[i,1],odd]
+                    pvals[i] = [fisherResults[i,1],pval]
+                    oddsratio[i] = [fisherResults[i,0],odd]
 
     return pvals,oddsratio
 
