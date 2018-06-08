@@ -23,8 +23,7 @@ def scatter_file(lofString = 'hc_lof',infoFilter = 0.9):
     for i,gene in enumerate(genes):
         pheno = phenotypes[i]
         phenoResults = pheno + '-' + lofString + '_gene_to_sample_'+str(infoFilter) + '.txt.gz'
-        if os.path.isfile(phenoResults):
-            print(phenoResults)
+        print(phenoResults)
 
 def write_final_file(iPath,lofString = 'hc_lof'):
 
