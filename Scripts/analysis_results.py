@@ -7,10 +7,16 @@ import sys
 from subprocess import Popen, PIPE,call
 from file_utils import make_sure_path_exists,return_header_variants,split_array_chunk,read_header,get_filepaths
 
+from file_utils import rootPath,dataPath,annotatedVariants,bashPath
 
-rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
-bashPath = rootPath + 'tmp_scripts/'
 
+def scatter_file():
+
+    resultsPath = rootPath + '/tmp/'
+    data = np.loadtxt(resultsPath,dtype = str, delimiter = '\t',usecols=[0,1])
+    genes = data[:,0]
+    phenotypes = data[:,1]
+                    
 
 def write_final_file(iPath,lofString = 'hc_lof'):
 
