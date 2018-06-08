@@ -22,8 +22,9 @@ def scatter_file(lofString = 'hc_lof',infoFilter = 0.9):
     oddsratio = np.empty_like(pvals)
     for i,gene in enumerate(genes):
         pheno = phenotypes[i]
-        phenoResults = pheno + '-' + lofString + '_gene_to_sample_'+str(infoFilter) + '.txt.gz'
-        print(phenoResults)
+        phenoResults = spaResults+'/'+ pheno + '-' + lofString + '_gene_to_sample_'+str(infoFilter) + '.txt.gz'
+        if os.path.isfile(phenoResults):
+            print(phenoResults)
 
 def write_final_file(iPath,lofString = 'hc_lof'):
 
