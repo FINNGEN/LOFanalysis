@@ -10,7 +10,7 @@ from file_utils import make_sure_path_exists,return_header_variants,split_array_
 from file_utils import rootPath,dataPath,annotatedVariants,bashPath
 
 
-def scatter_file(lofString + 'hc_lof',infoFilter = 0.9):
+def scatter_file(lofString = 'hc_lof',infoFilter = 0.9):
 
     resultsPath = rootPath + '/tmp.txt'
     spaResults = '~/Data/SPA_data/SPA_results'
