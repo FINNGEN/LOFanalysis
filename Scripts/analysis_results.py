@@ -13,7 +13,7 @@ from file_utils import rootPath,dataPath,annotatedVariants,bashPath
 def scatter_file(lofString = 'hc_lof',infoFilter = 0.9):
 
     resultsPath = rootPath + '/tmp.txt'
-    spaResults = '~/Data/SPA_data/SPA_results'
+    spaResults = '/home/pete/Data/SPA_data/SPA_results'
     data = np.loadtxt(resultsPath,dtype = str, delimiter = '\t',usecols=[0,1])
     genes = data[:,0]
     phenotypes = data[:,1]
