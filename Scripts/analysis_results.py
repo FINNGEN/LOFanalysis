@@ -33,6 +33,7 @@ def scatter_file(lofString = 'hc_lof',infoFilter = 0.9):
                 if line[0] == gene:
                     pval = float(line[1])
                     odd = float(line[-2])
+                    print(fisherResults[j])
                     pvals[j] = [fisherResults[j,1],pval]
                     oddsratio[j] = [fisherResults[j,0],odd]
 
