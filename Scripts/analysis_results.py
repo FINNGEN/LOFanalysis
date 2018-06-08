@@ -5,7 +5,7 @@ import pickle
 import shlex
 import sys
 from subprocess import Popen, PIPE,call
-from file_utils import make_sure_path_exists,return_header_variants,split_array_chunk,read_header,get_filepaths
+from file_utils import make_sure_path_exists,return_header_variants,split_array_chunk,read_header,get_filepaths,gzip
 
 from file_utils import rootPath,dataPath,annotatedVariants,bashPath
 
@@ -23,9 +23,13 @@ def scatter_file(lofString = 'hc_lof',infoFilter = 0.9):
     for i,gene in enumerate(genes):
         pheno = phenotypes[i]
         phenoResults = spaResults+'/'+ pheno + '-' + lofString + '_gene_to_sample_'+str(infoFilter) + '.txt.gz'
-        if os.path.isfile(phenoResults):
-            print(phenoResults)
+        with gzip.open(phenoResults,'rtb') as i:
+            for line in i:
+                line = line.split('\t')
+                if line[0] == gene:
+                    print(line)
 
+                
 def write_final_file(iPath,lofString = 'hc_lof'):
 
     oPath = iPath + '/gene_fits/'
