@@ -23,7 +23,7 @@ def scatter_file(lofString = 'hc_lof',infoFilter = 0.9):
     for i,gene in enumerate(genes):
         pheno = phenotypes[i]
         phenoResults = spaResults+'/'+ pheno + '-' + lofString + '_gene_to_sample_'+str(infoFilter) + '.txt.gz'
-        with gzip.open(phenoResults,'rtb') as i:
+        with gzip.open(phenoResults,'rt') as i:
             for line in i:
                 line = line.split('\t')
                 if line[0] == gene:
