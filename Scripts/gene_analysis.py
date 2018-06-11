@@ -24,7 +24,6 @@ def fisher_gene(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = True,i
     '''
     In order to speed up reading from disk, I multiproc the pheno data within a gene.
     '''
-
     matrix = iPath + lofString + "_gene_to_sample.tsv"
     geneList = np.genfromtxt(matrix,usecols = [0],dtype = str,delimiter = '\t')
     print(len(geneList))
