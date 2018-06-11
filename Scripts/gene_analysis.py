@@ -208,8 +208,9 @@ def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile):
     After the first reordering, the function will always load the same order of samples
     '''
     sharedPath = iPath + '/misc/' + lofString + '_shared_samples.txt'
-    print('loading data from ' + sharedPath)
+
     if os.path.isfile(sharedPath):
+    print('loading data from ' + sharedPath)
         finalSamples = pd.read_csv(sharedPath,header = None,dtype = str).values.flatten()
 
     else:
