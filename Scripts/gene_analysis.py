@@ -164,8 +164,9 @@ def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
     Shuffles the column of the gene_lof_matrix so that the ordering of shared samples is the same as in the eigenvec file
     '''
     
-    iMatrix = iPath + lofString + "_gene_to_sample.tsv"
-    oMatrix = iPath + lofString + "_gene_to_filtered_samples.tsv"
+    
+    iMatrix = iPath +'/matrix/' + lofString + '_gene_to_sample_' + str(infoScore) + '.tsv'
+    oMatrix = iPath +'/matrix/' + lofString + '_gene_to_sample_' + str(infoScore) + '_shared.tsv'
 
     if os.path.isfile(oMatrix):
         print('matrix already reordered')
