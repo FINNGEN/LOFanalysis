@@ -231,7 +231,7 @@ def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile):
 def return_lof_samples(iPath,lofString = 'hc_lof'):
     
     sFile = iPath + lofString + "_samplelist.txt"
-    samples = pd.read_csv(sFile,nrows = 1,header = None).values.flatten()
+    samples = pd.read_csv(sFile,header = None).values.flatten()
     return np.array(samples)
 
 
