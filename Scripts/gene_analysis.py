@@ -22,12 +22,12 @@ phenoFile = dataPath + 'FINNGEN_PHENOTYPES_DF1_V4_2018_03_27.txt.gz'
 #####################
 
 
-def logit_gene(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = True,infoFilter = 0.9):
+def logit_gene(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = True,infoScore = 0.9):
     '''
     In order to seepd up reading from disk, I multiproc the pheno data within a gene.
     '''
  
-    geneList = get_info_score_gene_list(iPath,lofString,infoFilter)
+    geneList = get_info_score_gene_list(iPath,lofString,infoScore)
     print(len(geneList))
     gList = geneList if test is False else geneList[:10]  
     print(len(gList),' genes')
@@ -143,14 +143,14 @@ def get_pheno_data(iPath,pheno,f = phenoFile,lofString = 'hc_lof'):
         phenoData[i] = int(phenoDict[sample])
     return phenoData
 
-def get_info_score_gene_list(iPath,lofString = 'hc_lof',infoFilter = 0.9):
+def get_info_score_gene_list(iPath,lofString = 'hc_lof',infoScore = 0.9):
     '''
-    Given a lof and infoFilter it returns the list of genes for that lof that all variants above infoFilter
+    Given a lof and infoScore it returns the list of genes for that lof that all variants above infoScore
     '''
     import pickle
     g2v = get_variant_to_gene_dict(iPath,lofString)
     infoDict = pickle.load(open(dataPath + lofString + '_infoDict.p','rb'))
-    geneList = [gene for gene in g2v if np.min([infoDict[variant] for variant in g2v[gene]]) > infoFilter]
+    geneList = [gene for gene in g2v if np.min([infoDict[variant] for variant in g2v[gene]]) > infoScore]
     return geneList
 
 
@@ -229,7 +229,8 @@ def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile):
 
 
 def return_lof_samples(iPath,lofString = 'hc_lof'):
-    matrixPath =  iPath + lofString + "_gene_to_sample.tsv"
+    
+    sFile = iPath + lofString + "_samplelist.txt"
     samples = pd.read_csv(matrixPath,nrows = 1,header = None).values.flatten()[0].split('\t')[1:]
     return np.array(samples)
 
@@ -257,14 +258,14 @@ if __name__ == '__main__':
     parser_fisher = subparsers.add_parser('fisher', help='do fisher analysis')  
     parser_fisher.add_argument("--cpus",type = int, help = 'Number of cores to use', default = cpus)
     parser_fisher.add_argument('--test',action = 'store_true',help = 'Flag to run small chunks')
-    parser_fisher.add_argument('--infoFilter',type = float,default = 0.9, help = 'info score filter value')
+    parser_fisher.add_argument('--infoScore',type = float,default = 0.9, help = 'info score filter value')
     args = parser.parse_args()
     oPath = (args.oPath + '/' + args.lof +'/').replace('//','/')
 
     if args.command == "fix-samples":
-        reorder_lof_matrix(oPath,args.lof,args.infoFilter)
+        reorder_lof_matrix(oPath,args.lof,args.infoScore)
     
     
     if args.command == "fisher":
 
-        logit_gene(oPath,args.lof,args.phenoFile,args.cpus,args.test,args.infoFilter)
+        logit_gene(oPath,args.lof,args.phenoFile,args.cpus,args.test,args.infoScore)
