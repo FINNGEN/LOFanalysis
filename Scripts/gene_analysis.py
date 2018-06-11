@@ -72,8 +72,8 @@ def gene_proc(iPath,phenoList,lofString='hc_lof',gene = 'TTLL10',f = phenoFile,p
 
 
 def gene_wrapper(args):
-    return fisher_gene(*args)
-def fisher_gene(iPath,lofData,pheno,lofString = 'hc_lof',f = phenoFile):
+    return fisher_test(*args)
+def fisher_test(iPath,lofData,pheno,lofString = 'hc_lof',f = phenoFile):
     '''
     Function that is ultimately passed to the multiprocessing pool. It performs a fisher test given lofData and a phenotype.
     '''
