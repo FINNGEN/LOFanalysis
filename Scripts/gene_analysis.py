@@ -222,7 +222,7 @@ def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile):
         samples = list(lofSamples.intersection(phenoSamples))
         print('set of samples calculated')
         # keep lof samples in order
-        finalSamples = [s for s in lofSamples if s in samples]
+        finalSamples = np.array([s for s in lofSamples if s in samples])
         np.savetxt(sharedPath,finalSamples,fmt ='%s')
     return finalSamples
 
