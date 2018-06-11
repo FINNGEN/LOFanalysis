@@ -26,16 +26,19 @@ def matrix_to_bool(iPath,lofString,infoScore=0.9):
     make_sure_path_exists(os.path.dirname(oFile))
     
     mFile = iPath + lofString + "_gene_to_sample.tsv"
-    genes =  pd.read_csv(mFile,dtype = str,header = None,sep = '\t',usecols = [0]).values.flatten()
-    print('genes loaded.')
-    with open(oFile,'wt') as o:
-        for i,gene in enumerate(genes):
-            sys.stdout.write('processing gene %i %s \r'%(i,gene)),
-            sys.stdout.flush()
-            line = pd.read_csv(mFile,nrows = 1,skiprows = i,header = None,dtype = str,sep = '\t').values.flatten()[1:].astype(float)
-            line = np.where(line < infoScore,0,1).astype(str)
-            line = np.concatenate((np.array([gene]),line))
-            o.write("\t".join(line) + '\n')
+    if os.path.isfile(oFile):
+        print('matrix already converted')
+    else:
+        genes =  pd.read_csv(mFile,dtype = str,header = None,sep = '\t',usecols = [0]).values.flatten()
+        print('genes loaded.')
+        with open(oFile,'wt') as o:
+            for i,gene in enumerate(genes):
+                sys.stdout.write('processing gene %i %s \r'%(i,gene)),
+                sys.stdout.flush()
+                line = pd.read_csv(mFile,nrows = 1,skiprows = i,header = None,dtype = str,sep = '\t').values.flatten()[1:].astype(float)
+                line = np.where(line < infoScore,0,1).astype(str)
+                line = np.concatenate((np.array([gene]),line))
+                o.write("\t".join(line) + '\n')
 
     
 
