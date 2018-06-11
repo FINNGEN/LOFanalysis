@@ -12,9 +12,9 @@ import multiprocessing
 cpus = multiprocessing.cpu_count()
 
 
-
 # REQUIRED FILES
 phenoList = np.loadtxt(dataPath + 'pheno-list.txt',usecols = [0],dtype = str,skiprows = 1)
+
 #####################
 #--GENE  MULTIPROC--#
 #####################
@@ -25,29 +25,29 @@ def fisher_gene(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = True,i
     In order to speed up reading from disk, I multiproc the pheno data within a gene.
     '''
 
-    
-    geneList = get_info_score_gene_list(iPath,lofString,infoScore)
+    matrix = iPath + lofString + "_gene_to_sample.tsv"
+    geneList = np.genfromtxt(matrix,usecols = [0],dtype = str,delimiter = '\t')
     print(len(geneList))
     gList = geneList if test is False else geneList[:10]  
     print(len(gList),' genes')
 
     pList = phenoList if test is False else phenoList[:proc]
     for gene in gList:
-        gene_proc(iPath,pList,lofString,gene,f,proc)
+        gene_proc(iPath,pList,lofString,gene,f,proc,infoScore)
 
-def gene_proc(iPath,phenoList,lofString='hc_lof',gene = 'TTLL10',f = phenoFile,proc = cpus):
+def gene_proc(iPath,phenoList,lofString='hc_lof',gene = 'TTLL10',f = phenoFile,proc = cpus,infoScore = 0.9):
     '''
-    For a single gene, multiproc the phenodata
+    For a single gene, it multiprocs over the pheno data
     '''
 
     # where to write_Results
-    oPath = iPath + '/gene_fits/'
+    oPath = iPath + '/gene_fisher/'
     make_sure_path_exists(oPath)
-    oFile = oPath + lofString + '_' + gene +  '_gene_results.txt'
+    oFile = oPath + lofString + '_' + gene + '_' + str(infoScore)+  '_results.txt'
 
     # load lofData
     print(gene)
-    lofData = get_lof_data(iPath,gene,lofString)
+    lofData = get_lof_data(iPath,gene,lofString,infoScore)
  
     # list of params to loop
     params  = list(product([iPath],[lofData],phenoList,[lofString],[f]))
@@ -73,10 +73,10 @@ def gene_proc(iPath,phenoList,lofString='hc_lof',gene = 'TTLL10',f = phenoFile,p
 
 
 def gene_wrapper(args):
-    return logistic_gene(*args)
-def logistic_gene(iPath,lofData,pheno,lofString = 'hc_lof',f = phenoFile):
+    return fisher_gene(*args)
+def fisher_gene(iPath,lofData,pheno,lofString = 'hc_lof',f = phenoFile):
     '''
-    Function that is ultimately passed to the multiprocessing pool. It loops through all genes given a phenotype. 
+    Function that is ultimately passed to the multiprocessing pool. It performs a fisher test given lofData and a phenotype.
     '''
  
     phenoDataPath = iPath + '/pheno_data/'
@@ -252,5 +252,4 @@ if __name__ == '__main__':
     
     
     if args.command == "fisher":
-
         fisher_gene(oPath,args.lof,args.phenoFile,args.cpus,args.test,args.infoScore)

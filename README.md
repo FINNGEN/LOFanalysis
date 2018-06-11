@@ -31,4 +31,6 @@ converts all values \geq 0.9 to ones.
 
 ## gene_analysis.py
 
-At the moment this script is not implemented.
+`python gene_analysis.py --lof hc_lof --oPath ~/results/ --phenoFile /path/to/phenoFile.txt fix-samples --infoScore 0.9`\
+fixes the info score matrix so that only shared samples are considered
+
