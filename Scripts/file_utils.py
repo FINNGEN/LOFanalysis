@@ -7,7 +7,6 @@ import pickle
 rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
 dataPath = rootPath + 'Data/'
 # REQUIRED FILES
-phenoFile = dataPath + 'FINNGEN_PHENOTYPES_DF1_V4_2018_03_27.txt.gz'
 rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
 
 dataPath = rootPath + 'Data/'
