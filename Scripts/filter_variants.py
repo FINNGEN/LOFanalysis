@@ -22,7 +22,6 @@ matrixName = "_variantmatrix.tsv"
 
 
 def matrix_to_bool(iPath,lofString,infoScore=0.9):
-    print(iPath)
     oFile = iPath +'/matrix/' + lofString + '_gene_to_sample_' + str(infoScore) + '.tsv'
     make_sure_path_exists(os.path.dirname(oFile))
     
@@ -343,4 +342,4 @@ if __name__ == '__main__':
 
     if args.command == 'bool-matrix':
         oPath = (args.oPath + '/' + args.lof +'/').replace('//','/')
-        matrix_to_bool(args.oPath,args.lof,args.infoScore)
+        matrix_to_bool(oPath,args.lof,args.infoScore)
