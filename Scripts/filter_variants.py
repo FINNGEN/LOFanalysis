@@ -308,13 +308,17 @@ if __name__ == '__main__':
 
     # create the parser for the generate_variants command
     parser_filter = subparsers.add_parser('filter', help='filter the variants')
-
     # create the parser for the "command_2" command
     parser_matrix = subparsers.add_parser('generate-matrix', help='help for command_2')
     parser_matrix.add_argument("--plinkPath", type= str,help="Path to plink data (with name of bFile)",required = True)
     parser_matrix.add_argument("--oPath", type= str,help="Path to folder where to output",default = ".")
     parser_matrix.add_argument("--geno", type= float,help="genotype call rate for plink",default = 0.9 )
     parser_matrix.add_argument("--samplePath", type = str,help ='path to file with info about sample and batches ',default = dataPath + 'sample_info.txt')
+
+    parser_bool = subparsers.add_parser('bool-matrix', help='help for command_2')
+    parser_bool.add_argument("--oPath", type= str,help="Path to folder where to output",default = ".")
+    parser_bool.add_argument("--infoScore",type = float,help =' minimum value of info score to convert to bool')
+
     
     args = parser.parse_args()
 
@@ -331,3 +335,8 @@ if __name__ == '__main__':
         #from the plink matrix merge variants into genes
         do_chunks(oPath,args.lof)
         write_gene_matrix(oPath,args.lof)
+
+
+    if args.command == 'bool-matrix':
+        oPath = (args.oPath + '/' + args.lof +'/').replace('//','/')
+        matrix_to_bool(args.oPath,args.lof,args.infoScore)

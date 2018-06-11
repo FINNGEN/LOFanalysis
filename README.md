@@ -23,6 +23,12 @@ where:\
 
 The result is a file called `$lof_gene_to_sample.tsv` matrix where each row is the lof data of a gene. The values are the maximum info score values across all variants that belong to the gene, where the info score is the batch info score for that variant and sample.
 
+### convert matrix to bool
+`python filter_variants.py --lof hc_lof matrix-bool --infoScore 0.9 --oPath ~/results'
+
+converts all values \geq 0.9 to ones.
+
+
 ## gene_analysis.py
 
 At the moment this script is not implemented.
