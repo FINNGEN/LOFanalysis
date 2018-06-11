@@ -159,7 +159,7 @@ def get_info_score_gene_list(iPath,lofString = 'hc_lof',infoFilter = 0.9):
 #####################################
 
 
-def reorder_lof_matrix(iPath,lofString = 'hc_lof'):
+def reorder_lof_matrix(iPath,lofString = 'hc_lof',infoScore = 0.9):
     '''
     Shuffles the column of the gene_lof_matrix so that the ordering of shared samples is the same as in the eigenvec file
     '''
