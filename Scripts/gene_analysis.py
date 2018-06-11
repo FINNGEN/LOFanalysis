@@ -5,7 +5,7 @@ import sys
 import shlex
 from itertools import product
 from scipy.stats import fisher_exact
-from file_utils import make_sure_path_exists,return_column, get_variant_to_gene_dict
+from file_utils import make_sure_path_exists,return_column, get_variant_to_gene_dict,f_test
 from file_utils import dataPath,phenoFile
 import pandas as pd
 import multiprocessing
@@ -20,11 +20,12 @@ phenoList = np.loadtxt(dataPath + 'pheno-list.txt',usecols = [0],dtype = str,ski
 #####################
 
 
-def logit_gene(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = True,infoScore = 0.9):
+def fisher_gene(iPath,lofString='hc_lof',f = phenoFile,proc = cpus,test = True,infoScore = 0.9):
     '''
-    In order to seepd up reading from disk, I multiproc the pheno data within a gene.
+    In order to speed up reading from disk, I multiproc the pheno data within a gene.
     '''
- 
+
+    
     geneList = get_info_score_gene_list(iPath,lofString,infoScore)
     print(len(geneList))
     gList = geneList if test is False else geneList[:10]  
@@ -75,7 +76,7 @@ def gene_wrapper(args):
     return logistic_gene(*args)
 def logistic_gene(iPath,lofData,pheno,lofString = 'hc_lof',f = phenoFile):
     '''
-    Function that is ultimately passed to the multiprocessing pool. It loops through all genes given a phenotype. With test  it only works with a small chunk of genes
+    Function that is ultimately passed to the multiprocessing pool. It loops through all genes given a phenotype. 
     '''
  
     phenoDataPath = iPath + '/pheno_data/'
@@ -90,30 +91,21 @@ def logistic_gene(iPath,lofData,pheno,lofString = 'hc_lof',f = phenoFile):
         
     f_results,table = f_test(phenoData,lofData)
     return pheno,f_results,table
-          
 
 
-def f_test(phenoData,lofData):
-    # get lof counts for cases
-    phenoMask = (phenoData >0)
-    cases = phenoMask.sum()
-    lofCases = int(lofData[phenoMask].sum())
-    nolofCases = cases - lofCases
-    # get lof counts for controls
-    phenoMask = (phenoData == 0)
-    controls = phenoMask.sum()
-    lofControls = int(lofData[phenoMask].sum())
-    nolofControls = controls - lofControls
-    # do fischer test
-    table = np.empty((2,2),dtype = int)
-    table[0] = [lofCases,lofControls]
-    table[1] = [nolofCases,nolofControls]
-    f_results = fisher_exact(table)
 
-    return f_results,table
 
-def get_lof_data(iPath,gene,lofString = 'hc_lof'):
-    with open(iPath + lofString + '_gene_to_filtered_samples.tsv','rt',os.O_NONBLOCK) as i:
+###############
+#--READ DATA--#
+###############
+
+def get_lof_data(iPath,gene,lofString = 'hc_lof',infoScore = 0.9):
+    '''
+    Given a gene, it reads the row of the matrix
+    '''
+    matrix = iPath +'/matrix/' + lofString + '_gene_to_sample_' + str(infoScore) + '_shared.tsv'
+
+    with open(matrix,'rt',os.O_NONBLOCK) as i:
         for line in i:
              line = line.strip().split('\t')
              if line[0] == gene:
@@ -123,7 +115,9 @@ def get_lof_data(iPath,gene,lofString = 'hc_lof'):
     return lofData
 
 def get_pheno_data(iPath,pheno,f = phenoFile,lofString = 'hc_lof'):
-
+    '''
+    Given a pheno, it returns the pheno data that matches the lofSamples
+    '''
     # read data and fix nans by setting all non 0 values
     data = return_column(pheno = pheno,f = f,dtype = float)
     mask = (data >0)
@@ -141,15 +135,6 @@ def get_pheno_data(iPath,pheno,f = phenoFile,lofString = 'hc_lof'):
         phenoData[i] = int(phenoDict[sample])
     return phenoData
 
-def get_info_score_gene_list(iPath,lofString = 'hc_lof',infoScore = 0.9):
-    '''
-    Given a lof and infoScore it returns the list of genes for that lof that all variants above infoScore
-    '''
-    import pickle
-    g2v = get_variant_to_gene_dict(iPath,lofString)
-    infoDict = pickle.load(open(dataPath + lofString + '_infoDict.p','rb'))
-    geneList = [gene for gene in g2v if np.min([infoDict[variant] for variant in g2v[gene]]) > infoScore]
-    return geneList
 
 
 #####################################
@@ -251,12 +236,14 @@ if __name__ == '__main__':
 
     # create the parser for fixing samples
     parser_fix_samples = subparsers.add_parser('fix-samples', help='fix files in order to match shared samples')
+    parser_fix_samples.add_argument('--infoScore',type = float,default = 0.9, help = 'info score filter value')
 
-    # create the parser for the logit command
+    # create the parser for the fisher command
     parser_fisher = subparsers.add_parser('fisher', help='do fisher analysis')  
     parser_fisher.add_argument("--cpus",type = int, help = 'Number of cores to use', default = cpus)
     parser_fisher.add_argument('--test',action = 'store_true',help = 'Flag to run small chunks')
     parser_fisher.add_argument('--infoScore',type = float,default = 0.9, help = 'info score filter value')
+
     args = parser.parse_args()
     oPath = (args.oPath + '/' + args.lof +'/').replace('//','/')
 
@@ -266,4 +253,4 @@ if __name__ == '__main__':
     
     if args.command == "fisher":
 
-        logit_gene(oPath,args.lof,args.phenoFile,args.cpus,args.test,args.infoScore)
+        fisher_gene(oPath,args.lof,args.phenoFile,args.cpus,args.test,args.infoScore)

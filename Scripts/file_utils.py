@@ -87,7 +87,6 @@ def return_column(pheno = 'FINNGENID',f = phenoFile,dtype = 'f8'):
     for i,elem in enumerate(header):
         if str(elem) == pheno:
             phenocol = i
-    idcol = 0
     if f.split('.')[-1] == 'txt':
         i = open(f,'rt')
     elif f.split('.')[-1] == 'gz':
@@ -235,3 +234,25 @@ def sample_to_batch_dict(filePath = dataPath + 'sample_info.txt'):
     return s2b
 
 
+
+def f_test(phenoData,lofData):
+    '''
+    Runs the fisher test given phenoData and lofData
+    '''
+    # get lof counts for cases
+    phenoMask = (phenoData >0)
+    cases = phenoMask.sum()
+    lofCases = int(lofData[phenoMask].sum())
+    nolofCases = cases - lofCases
+    # get lof counts for controls
+    phenoMask = (phenoData == 0)
+    controls = phenoMask.sum()
+    lofControls = int(lofData[phenoMask].sum())
+    nolofControls = controls - lofControls
+    # do fischer test
+    table = np.empty((2,2),dtype = int)
+    table[0] = [lofCases,lofControls]
+    table[1] = [nolofCases,nolofControls]
+    f_results = fisher_exact(table)
+
+    return f_results,table
