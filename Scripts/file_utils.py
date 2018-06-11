@@ -88,7 +88,7 @@ def return_column(pheno = 'FINNGENID',f = phenoFile,dtype = 'f8'):
             phenocol = i
     idcol = 0
     if f.split('.')[-1] == 'txt':
-        i = open(f,'rb')
+        i = open(f,'rt')
     elif f.split('.')[-1] == 'gz':
         i = gzip.open(f,'rb')
 

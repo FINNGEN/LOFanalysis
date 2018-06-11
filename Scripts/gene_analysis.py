@@ -15,7 +15,6 @@ cpus = multiprocessing.cpu_count()
 
 # REQUIRED FILES
 phenoList = np.loadtxt(dataPath + 'pheno-list.txt',usecols = [0],dtype = str,skiprows = 1)
-phenoFile = dataPath + 'FINNGEN_PHENOTYPES_DF1_V4_2018_03_27.txt.gz'
 phenoFile = '/home/pete/Data/SPA_data/R1_COV_PHENO.txt'
 #####################
 #--GENE  MULTIPROC--#
