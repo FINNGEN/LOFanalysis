@@ -22,6 +22,7 @@ matrixName = "_variantmatrix.tsv"
 
 
 def matrix_to_bool(iPath,lofString,infoScore=0.9):
+    print(iPath)
     oFile = iPath +'/matrix/' + lofString + '_gene_to_sample_' + str(infoScore) + '.tsv'
     make_sure_path_exists(os.path.dirname(oFile))
     
