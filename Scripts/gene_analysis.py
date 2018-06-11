@@ -210,7 +210,7 @@ def get_shared_samples(iPath,lofString = 'hc_lof',f = phenoFile):
     sharedPath = iPath + '/misc/' + lofString + '_shared_samples.txt'
 
     if os.path.isfile(sharedPath):
-    print('loading data from ' + sharedPath)
+        print('loading data from ' + sharedPath)
         finalSamples = pd.read_csv(sharedPath,header = None,dtype = str).values.flatten()
 
     else:
