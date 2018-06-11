@@ -12,6 +12,7 @@ rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
 dataPath = rootPath + 'Data/'
 annotatedVariants =  dataPath + 'annotated_variants.gz'
 bashPath = rootPath + 'tmp_scripts/'
+phenoFile = '/home/pete/Data/SPA_data/R1_COV_PHENO.txt'
 
 def dd(tp):
     return defaultdict(tp)

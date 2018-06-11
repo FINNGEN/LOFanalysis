@@ -6,7 +6,7 @@ import shlex
 from itertools import product
 from scipy.stats import fisher_exact
 from file_utils import make_sure_path_exists,return_column, get_variant_to_gene_dict
-from file_utils import dataPath
+from file_utils import dataPath,phenoFile
 import pandas as pd
 import multiprocessing
 cpus = multiprocessing.cpu_count()
@@ -15,7 +15,6 @@ cpus = multiprocessing.cpu_count()
 
 # REQUIRED FILES
 phenoList = np.loadtxt(dataPath + 'pheno-list.txt',usecols = [0],dtype = str,skiprows = 1)
-phenoFile = '/home/pete/Data/SPA_data/R1_COV_PHENO.txt'
 #####################
 #--GENE  MULTIPROC--#
 #####################
