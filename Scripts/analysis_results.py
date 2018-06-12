@@ -41,6 +41,7 @@ def best_hits(resPath ,lofString = 'hc_lof',exp = 6):
                     lines.append(line)
                 except:
                     pass
+    prin('sorting...')
     lines = sorted(lines,key = lambda x:x[2])
     with open(oPath,'wt') as o:
         for s in lines:
