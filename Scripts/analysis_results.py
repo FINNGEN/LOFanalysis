@@ -29,7 +29,7 @@ def qq_data(resPath ,lofString = 'hc_lof'):
             for line in i:
                 pval = line.split('\t')[1]
                 try:
-                    pval = float(pval)
+                    pval = np.float128(pval)
                     res.append(pval)
                 except:
                     pass
