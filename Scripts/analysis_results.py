@@ -23,9 +23,10 @@ def best_hits(resPath ,lofString = 'hc_lof',exp = 6):
     resPath += '/' + lofString +'/results/'
     print('fetching data from ' + resPath)
     files = get_filepaths(resPath )
+    lines = []
     for f in files:
         pheno = f.split('/')[-1].split('-')[0]
-        with gzip.open(f,'rt') as i,open(oPath,'wt') as o:
+        with gzip.open(f,'rt') as i:
             for line in i:
                 line = line.split('\t')
                 pval = line[1]
@@ -37,10 +38,13 @@ def best_hits(resPath ,lofString = 'hc_lof',exp = 6):
                     if pExp > exp:
                         oString = '\t'.join([pheno,gene,pval])
                         print(oString)
-                        o.write(oString + '\n')
+                        lines.append(oString)
                 except:
                     pass
-
+    with open(oPath,'wt') as o:
+        for s in lines:
+            o.write(s + '\n')
+        
 def qq_data(resPath ,lofString = 'hc_lof'):
 
     qqPath = resPath + '/' + lofString+ '/' +lofString + '_qq_data.txt'
