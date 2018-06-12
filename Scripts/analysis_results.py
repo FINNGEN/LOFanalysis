@@ -42,7 +42,7 @@ def best_hits(resPath ,lofString = 'hc_lof',exp = 6):
     lines = sorted(lines,key = lambda x:x[2])
     with open(oPath,'wt') as o:
         for s in lines:
-            oString = '\t'.join([str(elem) for elem in lines]
+            oString = '\t'.join([str(elem) for elem in lines])
             o.write(oString + '\n')
         
 def qq_data(resPath ,lofString = 'hc_lof'):
