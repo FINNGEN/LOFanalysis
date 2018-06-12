@@ -15,6 +15,8 @@ import pylab
 miscPath = rootPath+ '/misc/'
 
 
+def qq_data(resPath ,lofString = 'hc_lof',figPath = '/home/pete/results/'):
+
 def qq_plot(resPath ,lofString = 'hc_lof',figPath = '/home/pete/results/'):
 
     figPath += lofString + '/qq_plot.pdf'
@@ -26,7 +28,7 @@ def qq_plot(resPath ,lofString = 'hc_lof',figPath = '/home/pete/results/'):
 #    plt.legend(scatterpoints=1, frameon=False,labelspacing=1, loc='lower left');
 
     print('saving...')
-    fig.savefig(figPath )
+    fig.savefig(figPath)
     plt.close(fig)
 
 def scatter_file(lofString = 'hc_lof',infoFilter = 0.9):
