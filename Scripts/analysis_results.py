@@ -7,6 +7,9 @@ import sys
 from subprocess import Popen, PIPE,call
 from file_utils import make_sure_path_exists,return_header_variants,split_array_chunk,read_header,get_filepaths,gzip
 from file_utils import rootPath,dataPath,annotatedVariants,bashPath
+import matplotlib as mpl
+mpl.use('Agg')
+from matplotlib import pyplot as plt
 from verkko.plots import matplotlibHelperFunction as HF
 import pylab
 
