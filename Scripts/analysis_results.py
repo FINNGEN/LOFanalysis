@@ -15,9 +15,9 @@ import pylab
 miscPath = rootPath+ '/misc/'
 
 
-def qq_data(resPath ,lofString = 'hc_lof',figPath = '/home/pete/results/'):
+def qq_data(resPath ,lofString = 'hc_lof'):
 
-    files = get_variant_to_gene_dict(resPath)
+    files = get_filepaths(resPath)
 
     return files
     
