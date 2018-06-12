@@ -35,8 +35,8 @@ def best_hits(resPath ,lofString = 'hc_lof',exp = 6):
                 try:
                     p = np.float128(pval)
                     pExp = -np.log10(p)
-                    print(pExp)
                     if pExp > exp:
+                        print(pExp)
                         oString = '\t'.join([pheno,gene,pval])
                         o.write(oString + '\n')
                 except:
