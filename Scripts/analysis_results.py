@@ -24,7 +24,12 @@ def qq_data(resPath ,lofString = 'hc_lof'):
             count = 0
             while count <10:
                 for line in i:
-                    print(line.split('\t')[1])
+                    pval = line.split('\t')[1]
+                    try:
+                        pval = float(pval)
+                    except:
+                        pass
+                    print(pval)
                     count +=1
     
     
