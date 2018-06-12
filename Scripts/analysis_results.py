@@ -19,18 +19,20 @@ def qq_data(resPath ,lofString = 'hc_lof'):
 
     resPath += '/' + lofString +'/results/' 
     files = get_filepaths(resPath)
-    for f in files[:10]:
+    res = []
+    for f in files:
+        print(f)
         with gzip.open(f,'rt') as i:
-            count = 0
-            while count <10:
-                for line in i:
-                    pval = line.split('\t')[1]
-                    try:
-                        pval = float(pval)
-                    except:
-                        pass
-                    print(pval)
-                    count +=1
+            for line in i:
+                pval = line.split('\t')[1]
+                try:
+                    pval = float(pval)
+                    res.append(pval)
+                except:
+                    pass
+    res = np.array(res)
+    np.savetxt(dataPath + 'qq_data.txt',fmt = '%f')
+                
     
     
 
