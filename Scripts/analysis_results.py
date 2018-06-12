@@ -103,6 +103,8 @@ def qq_plot(qqPath,fPath = figPath,lofString = 'hc_lof',dpi = 300,nBins = 1000):
     ax.set_ylim([0,yData.max()])
     ax.set_aspect('equal')
     print('saving...')
+    ax.set_xlabel('Expected -log(pval)')
+    ax.set_ylabel('Observed -log(pval)')
     fig.savefig(fPath,dpi = dpi)
     plt.close(fig)
 
