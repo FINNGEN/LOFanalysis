@@ -40,6 +40,7 @@ def best_hits(resPath ,lofString = 'hc_lof',exp = 6):
                 except:
                     pass
     lines = sorted(lines,key = lambda x:x[2])
+    return lines
     with open(oPath,'wt') as o:
         for s in lines:
             oString = '\t'.join([str(elem) for elem in lines])
