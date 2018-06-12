@@ -33,7 +33,7 @@ def qq_data(resPath ,lofString = 'hc_lof'):
                     res.append(pval)
                 except:
                     pass
-    res = np.array(res)
+    res = np.array(res,dtype = np.float128)
     np.savetxt(qqPath,res,fmt = '%f')
     return res
        
