@@ -19,20 +19,24 @@ figPath = rootPath + '/Figs/'
 
 def best_hits(resPath ,lofString = 'hc_lof',exp = 6):
     qqPath = resPath + '/' + lofString+ '/' +lofString + '_qq_data.txt'
+    oPath =  resPath + '/' + lofString+ '/' +lofString + '_best_hits.txt'
     resPath += '/' + lofString +'/results/'
     print('fetching data from ' + resPath)
     files = get_filepaths(resPath )
-    res = []
     for f in files:
         pheno = f.split('/')[-1].split('-')[0]
         print(pheno)
-        with gzip.open(f,'rt') as i:
+        with gzip.open(f,'rt') as i,open(oPath,'wt') as o:
             for line in i:
                 line = line.split('\t')
                 pval = line[1]
+                gene = line[0]
                 try:
-                    pval = np.float128(pval)
-                    res.append(pval)
+                    p = np.float128(pval)
+                    pExp = -np.log10(p)
+                    if pExp > exp:
+                        oString = '\t'.join([pheno,gene,pval])
+                        o.write(oString + '\n')
                 except:
                     pass
 
