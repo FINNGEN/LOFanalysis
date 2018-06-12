@@ -35,13 +35,13 @@ def qq_data(resPath ,lofString = 'hc_lof'):
                     pass
                 
     res = np.array(res,dtype = np.float128)
-    np.savetxt(qqPath,res,fmt = '%f')
+    np.savetxt(qqPath,res,fmt = '%E')
     return res
        
 def qq_plot(qqPath,fPath = figPath,lofString = 'hc_lof'):
 
    
-    fPath += lofString + '_qq_plot.pdf'
+    fPath += lofString + '_qq_plot.png'
     qqData = pd.read_csv(qqPath,dtype =float,header = None).values.flatten()
     qqData[::-1].sort()
     qqData = np.log10(qqData)*-1
@@ -58,7 +58,7 @@ def qq_plot(qqPath,fPath = figPath,lofString = 'hc_lof'):
 #    plt.legend(scatterpoints=1, frameon=False,labelspacing=1, loc='lower left');
 
     print('saving...')
-    fig.savefig(fPath,dpi =100)
+    fig.savefig(fPath)
     plt.close(fig)
 
 def scatter_file(lofString = 'hc_lof',infoFilter = 0.9):
