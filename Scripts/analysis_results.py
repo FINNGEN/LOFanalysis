@@ -21,8 +21,7 @@ def qq_plot(resPath ,lofString = 'hc_lof',figPath = '/home/pete/results/'):
     gs = mpl.gridspec.GridSpec(1,1)
     ax = fig.add_subplot(gs[0,0])
     print('ax created...')
-#    plt.legend(scatterpoints=1, frameon=False,
-           labelspacing=1, loc='lower left');
+#    plt.legend(scatterpoints=1, frameon=False,labelspacing=1, loc='lower left');
 
     print('saving...')
     fig.savefig(figPath )
