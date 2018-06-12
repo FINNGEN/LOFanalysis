@@ -31,15 +31,13 @@ def best_hits(resPath ,lofString = 'hc_lof',exp = 6):
                 line = line.split('\t')
                 pval = line[1]
                 gene = line[0]
-                try:
-                    p = np.float128(pval)
-                    pExp = -np.log10(p)
-                    print(pExp)
-                    if pExp > exp:
-                        oString = '\t'.join([pheno,gene,pval])
-                        o.write(oString + '\n')
-                except:
-                    pass
+
+                p = np.float128(pval)
+                pExp = -np.log10(p)
+                print(pExp)
+                if pExp > exp:
+                    oString = '\t'.join([pheno,gene,pval])
+                    o.write(oString + '\n')
 
 def qq_data(resPath ,lofString = 'hc_lof'):
 
