@@ -11,9 +11,10 @@ import matplotlib as mpl
 from matplotlib import pyplot as plt
 from verkko.plots import matplotlibHelperFunction as HF
 import pylab
+import pandas as pd
 
 miscPath = rootPath+ '/misc/'
-
+figPath = rootPath + '/Figs/'
 
 def qq_data(resPath ,lofString = 'hc_lof'):
 
@@ -34,22 +35,27 @@ def qq_data(resPath ,lofString = 'hc_lof'):
                     pass
     res = np.array(res)
     np.savetxt(qqPath,res,fmt = '%f')
-                
-    
-    
+    return res
+       
+def qq_plot(qqPath,fPath = figPath,lofString = 'hc_lof'):
 
-def qq_plot(resPath ,lofString = 'hc_lof',figPath = '/home/pete/results/'):
-
-    figPath += lofString + '/qq_plot.pdf'
+   
+    fPath += lofString + '_qq_plot.pdf'
+    qqData = pd.read_csv(qqPath,dtype =float,header = None).values.flatten()
+    qqData[::-1].sort()
+    qqData = np.log10(qqData)*-1
     pylab.ioff()
     fig = HF.setFigure()
     gs = mpl.gridspec.GridSpec(1,1)
     ax = fig.add_subplot(gs[0,0])
     print('ax created...')
+    xData = np.array([1./(1+elem) for elem in range(len(qqData))])
+    xData = -1*np.log10(xData)
+    ax.plot(xData,qqData,'bo')
 #    plt.legend(scatterpoints=1, frameon=False,labelspacing=1, loc='lower left');
 
     print('saving...')
-    fig.savefig(figPath)
+    fig.savefig(fPath,dpi =100)
     plt.close(fig)
 
 def scatter_file(lofString = 'hc_lof',infoFilter = 0.9):
