@@ -21,11 +21,12 @@ def qq_data(resPath ,lofString = 'hc_lof'):
     files = get_filepaths(resPath)
     for f in files[:10]:
         with gzip.open(f,'rt') as i:
-            for line in i:
-                print(line.split('\t')[1])
-                break
+            count = 0
+            while count <10:
+                for line in i:
+                    print(line.split('\t')[1])
+                    count +=1
     
-    return files
     
 
 def qq_plot(resPath ,lofString = 'hc_lof',figPath = '/home/pete/results/'):
