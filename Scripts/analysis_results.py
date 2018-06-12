@@ -6,10 +6,27 @@ import shlex
 import sys
 from subprocess import Popen, PIPE,call
 from file_utils import make_sure_path_exists,return_header_variants,split_array_chunk,read_header,get_filepaths,gzip
-
 from file_utils import rootPath,dataPath,annotatedVariants,bashPath
+from verkko.plots import matplotlibHelperFunction as HF
+import pylab
 
 miscPath = rootPath+ '/misc/'
+
+
+def qq_plot(resPath ,lofString = 'hc_lof',figPath = '/home/pete/results/'):
+
+    figPath += lofString + '/qq_plot.pdf'
+    pylab.ioff()
+    fig = HF.setFigure()
+    gs = mpl.gridspec.GridSpec(1,1)
+    ax = fig.add_subplot(gs[0,0])
+    print('ax created...')
+#    plt.legend(scatterpoints=1, frameon=False,
+           labelspacing=1, loc='lower left');
+
+    print('saving...')
+    fig.savefig(figPath )
+    plt.close(fig)
 
 def scatter_file(lofString = 'hc_lof',infoFilter = 0.9):
 
