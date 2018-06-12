@@ -5,7 +5,7 @@ import pickle
 import shlex
 import sys
 from subprocess import Popen, PIPE,call
-from file_utils import make_sure_path_exists,return_header_variants,split_array_chunk,read_header,get_filepaths,gzip,get_filepaths
+from file_utils import make_sure_path_exists,gzip,get_filepaths
 from file_utils import rootPath,dataPath,annotatedVariants,bashPath
 import matplotlib as mpl
 from matplotlib import pyplot as plt
@@ -19,7 +19,9 @@ def qq_data(resPath ,lofString = 'hc_lof'):
 
     resPath += '/' + lofString +'/results/' 
     files = get_filepaths(resPath)
-
+    for f in files[:10]:
+        with gzip
+    
     return files
     
 
