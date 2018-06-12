@@ -38,7 +38,7 @@ def best_hits(resPath ,lofString = 'hc_lof',exp = 6):
                     p = np.float128(pval)
                     pExp = -np.log10(p)
                     #if (pExp > exp):
-                    line[2] = p
+                    line[1] = p
                     lines.append(line)
                 except:
                     pass
