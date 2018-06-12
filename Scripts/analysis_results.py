@@ -17,7 +17,7 @@ miscPath = rootPath+ '/misc/'
 
 def qq_data(resPath ,lofString = 'hc_lof'):
 
-    resPath += '/' + lofString 
+    resPath += '/' + lofString +'/'
     files = get_filepaths(resPath +'/results/' )
     res = []
     for f in files:
