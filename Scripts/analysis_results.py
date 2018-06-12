@@ -20,6 +20,7 @@ def qq_data(resPath ,lofString = 'hc_lof'):
     resPath += '/' + lofString +'/results/' 
     files = get_filepaths(resPath)
     for f in files[:10]:
+        print(f)
         with gzip.open(f,'rt') as i:
             for line in i:
                 print(line)
