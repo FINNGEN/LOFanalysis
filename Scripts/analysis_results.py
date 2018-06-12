@@ -25,7 +25,6 @@ def best_hits(resPath ,lofString = 'hc_lof',exp = 6):
     files = get_filepaths(resPath )
     for f in files:
         pheno = f.split('/')[-1].split('-')[0]
-        print(pheno)
         with gzip.open(f,'rt') as i,open(oPath,'wt') as o:
             for line in i:
                 line = line.split('\t')
@@ -36,8 +35,8 @@ def best_hits(resPath ,lofString = 'hc_lof',exp = 6):
                     p = np.float128(pval)
                     pExp = -np.log10(p)
                     if pExp > exp:
-                        print(pExp)
                         oString = '\t'.join([pheno,gene,pval])
+                        print(oString)
                         o.write(oString + '\n')
                 except:
                     pass
