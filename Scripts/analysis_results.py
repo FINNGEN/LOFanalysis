@@ -34,8 +34,8 @@ def qq_data(resPath ,lofString = 'hc_lof'):
                 except:
                     pass
                 
-#    res = np.array(res,dtype = np.float128)
-#    np.savetxt(qqPath,res,fmt = '%f')
+    res = np.array(res,dtype = np.float128)
+    np.savetxt(qqPath,res,fmt = '%f')
     return res
        
 def qq_plot(qqPath,fPath = figPath,lofString = 'hc_lof'):
