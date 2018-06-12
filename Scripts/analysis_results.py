@@ -5,7 +5,7 @@ import pickle
 import shlex
 import sys
 from subprocess import Popen, PIPE,call
-from file_utils import make_sure_path_exists,gzip,get_filepaths
+from file_utils import make_sure_path_exists,gzip,get_filepaths,compute_qq,gc_value
 from file_utils import rootPath,dataPath,annotatedVariants,bashPath
 import matplotlib as mpl
 from matplotlib import pyplot as plt
@@ -15,6 +15,27 @@ import pandas as pd
 
 miscPath = rootPath+ '/misc/'
 figPath = rootPath + '/Figs/'
+
+
+def best_hits(resPath ,lofString = 'hc_lof',exp = 6):
+    qqPath = resPath + '/' + lofString+ '/' +lofString + '_qq_data.txt'
+    resPath += '/' + lofString +'/results/'
+    print('fetching data from ' + resPath)
+    files = get_filepaths(resPath )
+    res = []
+    for f in files:
+        print(f)
+        pheno = g.split('/')[-1]
+        print(pheno)
+        with gzip.open(f,'rt') as i:
+            for line in i:
+                line = line.split('\t')
+                pval = line[1]
+                try:
+                    pval = np.float128(pval)
+                    res.append(pval)
+                except:
+                    pass
 
 def qq_data(resPath ,lofString = 'hc_lof'):
 
@@ -37,28 +58,39 @@ def qq_data(resPath ,lofString = 'hc_lof'):
     res = np.array(res,dtype = np.float128)
     np.savetxt(qqPath,res,fmt = '%E')
     return res
-       
-def qq_plot(qqPath,fPath = figPath,lofString = 'hc_lof'):
+
+def return_gc(qqPAth,lofString):
+    qqData = pd.read_csv(qqPath,dtype =float,header = None).values.flatten()
+    qqData.sort()
+    qqData = qqData[qqData >0]
+    return gc_value(qqData,0.5)
+
+def qq_plot(qqPath,fPath = figPath,lofString = 'hc_lof',dpi = 300,nBins = 1000):
 
    
-    fPath += lofString + '_qq_plot.png'
+    fPath += lofString + '_qq_plot.pdf'
     qqData = pd.read_csv(qqPath,dtype =float,header = None).values.flatten()
-    qqData[::-1].sort()
+    qqData.sort()
+    qqData = qqData[qqData >0]
+    print(gc_value(qqData,0.5))
     qqData = np.log10(qqData)*-1
     pylab.ioff()
     fig = HF.setFigure()
     gs = mpl.gridspec.GridSpec(1,1)
     ax = fig.add_subplot(gs[0,0])
-    print('ax created...')
-    #    xData = np.array([1./(1+elem) for elem in range(len(qqData))]) 
-    #    xData = -1*np.log10(xData)
-    entries = len(qqData)
-    xData = np.linspace(0,np.log10(entries),entries)
-    ax.plot(xData,qqData,'bo')
-#    plt.legend(scatterpoints=1, frameon=False,labelspacing=1, loc='lower left');
 
+    print('ax created...')
+    #    entries = np.power(10,max(qqData))
+    plotData = np.array(compute_qq(qqData,nBins))
+    xData = plotData[:,0]
+    yData = plotData[:,1]
+
+    ax.plot(xData,yData,'bo')
+    ax.set_xlim([0,xData.max()])
+    ax.set_ylim([0,yData.max()])
+    ax.set_aspect('equal')
     print('saving...')
-    fig.savefig(fPath)
+    fig.savefig(fPath,dpi = dpi)
     plt.close(fig)
 
 def scatter_file(lofString = 'hc_lof',infoFilter = 0.9):

@@ -4,7 +4,7 @@ import gzip
 from collections import defaultdict
 import pickle
 from scipy.stats import fisher_exact
-
+import scipy
 rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
 dataPath = rootPath + 'Data/'
 # REQUIRED FILES
@@ -259,3 +259,38 @@ def f_test(phenoData,lofData):
     return f_results,table
 
 
+def compute_qq(neglog10_pvals,nBins):
+    import math
+    # neglog10_pvals must be in decreasing order.
+    assert all(neglog10_pvals[i] >= neglog10_pvals[i+1] for i in range(len(neglog10_pvals)-1))
+
+    if len(neglog10_pvals) == 0:
+        return []
+
+    max_exp_neglog10_pval = -math.log10(0.5 / len(neglog10_pvals))
+    max_obs_neglog10_pval = neglog10_pvals[0]
+
+    if max_obs_neglog10_pval == 0:
+        print('WARNING: All pvalues are 1! How is that supposed to make a QQ plot?')
+        return []
+
+    occupied_bins = set()
+    for i, obs_neglog10_pval in enumerate(neglog10_pvals):
+        exp_neglog10_pval = -math.log10( (i+0.5) / len(neglog10_pvals))
+        exp_bin = int(exp_neglog10_pval / max_exp_neglog10_pval * nBins)
+        obs_bin = int(obs_neglog10_pval / max_obs_neglog10_pval * nBins)
+        occupied_bins.add( (exp_bin,obs_bin) )
+
+    qq = []
+    for exp_bin, obs_bin in occupied_bins:
+        assert 0 <= exp_bin <= nBins, exp_bin
+        assert 0 <= obs_bin <= nBins, obs_bin
+        qq.append((
+            exp_bin / nBins * max_exp_neglog10_pval,
+            obs_bin / nBins * max_obs_neglog10_pval
+        ))
+    return sorted(qq)
+
+def gc_value(pval, quantile=0.5):
+    # This should be equivalent to this R: `qchisq(median_pval, df=1, lower.tail=F) / qchisq(quantile, df=1, lower.tail=F)`
+    return scipy.stats.chi2.ppf(1 - pval, 1) / scipy.stats.chi2.ppf(1 - quantile, 1)
