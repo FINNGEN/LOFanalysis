@@ -24,8 +24,7 @@ def best_hits(resPath ,lofString = 'hc_lof',exp = 6):
     files = get_filepaths(resPath )
     res = []
     for f in files:
-        print(f)
-        pheno = f.split('/')[-1]
+        pheno = f.split('/')[-1].split('-')[0]
         print(pheno)
         with gzip.open(f,'rt') as i:
             for line in i:
