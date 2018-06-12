@@ -17,6 +17,7 @@ miscPath = rootPath+ '/misc/'
 
 def qq_data(resPath ,lofString = 'hc_lof'):
 
+    qqPath = resPath + '/' + lofString '/' +lofString + '_qq_data.txt'
     resPath += '/' + lofString +'/results/'
     print('fetching data from ' + resPath)
     files = get_filepaths(resPath )
@@ -32,7 +33,7 @@ def qq_data(resPath ,lofString = 'hc_lof'):
                 except:
                     pass
     res = np.array(res)
-#    np.savetxt(resPath +'_qq_data.txt',res,fmt = '%f')
+    np.savetxt(resPath +'_qq_data.txt',res,fmt = '%f')
                 
     
     
