@@ -291,6 +291,12 @@ def compute_qq(neglog10_pvals,nBins):
         ))
     return sorted(qq)
 
+def gc_value_from_list(neglog10_pvals, quantile=0.5):
+    # neglog10_pvals must be in decreasing order.
+    assert all(neglog10_pvals[i] >= neglog10_pvals[i+1] for i in range(len(neglog10_pvals)-1))
+    neglog10_pval = neglog10_pvals[int(len(neglog10_pvals) * quantile)]
+    pval = 10 ** -neglog10_pval
+    return gc_value(pval, quantile)
 def gc_value(pval, quantile=0.5):
     # This should be equivalent to this R: `qchisq(median_pval, df=1, lower.tail=F) / qchisq(quantile, df=1, lower.tail=F)`
     return scipy.stats.chi2.ppf(1 - pval, 1) / scipy.stats.chi2.ppf(1 - quantile, 1)

@@ -5,13 +5,14 @@ import pickle
 import shlex
 import sys
 from subprocess import Popen, PIPE,call
-from file_utils import make_sure_path_exists,gzip,get_filepaths,compute_qq,gc_value
+from file_utils import make_sure_path_exists,gzip,get_filepaths,compute_qq,gc_value_from_list
 from file_utils import rootPath,dataPath,annotatedVariants,bashPath
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 from verkko.plots import matplotlibHelperFunction as HF
 import pylab
 import pandas as pd
+import scipy
 
 miscPath = rootPath+ '/misc/'
 figPath = rootPath + '/Figs/'
@@ -19,7 +20,7 @@ figPath = rootPath + '/Figs/'
 
 def best_hits(resPath ,lofString = 'hc_lof',exp = 6):
     qqPath = resPath + '/' + lofString+ '/' +lofString + '_qq_data.txt'
-    oPath =  resPath + '/' + lofString+ '/' +lofString + '_best_hits.txt'
+    oPath =  resPath + '/' + lofString+ '/' +lofString + '_hits.txt'
     resPath += '/' + lofString +'/results/'
     print('fetching data from ' + resPath)
     files = get_filepaths(resPath )
@@ -35,8 +36,8 @@ def best_hits(resPath ,lofString = 'hc_lof',exp = 6):
                 try:
                     p = np.float128(pval)
                     pExp = -np.log10(p)
-                    if (pExp > exp):
-                        lines.append([pheno,gene,p])
+                    #if (pExp > exp):
+                    lines.append([pheno,gene,p])
                 except:
                     pass
     lines = sorted(lines,key = lambda x:x[2])
@@ -67,21 +68,25 @@ def qq_data(resPath ,lofString = 'hc_lof'):
     np.savetxt(qqPath,res,fmt = '%E')
     return res
 
-def return_gc(qqPath):
+def genomic_inflation(qqPath,quantile = 0.5):
     qqData = pd.read_csv(qqPath,dtype =float,header = None).values.flatten()
-    qqData.sort()
-    qqData = qqData[qqData >0]
-    return gc_value(qqData,0.5)
+    qqData = qqData[qqData>0]
+    qqData = np.log10(qqData)*-1
+    qqData[::-1].sort()
+    for perc in ['0.5', '0.1', '0.01', '0.001']:
+        gc = gc_value_from_list(qqData, float(perc))
+        print(perc,gc)
 
+    
 def qq_plot(qqPath,fPath = figPath,lofString = 'hc_lof',dpi = 300,nBins = 1000):
 
    
     fPath += lofString + '_qq_plot.pdf'
     qqData = pd.read_csv(qqPath,dtype =float,header = None).values.flatten()
+    qqData = qqData[qqData>0]
     qqData.sort()
-    qqData = qqData[qqData >0]
-    print(gc_value(qqData,0.5))
     qqData = np.log10(qqData)*-1
+    
     pylab.ioff()
     fig = HF.setFigure()
     gs = mpl.gridspec.GridSpec(1,1)
