@@ -35,7 +35,7 @@ def best_hits(resPath ,lofString = 'hc_lof',exp = 6):
                 try:
                     p = np.float128(pval)
                     pExp = -np.log10(p)
-                    if (pExp > exp) & (p!= 0):
+                    if (pExp > exp):
                         lines.append([pheno,gene,p])
                 except:
                     pass
@@ -67,7 +67,7 @@ def qq_data(resPath ,lofString = 'hc_lof'):
     np.savetxt(qqPath,res,fmt = '%E')
     return res
 
-def return_gc(qqPAth,lofString):
+def return_gc(qqPath):
     qqData = pd.read_csv(qqPath,dtype =float,header = None).values.flatten()
     qqData.sort()
     qqData = qqData[qqData >0]
