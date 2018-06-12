@@ -22,7 +22,7 @@ def qq_data(resPath ,lofString = 'hc_lof'):
     for f in files[:10]:
         with gzip.open(f,'rt') as i:
             for line in i:
-                print(line)
+                print(line.split('\t')[1])
                 break
     
     return files
