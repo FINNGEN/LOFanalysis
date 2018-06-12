@@ -50,8 +50,10 @@ def qq_plot(qqPath,fPath = figPath,lofString = 'hc_lof'):
     gs = mpl.gridspec.GridSpec(1,1)
     ax = fig.add_subplot(gs[0,0])
     print('ax created...')
-    xData = np.array([1./(1+elem) for elem in range(len(qqData))])
-    xData = -1*np.log10(xData)
+    #    xData = np.array([1./(1+elem) for elem in range(len(qqData))]) 
+    #    xData = -1*np.log10(xData)
+    entries = len(qqData)
+    xData = np.linspace(0,np.log10(entries),entries)
     ax.plot(xData,qqData,'bo')
 #    plt.legend(scatterpoints=1, frameon=False,labelspacing=1, loc='lower left');
 
