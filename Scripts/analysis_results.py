@@ -18,7 +18,7 @@ miscPath = rootPath+ '/misc/'
 figPath = rootPath + '/Figs/'
 
 
-def best_hits(resPath ,lofString = 'hc_lof',exp = 6):
+def best_hits(resPath ,lofString = 'hc_lof'):
     qqPath = resPath + '/' + lofString+ '/' +lofString + '_qq_data.txt'
     oPath =  resPath + '/' + lofString+ '/' +lofString + '_hits.txt'
     resPath += '/' + lofString +'/results/'
@@ -28,6 +28,7 @@ def best_hits(resPath ,lofString = 'hc_lof',exp = 6):
     for f in files:
         pheno = f.split('/')[-1].split('-')[0]
         print(pheno)
+        pheno = [pheno]
         with gzip.open(f,'rt') as i:
             for line in i:
                 line = line.split('\t')
@@ -39,11 +40,11 @@ def best_hits(resPath ,lofString = 'hc_lof',exp = 6):
                     pExp = -np.log10(p)
                     #if (pExp > exp):
                     line[1] = p
-                    lines.append(line)
+                    lines.append(pheno + line)
                 except:
                     pass
     print('sorting...')
-    lines = sorted(lines,key = lambda x:x[1])
+    lines = sorted(lines,key = lambda x:x[2])
     with open(oPath,'wt') as o:
         for s in lines:
             oString = '\t'.join([str(elem) for elem in s])
@@ -64,7 +65,8 @@ def qq_plot(qqPath,fPath = figPath,lofString = 'hc_lof',dpi = 300,nBins = 1000):
     '''
     QQ plot for the pvals
     '''
-   
+
+    
     fPath += lofString + '_qq_plot.pdf'
     qqData = pd.read_csv(qqPath,dtype =float,header = None).values.flatten()
     qqData = qqData[qqData>0]
