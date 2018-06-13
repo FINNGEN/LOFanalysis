@@ -48,9 +48,9 @@ def best_hits(resPath ,lofString = 'hc_lof'):
     with open(oPath,'wt') as o:
         for s in lines:
             oString = '\t'.join([str(elem) for elem in s])
-            o.write(oString + '\n')
+            o.write(oString)
 
-def genomic_inflation(qqPath,quantile = 0.5):
+def genomic_inflation(qqPath):
     qqData = pd.read_csv(qqPath,dtype =float,header = None).values.flatten()
     qqData = qqData[qqData>0]
     qqData = np.log10(qqData)*-1
@@ -91,6 +91,11 @@ def qq_plot(qqPath,fPath = figPath,lofString = 'hc_lof',dpi = 300,nBins = 1000):
     print('saving...')
     ax.set_xlabel('Expected -log(pval)')
     ax.set_ylabel('Observed -log(pval)')
+    size = fig.get_size_inches()
+    print(size)
+    scale = 2
+    newSize = [elem*scale for elem in size]
+    fig.set_size_inches(newSize)
     fig.savefig(fPath,dpi = dpi)
     plt.close(fig)
 
