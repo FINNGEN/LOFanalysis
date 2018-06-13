@@ -48,28 +48,6 @@ def best_hits(resPath ,lofString = 'hc_lof',exp = 6):
         for s in lines:
             oString = '\t'.join([str(elem) for elem in s])
             o.write(oString + '\n')
-        
-def qq_data(resPath ,lofString = 'hc_lof'):
-
-    qqPath = resPath + '/' + lofString+ '/' +lofString + '_qq_data.txt'
-    resPath += '/' + lofString +'/results/'
-    print('fetching data from ' + resPath)
-    files = get_filepaths(resPath )
-    res = []
-    for f in files:
-        print(f)
-        with gzip.open(f,'rt') as i:
-            for line in i:
-                pval = line.split('\t')[1]
-                try:
-                    pval = np.float128(pval)
-                    res.append(pval)
-                except:
-                    pass
-                
-    res = np.array(res,dtype = np.float128)
-    np.savetxt(qqPath,res,fmt = '%E')
-    return res
 
 def genomic_inflation(qqPath,quantile = 0.5):
     qqData = pd.read_csv(qqPath,dtype =float,header = None).values.flatten()
@@ -83,6 +61,9 @@ def genomic_inflation(qqPath,quantile = 0.5):
     
 def qq_plot(qqPath,fPath = figPath,lofString = 'hc_lof',dpi = 300,nBins = 1000):
 
+    '''
+    QQ plot for the pvals
+    '''
    
     fPath += lofString + '_qq_plot.pdf'
     qqData = pd.read_csv(qqPath,dtype =float,header = None).values.flatten()
@@ -111,6 +92,31 @@ def qq_plot(qqPath,fPath = figPath,lofString = 'hc_lof',dpi = 300,nBins = 1000):
     fig.savefig(fPath,dpi = dpi)
     plt.close(fig)
 
+
+        
+def qq_data(resPath ,lofString = 'hc_lof'):
+
+    qqPath = resPath + '/' + lofString+ '/' +lofString + '_qq_data.txt'
+    resPath += '/' + lofString +'/results/'
+    print('fetching data from ' + resPath)
+    files = get_filepaths(resPath )
+    res = []
+    for f in files:
+        print(f)
+        with gzip.open(f,'rt') as i:
+            for line in i:
+                pval = line.split('\t')[1]
+                try:
+                    pval = np.float128(pval)
+                    res.append(pval)
+                except:
+                    pass
+                
+    res = np.array(res,dtype = np.float128)
+    np.savetxt(qqPath,res,fmt = '%E')
+    return res
+
+    
 def scatter_file(lofString = 'hc_lof',infoFilter = 0.9):
 
     resultsPath = miscPath + '/tmp.txt'
