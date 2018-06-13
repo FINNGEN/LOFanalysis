@@ -57,7 +57,7 @@ def genomic_inflation(qqPath,oPath,lofString):
     qqData[::-1].sort()
     oPath += lofStrin + '_genomic_inflation.txt'
     with open(oPath,'wt') as o:
-        o.write('Quantile' + \t 'inflation' + '\n')
+        o.write('Quantile' + '\t' + 'inflation' + '\n')
         for perc in ['0.5', '0.1', '0.01', '0.001']:
             gc = gc_value_from_list(qqData, float(perc))
             o.write(str(perc) + '\t' + str(gc) + '\n')
