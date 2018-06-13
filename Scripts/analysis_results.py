@@ -50,14 +50,18 @@ def best_hits(resPath ,lofString = 'hc_lof'):
             oString = '\t'.join([str(elem) for elem in s])
             o.write(oString)
 
-def genomic_inflation(qqPath):
+def genomic_inflation(qqPath,oPath,lofString):
     qqData = pd.read_csv(qqPath,dtype =float,header = None).values.flatten()
     qqData = qqData[qqData>0]
     qqData = np.log10(qqData)*-1
     qqData[::-1].sort()
-    for perc in ['0.5', '0.1', '0.01', '0.001']:
-        gc = gc_value_from_list(qqData, float(perc))
-        print(perc,gc)
+    oPath += lofStrin + '_genomic_inflation.txt'
+    with open(oPath,'wt') as o:
+        o.write('Quantile' + \t 'inflation' + '\n')
+        for perc in ['0.5', '0.1', '0.01', '0.001']:
+            gc = gc_value_from_list(qqData, float(perc))
+            o.write(str(perc) + '\t' + str(gc) + '\n')
+            print(perc,gc)
 
     
 def qq_plot(qqPath,fPath = figPath,lofString = 'hc_lof',dpi = 300,nBins = 1000):
