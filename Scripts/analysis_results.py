@@ -17,6 +17,9 @@ import scipy
 miscPath = rootPath+ '/misc/'
 figPath = rootPath + '/Figs/'
 
+import seaborn as sns
+sns.set(style='ticks', palette='Set2')
+sns.despine()
 
 def best_hits(resPath ,lofString = 'hc_lof'):
     qqPath = resPath + '/' + lofString+ '/' +lofString + '_qq_data.txt'
@@ -64,7 +67,7 @@ def genomic_inflation(qqPath,oPath,lofString):
             print(perc,gc)
 
     
-def qq_plot(qqPath,fPath = figPath,lofString = 'hc_lof',dpi = 300,nBins = 1000):
+def qq_plot(qqPath,fPath = figPath,lofString = 'hc_lof',dpi = 300,nBins = 1000,ymax = None):
 
     '''
     QQ plot for the pvals
@@ -82,24 +85,29 @@ def qq_plot(qqPath,fPath = figPath,lofString = 'hc_lof',dpi = 300,nBins = 1000):
     gs = mpl.gridspec.GridSpec(1,1)
     ax = fig.add_subplot(gs[0,0])
 
+    
     print('ax created...')
     #    entries = np.power(10,max(qqData))
     plotData = np.array(compute_qq(qqData,nBins))
     xData = plotData[:,0]
     yData = plotData[:,1]
 
-    ax.plot(xData,yData,'bo')
+    if ymax is not None:
+        if int(ymax):
+            yData[yData>ymax] = ymax
+    print(yData.max())
+   # ax.plot(xData,yData,'bo')
+    sns.regplot(xData,yData,ax =ax,fit_reg = False)
     ax.set_xlim([0,xData.max()])
     ax.set_ylim([0,yData.max()])
     ax.set_aspect('equal')
     print('saving...')
     ax.set_xlabel('Expected -log(pval)')
     ax.set_ylabel('Observed -log(pval)')
-    size = fig.get_size_inches()
-    print(size)
-    scale = 2
-    newSize = [elem*scale for elem in size]
-    fig.set_size_inches(newSize)
+    #size = fig.get_size_inches()
+    #scale = 2
+    #newSize = [elem*scale for elem in size]
+    #fig.set_size_inches(newSize)
     fig.savefig(fPath,dpi = dpi)
     plt.close(fig)
 
