@@ -21,7 +21,10 @@ import seaborn as sns
 sns.set(style='ticks', palette='Set2')
 sns.despine()
 
-def best_hits(resPath ,lofString = 'hc_lof'):
+def best_hits(resPath ,lofString = 'hc_lof',iPath):
+
+
+    g2v = get_variant_to_gene_dict(iPath,lofString)
     
     qqPath = resPath + '/' + lofString+ '/' +lofString + '_qq_data.txt'
     oPath =  resPath + '/' + lofString+ '/' +lofString + '_hits.txt'
@@ -38,13 +41,13 @@ def best_hits(resPath ,lofString = 'hc_lof'):
                 line = line.split('\t')
                 pval = line[1]
                 gene = line[0]
-
+                variants = g2v[gene]
                 try:
                     p = np.float128(pval)
                     pExp = -np.log10(p)
                     #if (pExp > exp):
                     line[1] = p
-                    lines.append(pheno + line)
+                    lines.append(pheno + line + variants)
                 except:
                     pass
     print('sorting...')
