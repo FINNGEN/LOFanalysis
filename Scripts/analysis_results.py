@@ -5,7 +5,7 @@ import pickle
 import shlex
 import sys
 from subprocess import Popen, PIPE,call
-from file_utils import make_sure_path_exists,gzip,get_filepaths,compute_qq,gc_value_from_list
+from file_utils import make_sure_path_exists,gzip,get_filepaths,compute_qq,gc_value_from_list,get_variant_to_gene_dict
 from file_utils import rootPath,dataPath,annotatedVariants,bashPath
 import matplotlib as mpl
 from matplotlib import pyplot as plt
@@ -22,6 +22,7 @@ sns.set(style='ticks', palette='Set2')
 sns.despine()
 
 def best_hits(resPath ,lofString = 'hc_lof'):
+    
     qqPath = resPath + '/' + lofString+ '/' +lofString + '_qq_data.txt'
     oPath =  resPath + '/' + lofString+ '/' +lofString + '_hits.txt'
     resPath += '/' + lofString +'/results/'
