@@ -21,7 +21,7 @@ import seaborn as sns
 sns.set(style='ticks', palette='Set2')
 sns.despine()
 
-def best_hits(resPath ,lofString = 'hc_lof',iPath):
+def best_hits(resPath ,iPath,lofString = 'hc_lof'):
 
 
     g2v = get_variant_to_gene_dict(iPath,lofString)
