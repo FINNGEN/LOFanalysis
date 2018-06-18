@@ -56,7 +56,8 @@ def best_hits(resPath ,iPath,lofString = 'hc_lof'):
         for s in lines:
             oString = '\t'.join([str(elem) for elem in s])
             o.write(oString + '\n')
-
+    cmd = 'gzip ' + oPath
+    call(shlex.split(cmd))
 def genomic_inflation(qqPath,oPath,lofString):
     qqData = pd.read_csv(qqPath,dtype =float,header = None).values.flatten()
     qqData = qqData[qqData>0]
