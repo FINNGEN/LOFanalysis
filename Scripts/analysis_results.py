@@ -48,6 +48,8 @@ def best_hits(resPath ,iPath,lofString = 'hc_lof'):
                     line[1] = p
                     lines.append(pheno + line + variants)
                     print(len(lines))
+                except:
+                    pass
                 
     print('sorting...')
     lines = sorted(lines,key = lambda x:x[2])
