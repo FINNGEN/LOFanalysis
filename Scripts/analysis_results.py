@@ -46,8 +46,8 @@ def best_hits(resPath ,iPath,lofString = 'hc_lof'):
                     p = np.float128(pval)
                     pExp = -np.log10(p)
                     line[1] = p
-                    #lines.append(pheno + line + variants)
-                    lines.append(pheno + line)
+                    lines.append(pheno + line + variants)
+
                 except:
                     pass
     print('sorting...')
