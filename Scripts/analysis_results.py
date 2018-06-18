@@ -42,9 +42,9 @@ def best_hits(resPath ,iPath,lofString = 'hc_lof'):
                 pval = line[1]
                 gene = line[0]
                 variants = g2v[gene]
-                p = np.float128(pval)
-                pExp = -np.log10(p)
-                line[1] = p
+#                p = np.float128(pval)
+#                pExp = -np.log10(p)
+#                line[1] = p
                 lines.append(pheno + line + variants)
                 
     print('sorting...')
