@@ -38,7 +38,7 @@ def best_hits(resPath ,iPath,lofString = 'hc_lof'):
         pheno = [pheno]
         with gzip.open(f,'rt') as i:
             for line in i:
-                line = line.split('\t')
+                line = line.strip().split('\t')
                 pval = line[1]
                 gene = line[0]
                 variants = g2v[gene]
