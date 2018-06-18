@@ -50,7 +50,6 @@ def best_hits(resPath ,iPath,lofString = 'hc_lof'):
                 
                 except:
                     pass
-    return lines
     print('sorting...')
     lines = sorted(lines,key = lambda x:x[2])
     with open(oPath,'wt') as o:
