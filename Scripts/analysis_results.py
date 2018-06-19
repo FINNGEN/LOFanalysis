@@ -53,15 +53,17 @@ def best_hits(resPath ,iPath,lofString = 'hc_lof'):
                     pass
     print('sorting...')
     lines = sorted(lines,key = lambda x:x[2])
+    with open(header,'rt') as i:
+        head = i.readlines()[0]
+
+    head = 'pheno gene ' + head.strip() + ' variants'
+    print(head)
     with open(oPath,'wt') as o:
         # add header
-        with open(header,'rt') as i:
-            for line in i:
-                o.write(line)
         for s in lines:
             oString = '\t'.join([str(elem) for elem in s])
             o.write(oString + '\n')
-    cmd = 'gzip -f ' + oPath
+    cmd = 'gzip -f sssssssssss' + oPath
     call(shlex.split(cmd))
 def genomic_inflation(qqPath,oPath,lofString):
     qqData = pd.read_csv(qqPath,dtype =float,header = None).values.flatten()
