@@ -27,7 +27,7 @@ def best_hits(resPath ,iPath,lofString = 'hc_lof'):
     lofPath = resPath + '/' + lofString+ '/' 
     g2v = get_variant_to_gene_dict(iPath,lofString)
     column = lofPath + 'columns.txt'
-    qqPath = lofPath +  +lofString + '_qq_data.txt'
+    qqPath = lofPath  +lofString + '_qq_data.txt'
     oPath =  lofPath  +lofString + '_hits.txt'
     resPath += '/' + lofString +'/results/'
     print('fetching data from ' + resPath)
