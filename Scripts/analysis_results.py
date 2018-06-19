@@ -60,6 +60,7 @@ def best_hits(resPath ,iPath,lofString = 'hc_lof'):
     print(head)
     with open(oPath,'wt') as o:
         # add header
+        o.write(head)
         for s in lines:
             oString = '\t'.join([str(elem) for elem in s])
             o.write(oString + '\n')
