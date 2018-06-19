@@ -24,10 +24,11 @@ sns.despine()
 def best_hits(resPath ,iPath,lofString = 'hc_lof'):
 
 
+    lofPath = resPath + '/' + lofString+ '/' 
     g2v = get_variant_to_gene_dict(iPath,lofString)
-    
-    qqPath = resPath + '/' + lofString+ '/' +lofString + '_qq_data.txt'
-    oPath =  resPath + '/' + lofString+ '/' +lofString + '_hits.txt'
+    column = lofPath + 'columns.txt'
+    qqPath = lofPath +  +lofString + '_qq_data.txt'
+    oPath =  lofPath  +lofString + '_hits.txt'
     resPath += '/' + lofString +'/results/'
     print('fetching data from ' + resPath)
     files = get_filepaths(resPath )
@@ -53,6 +54,10 @@ def best_hits(resPath ,iPath,lofString = 'hc_lof'):
     print('sorting...')
     lines = sorted(lines,key = lambda x:x[2])
     with open(oPath,'wt') as o:
+        # add header
+        with open(columns,'rt') as i:
+            for line in i:
+                o.write(line)
         for s in lines:
             oString = '\t'.join([str(elem) for elem in s])
             o.write(oString + '\n')
