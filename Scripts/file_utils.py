@@ -1,25 +1,23 @@
 import os
 import numpy as np
 import gzip
-from collections import defaultdict
+from collections import defaultdict as dd
 import pickle
-from scipy.stats import fisher_exact
 import scipy
+import shutil
+import time
+import sys
+import mmap
+import multiprocessing
+import subprocess
+from subprocess import call
+import shlex
+cpus = multiprocessing.cpu_count()
+
 rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
-dataPath = rootPath + 'Data/'
 # REQUIRED FILES
-rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
 
-dataPath = rootPath + 'Data/'
-annotatedVariants =  dataPath + 'annotated_variants.gz'
-bashPath = rootPath + 'tmp_scripts/'
-phenoFile = '/home/pete/Data/SPA_data/R1_COV_PHENO.txt'
 
-def dd(tp):
-    return defaultdict(tp)
-def dd_str():
-    return defaultdict(str)
-    
 def make_sure_path_exists(path):
     import errno
     try:
@@ -28,20 +26,24 @@ def make_sure_path_exists(path):
         if exception.errno != errno.EEXIST:
             raise                
 
-for path in [dataPath,bashPath]:
-    make_sure_path_exists(path)
 
-def return_header_variants(matrixPath):
-    '''
-    The plink command adds the alt to the name of the variant. Here i loop through the variants and just return the original variant name
-    '''
-    with open(matrixPath,'rt') as i:
-        header = i.readline()
-        header = header.strip().split(' ')[1:]
-        headerVariants = ['_'.join(elem.split('_')[:-1]) for elem in header]
-        
-    return np.array(headerVariants,dtype = str)
-                
+tmp_path = rootPath + 'tmp/'
+make_sure_path_exists(tmp_path)
+plink = shutil.which('plink')
+plink2 = shutil.which('plink2')
+
+
+
+mem_bytes = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')  # e.g. 4015976448
+mem_mib = mem_bytes/(1024.**2) 
+proc_mem = mem_mib / (cpus +1)
+
+
+import git
+
+def git_pull():
+    g = git.cmd.Git(os.getcwd())
+    g.pull()
 
 def split_array_chunk(seq, num):
     avg = len(seq) / float(num)
@@ -54,249 +56,203 @@ def split_array_chunk(seq, num):
 
     return out
 
-
-import shlex
-from subprocess import call
-
-def git_pull():
-    call(shlex.split('git pull'))
-
-
-def read_header(header = None,lofString = "hc_lof"):
-    '''
-    Reads the first line of the variants.gz file and returns the position of the Info score
-    '''
+def get_progress(args):
     
-    if header == None:
-        with gzip.open(annotatedVariants,'rt') as i:
+    if args.test:
+        genes = args.test * args.cpus
+    else:
+        g2v = get_variant_to_gene_dict(args)
+        gene_list = np.array(list(g2v.keys()))
+        genes = len(gene_list)
+
+    import glob    
+    chunk_path = os.path.join(args.tmp_path, args.lof +'_' + 'matrix_chunk*')
+    files = glob.iglob(chunk_path)
+    lines = 0
+    for f in files:
+        if os.path.getsize(f) > 0:
+            lines += mapcount(f)
     
-            header = i.readline()
-            header = header.strip().split('\t')
+    progressBar(lines,genes)
 
-            
-    infoPos = [i for i,elem in enumerate(header) if 'INFO_' in elem]
-    lofPos = [i for i,elem in enumerate(header) if  elem == lofString][0]
-    avgPos = [i for i,elem in enumerate(header) if 'INFO' == elem][0]
-    genePos =  [i for i,elem in enumerate(header) if  elem == "gene"][0]
-    return infoPos,lofPos,avgPos,genePos
-
-def return_column(pheno = 'FINNGENID',f = phenoFile,dtype = 'f8'):
+def return_header_variants(matrixPath):
     '''
-    Given the phenotype file, it returns the column given a phenotype
+    The plink command adds the alt to the name of the variant. Here i loop through the variants and just return the original variant name
     '''
-    header = return_header(f =f )
-    for i,elem in enumerate(header):
-        if str(elem) == pheno:
-            phenocol = i
-    if f.split('.')[-1] == 'txt':
-        i = open(f,'rt')
-    elif f.split('.')[-1] == 'gz':
-        i = gzip.open(f,'rb')
+    with open(matrixPath,'rt') as i:
+        header = i.readline().strip().split('\t')
+        header_variants = ['_'.join(elem.split('_')[:-1]) for elem in header]
+        
+    return header_variants
 
-    column = np.genfromtxt(i,usecols = (phenocol,),delimiter = ('\t'),skip_header=1,dtype = dtype)
-    i.close()
-    return column
+def pad(s,padding = ' '):
+    return padding +s + padding
 
 
-def return_header(f = phenoFile):
+def tmp_bash(cmd):
+    from tempfile import NamedTemporaryFile
+
+    scriptFile = NamedTemporaryFile(delete=True)
+    with open(scriptFile.name, 'w') as f:
+        f.write("#!/bin/bash\n")
+        f.write(cmd + "\n")
+
+    os.chmod(scriptFile.name,0o777)
+    scriptFile.file.close()
+    subprocess.check_call(scriptFile.name)
+
+def run_bash_script(cmd,file_path):
+    with open(file_path,'wt') as o:
+        o.write('#!/bin/bash\n')
+        o.write(cmd)
+    call(shlex.split('chmod +x ' + file_path))
+    call(file_path,shell = True)
+    
+def return_open_func(f):
     '''
-    Reads the header of the pheno file
+    Detects file extension and return proper open_func
     '''
-    if f.split('.')[-1] == 'txt':
+    import gzip
+    from functools import partial
+
+    file_path,file_root,file_extension = get_path_info(f)
+    print(file_extension)
+
+    if 'bgz' in file_extension:
+        print('gzip.open with rb mode')
+        open_func = partial(gzip.open, mode = 'rb')
+    
+    elif 'gz' in file_extension:
+        print('gzip.open with rt mode')
+        open_func = partial(gzip.open, mode = 'rt')
+
+    else:
+        print('regular open')
+        open_func = open      
+    return open_func
+
+def progressBar(value, endvalue, bar_length=20):
+    '''
+    Writes progress bar, given value (eg.current row) and endvalue(eg. total number of rows)
+    '''
+
+    percent = float(value) / endvalue
+    arrow = '-' * int(round(percent * bar_length)-1) + '>'
+    spaces = ' ' * (bar_length - len(arrow))
+
+    sys.stdout.write("\rPercent: [{0}] {1}%".format(arrow + spaces, int(round(percent * 100))))
+    sys.stdout.flush()
+    
+def timing_function(some_function):
+
+    """
+    Outputs the time a function takes  to execute.
+    """
+
+    def wrapper(*args,**kwargs):
+        t1 = time.time()
+        some_function(*args)
+        t2 = time.time()
+        print("Time it took to run the function: " + str((t2 - t1)))
+
+    return wrapper
+
+
+
+def file_exists(fname):
+    '''
+    Function to pass to type in argparse
+    '''
+    if os.path.isfile(fname):
+        return str(fname)
+    else:
+        print('File does not exist')
+        sys.exit(1)
+
+
+
+    
+
+def pretty_print(string,l = 30):
+    l = l-int(len(string)/2)
+    print('-'*l + '> ' + string + ' <' + '-'*l)
+    
+
+
+def mapcount(filename):
+    '''
+    Counts line in file
+    '''
+    f = open(filename, "r+")
+    buf = mmap.mmap(f.fileno(), 0)
+    lines = 0
+    readline = buf.readline
+    while readline():
+        lines += 1
+    return lines
+
+class SliceMaker(object):
+    '''
+    allows to pass around slices
+    '''
+    def __getitem__(self, item):
+        return item
+
+def line_iterator(f,separator ='\t',count = False,columns = SliceMaker()[:],dtype = str,skiprows = 0):
+    '''
+    Function that iterates through a file and returns each line as a list with separator being used to split.
+    N.B. it requires that all elements are the same type
+    '''
+    if f.split('.')[-1] != 'gz':
         i = open(f,'rt')
 
     elif f.split('.')[-1] == 'gz':
         i = gzip.open(f,'rt')
-    
-    header = i.readline()
-    header = header.strip().split('\t')
-    i.close()
-    return header
 
+    for x in range(skiprows):next(i)
 
-def get_filepaths(directory):
-    """
-    This function will generate the file names in a directory 
-    tree by walking the tree either top-down or bottom-up. For each 
-    directory in the tree rooted at directory top (including top itself), 
-    it yields a 3-tuple (dirpath, dirnames, filenames).
-    """
-    file_paths = []  # List which will store all of the full filepaths.
-
-    # Walk the tree.
-    for root, directories, files in os.walk(directory):
-        for filename in files:
-            # Join the two strings in order to form the full filepath.
-            filepath = os.path.join(root, filename)
-            file_paths.append(filepath)  # Add it to the list.
-
-    return file_paths  # Self-explanatory.
-
-
-
-def get_variant_to_gene_dict(iPath,lofString = 'hc_lof'):
-    '''
-    Reads the plink snplist and returns a gene to variant dictionary 
-    '''
-    #get variant to gene mapping from full list of variants
-    bFile = iPath + 'plink_files/'+lofString 
-
-    v2g = dd(str)
-    with open(dataPath + lofString + '_variants.txt','rt') as i:
+    if count is False:
         for line in i:
-            variant,gene = line.strip().split('\t')
-            v2g[variant] = gene
-
-    # read snplist of filtered plink file and keep gene to variant list dictionary
-    g2v = dd(list)
-    with open(bFile + '.snplist','rt') as i:
+            yield np.array(line.strip().split(separator),dtype = str)[columns].astype(dtype)
+    else:
+        row = 0
         for line in i:
-            variant = line.strip()
-            gene = v2g[variant]
-            g2v[gene].append(variant)
-    return g2v
+            row +=1 
+            yield row,np.array(line.strip().split(separator),dtype = str)[columns].astype(dtype)
 
 
 
-def variant_is_dict(annVariants = annotatedVariants,iPath ='/home/pete/results/hc_lof/',lofString = "hc_lof" ):
-    
+def basic_iterator(f,separator ='\t',skiprows = 0,count = False,columns = 'all'):
     '''
-    Read the annotated_variants and returns a dict[variant][batch] = INFO_SCORE for teh variants that are in the snplist.
-    I can use this dictionary to retreieve the info score for the samples
+    Function that iterates through a file and returns each line as a list with separator being used to split.
     '''
+    if f.split('.')[-1] != 'gz':
+        i = open(f,'rt')
 
-    picklePath = iPath + '/misc/'
-    make_sure_path_exists(picklePath)
+    elif f.split('.')[-1] == 'gz':
+        i = gzip.open(f,'rt')
 
-    picklePath += lofString +'_vDict.p'
-    print('loading/generating dict[variant][batch] = INFO_SCORE dict -->' + picklePath)
-    try:
-        vDict = pickle.load(open(picklePath,'rb'))
-    except:
-        snplist = iPath + '/plink_files/' +lofString + '.snplist'
+    for x in range(skiprows):next(i)
 
-        print('data missing, generating..')
-        variants = np.loadtxt(snplist,dtype = str)   
-        vDict = defaultdict(dd_str)
-        with gzip.open(annVariants,'rt') as i:
-            #read header
-            header = i.readline().strip().split('\t')
-            infoPos,lofPos,avgPos,genePos = read_header(header)
-            #return position of batches 
-            batches = header[infoPos[0]:infoPos[-1]+1]
-            #return batches
-            batches = [batch.split('INFO_')[1].split('_R1')[0] for batch in batches]
-            pickle.dump(batches,open(dataPath + 'ourbatches.p','wb'))
-        
-            startPos = infoPos[0]
-            rangebatches = np.arange(len(batches))
-            assert len(batches) == len(infoPos)
-
-            #loop variants
-            for line in i:
-                line = line.strip().split('\t')
-                variant = line[0].replace(':','_')
-                if variant in variants:
-                    for b in rangebatches:
-                        batch = batches[b]
-                        vDict[variant][batch] = line[startPos + b]
-
-        pickle.dump(vDict,open(picklePath,'wb'))
-
-    return vDict
-
-
-
-def sample_to_batch_dict(filePath = dataPath + 'sample_info.txt'):
+    if count is False:
+        for line in i:
+            line =line.strip().split(separator)
+            line = return_columns(line,columns)
+            yield line
+    else:
+        row = 0
+        for line in i:
+            line =line.strip().split(separator)
+            line = return_columns(line,columns)
+            row += 1   
+            yield row,line
+def return_columns(l,columns):
     '''
-    Given timo's file maps a sample to a batch. requires a conversion on the fly due to slightly different names between his batch names and ours. Need to pass our batches and use difflib
+    Returns all columns, or rather the elements, provided the columns
     '''
-
-    picklePath = dataPath +  'sample_to_batch.p'
-
-    try:
-        print('returning sample to batch dict')
-        s2b = pickle.load(open(picklePath,'rb'))
-        
-    except:
-        print("data doesn't exist..generating..")
-        import difflib                         
-        ourbatches = pickle.load(open(dataPath + 'ourbatches.p','rb'))
-
-                             
-        s2b = dd(str)
-        sampleData = np.loadtxt(filePath,dtype = str,delimiter=':',usecols=[0,-1])
-        for entry in sampleData:
-            timoBatch,sample = entry
-            ourBatch = difflib.get_close_matches(timoBatch,ourbatches)[0]
-            s2b[sample] = ourBatch
-
-        pickle.dump(s2b,open(picklePath,'wb'))
-    return s2b
-
-
-
-def f_test(phenoData,lofData):
-    '''
-    Runs the fisher test given phenoData and lofData
-    '''
-    # get lof counts for cases
-    phenoMask = (phenoData >0)
-    cases = phenoMask.sum()
-    lofCases = int(lofData[phenoMask].sum())
-    nolofCases = cases - lofCases
-    # get lof counts for controls
-    phenoMask = (phenoData == 0)
-    controls = phenoMask.sum()
-    lofControls = int(lofData[phenoMask].sum())
-    nolofControls = controls - lofControls
-    # do fischer test
-    table = np.empty((2,2),dtype = int)
-    table[0] = [lofCases,lofControls]
-    table[1] = [nolofCases,nolofControls]
-    f_results = fisher_exact(table)
-
-    return f_results,table
-
-
-def compute_qq(neglog10_pvals,nBins):
-    import math
-    # neglog10_pvals must be in decreasing order.
-    assert all(neglog10_pvals[i] >= neglog10_pvals[i+1] for i in range(len(neglog10_pvals)-1))
-
-    if len(neglog10_pvals) == 0:
-        return []
-
-    max_exp_neglog10_pval = -math.log10(0.5 / len(neglog10_pvals))
-    max_obs_neglog10_pval = neglog10_pvals[0]
-
-    if max_obs_neglog10_pval == 0:
-        print('WARNING: All pvalues are 1! How is that supposed to make a QQ plot?')
-        return []
-
-    occupied_bins = set()
-    for i, obs_neglog10_pval in enumerate(neglog10_pvals):
-        exp_neglog10_pval = -math.log10( (i+0.5) / len(neglog10_pvals))
-        exp_bin = int(exp_neglog10_pval / max_exp_neglog10_pval * nBins)
-        obs_bin = int(obs_neglog10_pval / max_obs_neglog10_pval * nBins)
-        occupied_bins.add( (exp_bin,obs_bin) )
-
-    qq = []
-    for exp_bin, obs_bin in occupied_bins:
-        assert 0 <= exp_bin <= nBins, exp_bin
-        assert 0 <= obs_bin <= nBins, obs_bin
-        qq.append((
-            exp_bin / nBins * max_exp_neglog10_pval,
-            obs_bin / nBins * max_obs_neglog10_pval
-        ))
-    return sorted(qq)
-
-def gc_value_from_list(neglog10_pvals, quantile=0.5):
-    # neglog10_pvals must be in decreasing order.
-    assert all(neglog10_pvals[i] >= neglog10_pvals[i+1] for i in range(len(neglog10_pvals)-1))
-    neglog10_pval = neglog10_pvals[int(len(neglog10_pvals) * quantile)]
-    pval = 10 ** -neglog10_pval
-    return gc_value(pval, quantile)
-def gc_value(pval, quantile=0.5):
-    # This should be equivalent to this R: `qchisq(median_pval, df=1, lower.tail=F) / qchisq(quantile, df=1, lower.tail=F)`
-    return scipy.stats.chi2.ppf(1 - pval, 1) / scipy.stats.chi2.ppf(1 - quantile, 1)
+    if columns == 'all':
+        return l
+    elif type(columns) == int:
+        return l[columns]
+    elif type(columns) == list:
+        return list(map(l.__getitem__,columns))

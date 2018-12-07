@@ -14,7 +14,6 @@ import pandas as pd
 import multiprocessing
 cpus = multiprocessing.cpu_count()
 
-plink = shutil.which('plink')
 
 lofName = "filtered_lof"
 matrixName = "_variantmatrix.tsv"
