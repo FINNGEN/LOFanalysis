@@ -23,3 +23,4 @@ Using the list of snpslist and the variant_to_gene_dict a reverse gene_to_varian
 Finally, the matrix is transposed to obtain a sample to gene LOF boolean matrix.
 
 
+
