@@ -47,7 +47,7 @@ def merge_gene(chunk,args):
     '''
     matrix_chunk = os.path.join(args.tmp_path, args.lof +'_' + 'matrix_chunk_'+str(chunk) + '.txt')
     if not os.path.isfile(matrix_chunk):
-        with open(args.g2v,'rb') as i:v2g = pickle.load(i)
+        with open(args.g2v,'rb') as i: g2v = pickle.load(i)
         gene_chunk = get_gene_chunk(chunk,args,g2v)
         with open(matrix_chunk,'wt') as o:
             for i,gene in enumerate(gene_chunk):
