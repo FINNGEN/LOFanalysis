@@ -61,7 +61,7 @@ def get_progress(args):
     if args.test:
         genes = args.test * args.cpus
     else:
-        g2v = get_variant_to_gene_dict(args)
+        with open(args.g2v,'rb') as i: g2v = pickle.load(i)
         gene_list = np.array(list(g2v.keys()))
         genes = len(gene_list)
 
