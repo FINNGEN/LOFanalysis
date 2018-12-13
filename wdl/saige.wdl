@@ -9,26 +9,29 @@ task pheno_saige {
 	Int cpu
 	Float mem
 	String loco
-	String outfile
+	String outfile = basename(nullfile, ".rda") +  ".SAIGE.txt"
 
 	command {
 
 	step2_SPAtests.R \
 	--dosageFile=${lofMatrix} \
-	--dosageFileNrowSkip=1
-	--dosageFileNcolSkip=1
-	--dosageFilecolnamesSkip="GENE"
-	--minMAC=10
+	--dosageFileNrowSkip=1 \
+	--dosageFileNcolSkip=1\
+	--dosageFilecolnamesSkip="GENE"\
+	--minMAC=10\
 	--sampleFile=${samplefile}\
 	--LOCO=${loco} \
 	--numLinesOutput=1000\
-	--IsOutputAFinCaseCtrl=True\
+	--IsOutputAFinCaseCtrl=TRUE\
 	--GMMATmodelFile=${nullfile}\
 	--varianceRatioFile=${varianceratiofile}\
 	--SAIGEOutputFile=${outfile} 
 
 	}
-
+	output {
+	
+		File out = outfile
+	    }
  runtime {
 
         docker: "${docker}"

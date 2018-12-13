@@ -1,5 +1,4 @@
 {
-  "LOF_saige.pheno_saige.outfile": "String",
   "LOF_saige.null_list": "gs://r2_data/LOF/nullfiles_test.txt",
   "LOF_saige.pheno_saige.lofMatrix": "gs://r2_data/LOF/most_severe_matrix.txt",
   "LOF_saige.pheno_saige.cpu": "1",
