@@ -75,6 +75,12 @@ def get_progress(args):
     
     progressBar(lines,genes)
 
+def get_path_info(path):
+    file_path = os.path.dirname(path)
+    basename = os.path.basename(path)
+    file_root, file_extension = os.path.splitext(basename)
+    return file_path,file_root,file_extension
+
 def return_header_variants(matrixPath):
     '''
     The plink command adds the alt to the name of the variant. Here i loop through the variants and just return the original variant name

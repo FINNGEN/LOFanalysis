@@ -24,22 +24,24 @@ def do_chunks(args):
     pool.close()
     print('done.')
 
+def merge_chunks(args):
     #merge matrix chunks
     print('merging matrix chunks..')
-    out_file = os.path.join(args.tmp_path, args.lof + '_matrix.txt')
-    samples = pd.read_csv(args.matrix,sep = '\t',usecols = ['FID']).values.flatten()
-    with open(out_file,'wt') as o: o.write('FINNGENID\t' + '\t'.join(samples) + '\n')
+    out_file = os.path.join(args.out_path, args.lof + '_matrix.txt')
+    #load samples
+    samples = pd.read_csv(args.matrix,sep = '\t',usecols = ['FID']).values.flatten()    
+    with open(out_file,'wt') as o: o.write('GENE\t' + '\t'.join(samples) + '\n')
     print('samples written...')
     cmd = "cat " + os.path.join(args.tmp_path, args.lof +'_' + "matrix_chunk*") + "  >> "+ out_file
     tmp_bash(cmd)
     print('done..')
     
     # transpose columns and rows
-    print('transposing matrix...')
-    final_matrix = os.path.join(args.out_path, args.lof + '_matrix.txt')
-    cmd = 'datamash transpose < ' + out_file + ' > ' + final_matrix
-    tmp_bash(cmd)
-    print('done..')
+    #print('transposing matrix...')
+    #final_matrix = os.path.join(args.out_path, args.lof + '_matrix.txt')
+    #cmd = 'datamash transpose < ' + out_file + ' > ' + final_matrix
+    #tmp_bash(cmd)
+    #print('done..')
     
 def merge_gene(chunk,args):
     '''
@@ -88,8 +90,8 @@ def return_lof_variants(args):
     elif args.lof == "most_severe":
         lof_filter = ["frameshift_variant","splice_donor_variant","stop_gained","splice_acceptor_variant"]
 
-    args.lof_variants =os.path.join(args.tmp_path, args.lof + '_variants.txt')
-    args.v2g = os.path.join(args.tmp_path, args.lof + '_variants_gene_dict.p')
+    args.lof_variants =os.path.join(args.out_path, args.lof + '_variants.txt')
+    args.v2g = os.path.join(args.out_path, args.lof + '_variants_gene_dict.p')
     if os.path.isfile(args.lof_variants):
         print('variants already filtered',args.lof_variants)
 
@@ -116,26 +118,45 @@ def matrix_plink(args):
     '''
     Returns the final list of snps as well as the LOF raw matrix
     '''
+
+
     
     args.snps =  os.path.join(args.out_path, args.lof + '.snplist')
     if not os.path.isfile(args.snps):
         exclude = ' --exclude '+ args.exclude if args.exclude else ''
         cmd = 'plink2  -bfile ' + pad(args.plink_path) +  ' --write-snplist  --extract' +pad(args.lof_variants) + pad(exclude) + '--threads' + pad(str(args.cpus)) + '--allow-extra-chr --out ' + pad(os.path.splitext(args.snps)[0])
-        print(cmd) 
         call(shlex.split(cmd))
     else:
         print('snplist already generated')
         
-    args.matrix = os.path.join(args.out_path, args.lof + '_matrix.raw')
+        
+    args.matrix = os.path.join(args.tmp_path, args.lof + '_matrix_filtered.raw')
     if not os.path.isfile(args.matrix):
+        matrix = os.path.join(args.tmp_path, args.lof + '_matrix.raw')
         remove = '--remove ' + args.remove if args.remove else ''
-        cmd = 'plink2 -bfile ' + pad(args.plink_path) + '--extract' + pad(args.snps) + pad(remove)+ '--recode A --threads' + pad(str(args.cpus)) + '--allow-extra-chr --out' + pad(os.path.splitext(args.matrix)[0])
+        keep = ''
+        if args.samples:
+            args.fam = os.path.join(args.tmp_path, args.lof + '.fam')
+            cmd = """awk 'BEGIN{FS=OFS="\t"} {$1 = $1 OFS $1} 1' """ + args.samples + " > " + args.fam
+            print(cmd)
+            tmp_bash(cmd)
+            keep =  '--keep ' + args.fam
+            
+        cmd = 'plink2 -bfile ' + pad(args.plink_path) + '--extract' + pad(args.snps) + pad(remove)+ pad(keep) +  '--recode A --threads' + pad(str(args.cpus)) + '--allow-extra-chr --out' + pad(os.path.splitext(matrix)[0])
         print(cmd)
         call(shlex.split(cmd))
+        
+        print('rearranging matrix in order of samples...')
+        cmd = "awk 'FNR == NR { lineno[$1] = NR; next}  {print lineno[$1], $0;}' " + args.samples + pad(matrix) +" | sort -k 1,1n | cut -d' ' -f2- > " + args.matrix
+        tmp_bash(cmd)
+        print('done.')
+
     else:
         print('raw matrix already generated')        
-        
-        
+
+    
+    
+
 def save_variant_to_gene_dict(args):
     '''
     Reads the final list of variants and dumps a gene to variant dictionary 
@@ -146,7 +167,7 @@ def save_variant_to_gene_dict(args):
         v2g = pickle.load(i)
         
     g2v = dd(list)
-    args.g2v = os.path.join(args.tmp_path, args.lof + '_gene_variants_dict.p')
+    args.g2v = os.path.join(args.out_path, args.lof + '_gene_variants_dict.p')
     if not os.path.isfile(args.g2v):
         # read snplist of filtered plink file and keep gene to variant list dictionary
         with open(args.snps,'rt') as i:
@@ -171,8 +192,11 @@ if __name__ == '__main__':
     # not required
     parser.add_argument("--exclude", type=file_exists, help =  "Path to list of variants to exclude")
     parser.add_argument("--remove", type=file_exists, help =  "Path to list of samples to remove")
+    parser.add_argument("--samples", type=file_exists, help =  "Path to list of samples to keep")
     parser.add_argument("--cpus", type=int, help =  "Number of cpus to use",default = cpus)
     parser.add_argument("--test", type = int,default = 0, help = "Number of genes to run per cpu, if 0 all genes are run.")
+
+    #parser.add_argument("--cov", type=file_exists, help =  "Covariate file")
     args=parser.parse_args()
     
     make_sure_path_exists(args.out_path)
@@ -188,4 +212,5 @@ if __name__ == '__main__':
     
     pretty_print('merge genes')
     do_chunks(args)
+    merge_chunks(args)
     

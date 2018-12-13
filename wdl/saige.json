@@ -1,0 +1,12 @@
+{
+  "LOF_saige.pheno_saige.outfile": "String",
+  "LOF_saige.null_list": "gs://r2_data/LOF/nullfiles_test.txt",
+  "LOF_saige.pheno_saige.lofMatrix": "gs://r2_data/LOF/most_severe_matrix.txt",
+  "LOF_saige.pheno_saige.cpu": "1",
+  "LOF_saige.pheno_saige.docker": "gcr.io/finngen-refinery-dev/saige:r2-4",
+  "LOF_saige.pheno_saige.samplefile": "gs://r2-analysis/misc/R2_final_samples.txt",
+  "LOF_saige.pheno_saige.minmac": "10",
+  "LOF_saige.pheno_saige.loco": "FALSE",
+  "LOF_saige.pheno_saige.mem": "3"
+}
+

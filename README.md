@@ -1,4 +1,4 @@
-# LOFanalysis
+1111111# LOFanalysis
 
 This script generates the lof variants and outputs the gene_to_sample matrix based on the info score of the batch
 
@@ -9,6 +9,7 @@ This script generates the lof variants and outputs the gene_to_sample matrix bas
 `--plink_path` : path to plink files (e.g. `/foo/bar/data`) where `data` is the root of the bim/bed/fam files\
 `--exclude `: File with list of variants to exclude\
 `--remove ` : File with list of samples to remove`.
+`--samples ` : File with list of samples to use`.
 `--cpus `: Number of parallel processes to run, by default the number of cpus of the machine\
 `--test ' : accepts an integer which is the number of genes to run per cpu. By deafult 0, which runs all genes \
 
