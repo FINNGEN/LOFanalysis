@@ -1,4 +1,4 @@
-1111111# LOFanalysis
+# LOFanalysis
 
 This script generates the lof variants and outputs the gene_to_sample matrix based on the info score of the batch
 
