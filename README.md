@@ -5,13 +5,15 @@ This script generates the lof variants and outputs the gene_to_sample matrix bas
 ## LOF.py
 
 ### Inputs:
+Requried:
 `--annotated_file ` tsv.gz file with columns named gene and `$LOF`. It's used for mapping a variant to gene and LOF\
 `--lof` : type of LOF. At the moment it accepts `most_severe` and `hc_lof`\
 `-o` : out path\
 `--bed` : path to plink bed file \
-`--exclude `: File(s) with list of variants to exclude\
-`--remove ` : File with list of samples to remove.\
 `--samples ` : File with list of samples to use.\
+
+Optional:
+`--exclude `: File(s) with list of variants to exclude\
 `--cpus `: Number of parallel processes to run, by default the number of cpus of the machine\
 `--maxMAF `: maximum minor allele frequency \
 `--pargs` : the arguments to pass to the plink write-snplist call \
