@@ -38,5 +38,7 @@ Once the docker is tested, it's enough to rerun `build_docerk.py` with the `--pu
 
 ## wdl
 
-
+`saige.wdl` is the wdl to run. Nothing special to note except for a couple of hacks:\
+- The full/complete version of the wdl reuqires the R2 plink file as an input. For testing purposes in case of a new annotated file, it's possible to cut the times by using the plink files generated locally by the `LOF.py` script. In this way the matrix calculation will be extremely fast (10 minutes or so) and the output will be identical. \
+- The flag `--pargs` of the python script is a hack to allow to pass more flags to plink withouth having to modify the python script specifically. However, the pargs are passed only to the part of code which outputs the snplist from the original plink file, so it does not affect the creation of the matrix.
 
