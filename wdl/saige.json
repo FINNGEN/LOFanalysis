@@ -1,5 +1,5 @@
 {
-  "LOF_saige.null_list": "gs://r2_data/LOF/nullfiles_test.txt",
+  "LOF_saige.null_list": "gs://r2_data/LOF/nulls_test.txt",
   "LOF_saige.pheno_saige.lofMatrix": "gs://r2_data/LOF/most_severe_matrix.txt",
   "LOF_saige.pheno_saige.cpu": "1",
   "LOF_saige.pheno_saige.docker": "gcr.io/finngen-refinery-dev/saige:r2-4",

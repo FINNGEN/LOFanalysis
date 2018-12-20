@@ -12,6 +12,7 @@ import multiprocessing
 import subprocess
 from subprocess import call
 import shlex
+import csv
 cpus = multiprocessing.cpu_count()
 
 rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
@@ -81,13 +82,21 @@ def get_path_info(path):
     file_root, file_extension = os.path.splitext(basename)
     return file_path,file_root,file_extension
 
+
+def identify_separator(line):
+    import csv
+    sniffer = csv.Sniffer()
+    dialect = sniffer.sniff(line)
+    return dialect.delimiter
+
 def return_header_variants(matrixPath):
     '''
     The plink command adds the alt to the name of the variant. Here i loop through the variants and just return the original variant name
     '''
-    with open(matrixPath,'rt') as i:
-        header = i.readline().strip().split('\t')
-        header_variants = ['_'.join(elem.split('_')[:-1]) for elem in header]
+    with open(matrixPath,'rt') as i:header = i.readline().strip()
+    sep = identify_separator(header)
+    header = header.split(sep)
+    header_variants = ['_'.join(elem.split('_')[:-1]) for elem in header]
         
     return header_variants
 

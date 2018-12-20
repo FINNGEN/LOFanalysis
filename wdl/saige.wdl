@@ -16,15 +16,15 @@ task pheno_saige {
 	step2_SPAtests.R \
 	--dosageFile=${lofMatrix} \
 	--dosageFileNrowSkip=1 \
-	--dosageFileNcolSkip=1\
-	--dosageFilecolnamesSkip="GENE"\
-	--minMAC=10\
-	--sampleFile=${samplefile}\
+	--dosageFileNcolSkip=1 \
+	--dosageFilecolnamesSkip="GENE" \
+	--minMAC=10 \
+	--sampleFile=${samplefile} \
 	--LOCO=${loco} \
-	--numLinesOutput=1000\
-	--IsOutputAFinCaseCtrl=TRUE\
-	--GMMATmodelFile=${nullfile}\
-	--varianceRatioFile=${varianceratiofile}\
+	--numLinesOutput=1000 \
+	--IsOutputAFinCaseCtrl=TRUE \
+	--GMMATmodelFile=${nullfile} \
+	--varianceRatioFile=${varianceratiofile} \
 	--SAIGEOutputFile=${outfile} 
 
 	}

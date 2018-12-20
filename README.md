@@ -6,7 +6,7 @@ This script generates the lof variants and outputs the gene_to_sample matrix bas
 `--annotated_file ` tsv.gz file with columns named gene and `$LOF`. It's used for mapping a variant to gene and LOF\
 `--lof` : type of LOF. At the moment it accepts `most_severe` and `hc_lof`\
 `-o` : out path\
-`--plink_path` : path to plink files (e.g. `/foo/bar/data`) where `data` is the root of the bim/bed/fam files\
+`--plink` : path to plink files (e.g. `/foo/bar/data`) where `data` is the root of the bim/bed/fam files\
 `--exclude `: File with list of variants to exclude\
 `--remove ` : File with list of samples to remove`.\
 `--samples ` : File with list of samples to use`.\
