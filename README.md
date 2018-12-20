@@ -2,7 +2,9 @@
 
 This script generates the lof variants and outputs the gene_to_sample matrix based on the info score of the batch
 
-## Inputs:
+## LOF.py
+
+### Inputs:
 `--annotated_file ` tsv.gz file with columns named gene and `$LOF`. It's used for mapping a variant to gene and LOF\
 `--lof` : type of LOF. At the moment it accepts `most_severe` and `hc_lof`\
 `-o` : out path\
@@ -17,7 +19,7 @@ This script generates the lof variants and outputs the gene_to_sample matrix bas
 
 E,g, `python3 ./Scripts/LOF.py --annotated_file /mnt/disks/tera/Data/R2_vep_annotated.tsv.gz --lof most_severe -o /mnt/disks/tera/LOF_test --bed /mnt/disks/tera/LOF/plink_test/most_severe.bed --exclude /mnt/disks/tera/Data/variants/lq_variants_0.9.txt /mnt/disks/tera/Data/variants/r2_blacklist_all.txt --samples /mnt/disks/tera/Data/R2_final_samples.txt --pargs "--maf 0.05" `
 `
-## How it works
+### How it works
 
 The script first reads through the annotated file and saves the LOF carry variants, according to the type of LOF requested. It also builds a variant_to_gene dict.\
 Then, the final snplist is created with plink, passing the LOF variants, the variants to be removed and the samples that also need to be removed.\
@@ -25,6 +27,16 @@ Using the snplist, then a `.raw` matrix is created, which has the sample to vari
 Also, the matrix will be rearranged so that the order is based on the list of samples provided, in case it's not alreaydy.\
 Using the list of snpslist and the variant_to_gene_dict a reverse gene_to_variants dict is built so that variants can be merged into genes. The genelist is split into `$cpus` chunks (a smaller subset if `$test` is used) to be run in a different cpu. Each process produces a temporary gene to sample matrix. The matrices are then pasted together adding a top row for finngen ids.\
 
+
+
+
+## Docker
+
+The `Docker` folder contains the script `build_docker.py` which builds the docker. `sudo python3 build_docker.py --version 0.001` is the command to run. 
+Within my machine (pete-pet) one can then run `sudo docker run -v /mnt/disks/tera/:/mnt/disks/tera/ -it eu.gcr.io/finngen-refinery-dev/lof:0.001 /bin/bash` to test it locally in order to avoid having to download the massive R2 plink files.
+Once the docker is tested, it's enough to rerun `build_docerk.py` with the `--push` flag and it will be pushed to gcloud.
+
+## wdl
 
 
 
