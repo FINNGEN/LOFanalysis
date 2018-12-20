@@ -10,7 +10,7 @@ This script generates the lof variants and outputs the gene_to_sample matrix bas
 `-o` : out path\
 `--bed` : path to plink bed file \
 `--exclude `: File(s) with list of variants to exclude\
-`--remove ` : File with list of samples to remove`.\
+`--remove ` : File with list of samples to remove.\
 `--samples ` : File with list of samples to use`.\
 `--cpus `: Number of parallel processes to run, by default the number of cpus of the machine\
 `--maxMAF `: maximum minor allele frequency \
