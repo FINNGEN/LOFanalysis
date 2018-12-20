@@ -30,7 +30,7 @@ Using the list of snpslist and the variant_to_gene_dict a reverse gene_to_varian
 
 ## Docker
 
-The `Docker` folder contains the script `build_docker.py` which builds the docker. `sudo python3 build_docker.py --version 0.001` is the command to run. 
+The `./Docker` folder contains the script `build_docker.py` which builds the docker. `sudo python3 build_docker.py --version 0.001` is the command to run. 
 Within my machine (pete-pet) one can then run `sudo docker run -v /mnt/disks/tera/:/mnt/disks/tera/ -it eu.gcr.io/finngen-refinery-dev/lof:0.001 /bin/bash` to test it locally in order to avoid having to download the massive R2 plink files.
 Once the docker is tested, it's enough to rerun `build_docerk.py` with the `--push` flag and it will be pushed to gcloud.
 
