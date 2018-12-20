@@ -17,18 +17,14 @@ This script generates the lof variants and outputs the gene_to_sample matrix bas
 `--pargs` : the arguments to pass to the plink write-snplist call \
 `--test`  : accepts an integer which is the number of genes to run per cpu. By deafult 0, which runs all genes 
 
-E.g. `python3 ./Scripts/LOF.py --annotated_file /mnt/disks/tera/Data/R2_vep_annotated.tsv.gz --lof most_severe -o /mnt/disks/tera/LOF_test --bed /mnt/disks/tera/LOF/plink_test/most_severe.bed --exclude /mnt/disks/tera/Data/variants/lq_variants_0.9.txt /mnt/disks/tera/Data/variants/r2_blacklist_all.txt --samples /mnt/disks/tera/Data/R2_final_samples.txt --pargs "--maf 0.05"
-`
+E.g. `python3 ./Scripts/LOF.py --annotated_file /mnt/disks/tera/Data/R2_vep_annotated.tsv.gz --lof most_severe -o /mnt/disks/tera/LOF_test --bed /mnt/disks/tera/LOF/plink_test/most_severe.bed --exclude /mnt/disks/tera/Data/variants/lq_variants_0.9.txt /mnt/disks/tera/Data/variants/r2_blacklist_all.txt --samples /mnt/disks/tera/Data/R2_final_samples.txt --pargs "--maf 0.05"`
+
 ### How it works
 
 The script first reads through the annotated file and saves the LOF carry variants, according to the type of LOF requested. It also builds a variant_to_gene dict.\
-Then, the final snplist is created with plink, passing the LOF variants, the variants to be removed and the samples that also need to be removed.\
-Using the snplist, then a `.raw` matrix is created, which has the sample to variant LOF matrix.\
-Also, the matrix will be rearranged so that the order is based on the list of samples provided, in case it's not alreaydy.\
+The final snplist is created with plink, passing the LOF variants, the variants to be removed and is then used to build a new small plink file, which reorders the samples to match the sample list passed.\
+From there  the `.raw` matrix is created, which has the sample to variant LOF matrix.\
 Using the list of snpslist and the variant_to_gene_dict a reverse gene_to_variants dict is built so that variants can be merged into genes. The genelist is split into `$cpus` chunks (a smaller subset if `$test` is used) to be run in a different cpu. Each process produces a temporary gene to sample matrix. The matrices are then pasted together adding a top row for finngen ids.\
-
-
-
 
 ## Docker
 
