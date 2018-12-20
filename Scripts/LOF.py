@@ -131,8 +131,8 @@ def matrix_plink(args):
         else:
             exclude = ''
 
-        maf = '--max-maf ' + pad(str(args.maxMAF)) if args.maxMAF else ''
-        cmd = 'plink  -bfile ' + pad(args.plink) +  ' --write-snplist --extract' +pad(args.lof_variants) + pad(exclude) + '--threads' + pad(str(args.cpus)) + maf +  '--allow-extra-chr --out ' + pad(os.path.splitext(args.snps)[0])
+        max_maf = '--max-maf ' + pad(str(args.maxMAF)) if args.maxMAF else ''
+        cmd = 'plink  -bfile ' + pad(args.plink) +  ' --write-snplist --extract' +pad(args.lof_variants) + pad(exclude) + pad(args.pargs) +  '--threads' + pad(str(args.cpus)) + max_maf +  '--allow-extra-chr --out ' + pad(os.path.splitext(args.snps)[0])
                
         call(shlex.split(cmd))
         args.force = True
@@ -212,6 +212,7 @@ if __name__ == '__main__':
     parser.add_argument("--samples", type=file_exists, help =  "Path to list of samples to keep",required = True)
 
     # not required
+    parser.add_argument('--pargs',type = str,default = '',help = 'String with kwargs to pass to all plink calls, based on the desired output')
     parser.add_argument("--maxMAF", type = float, help=  "List of paths to file with list of variants to exclude")
     parser.add_argument("--exclude", type = file_exists, nargs = '*',help=  "List of paths to file with list of variants to exclude")
     parser.add_argument("--remove", type=file_exists, help =  "Path to list of samples to remove")

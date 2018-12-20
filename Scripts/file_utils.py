@@ -40,11 +40,7 @@ mem_mib = mem_bytes/(1024.**2)
 proc_mem = mem_mib / (cpus +1)
 
 
-import git
 
-def git_pull():
-    g = git.cmd.Git(os.getcwd())
-    g.pull()
 
 def split_array_chunk(seq, num):
     avg = len(seq) / float(num)

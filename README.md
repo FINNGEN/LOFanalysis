@@ -7,13 +7,15 @@ This script generates the lof variants and outputs the gene_to_sample matrix bas
 `--lof` : type of LOF. At the moment it accepts `most_severe` and `hc_lof`\
 `-o` : out path\
 `--plink` : path to plink files (e.g. `/foo/bar/data`) where `data` is the root of the bim/bed/fam files\
-`--exclude `: File with list of variants to exclude\
+`--exclude `: File(s) with list of variants to exclude\
 `--remove ` : File with list of samples to remove`.\
 `--samples ` : File with list of samples to use`.\
 `--cpus `: Number of parallel processes to run, by default the number of cpus of the machine\
+`--maxMAF `: Number of parallel processes to run, by default the number of cpus of the machine\
+--pargs are the arguments to pass to all plink calls \
 `--test`  : accepts an integer which is the number of genes to run per cpu. By deafult 0, which runs all genes \
 
-E,g, `python3 ./Scripts/LOF.py --annotated_file /mnt/disks/tera/Data/R2_vep_annotated.tsv.gz --lof most_severe -o /mnt/disks/tera/LOF --plink_path /mnt/disks/tera/plink/R2 --exclude /mnt/disks/tera/Data/lq_variants_0.9.txt --samples /mnt/disks/tera/Data/samples.txt 
+E,g, `python3 ./Scripts/LOF.py --annotated_file /mnt/disks/tera/Data/R2_vep_annotated.tsv.gz --lof most_severe -o /mnt/disks/tera/LOF_test -p /mnt/disks/tera/LOF/plink_test/most_severe --exclude /mnt/disks/tera/Data/variants/lq_variants_0.9.txt /mnt/disks/tera/Data/variants/r2_blacklist_all.txt --samples /mnt/disks/tera/Data/R2_final_samples.txt --pargs "--maf 0.05" `
 `
 ## How it works
 
