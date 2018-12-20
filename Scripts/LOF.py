@@ -132,7 +132,7 @@ def matrix_plink(args):
             exclude = ''
 
         max_maf = '--max-maf ' + pad(str(args.maxMAF)) if args.maxMAF else ''
-        cmd = 'plink  -bfile ' + pad(args.plink) +  ' --write-snplist --extract' +pad(args.lof_variants) + pad(exclude) + pad(args.pargs) +  '--threads' + pad(str(args.cpus)) + max_maf +  '--allow-extra-chr --out ' + pad(os.path.splitext(args.snps)[0])
+        cmd = 'plink  -bfile ' + pad(os.path.splitext(args.bed)[0]) +  ' --write-snplist --extract' +pad(args.lof_variants) + pad(exclude) + pad(args.pargs) +  '--threads' + pad(str(args.cpus)) + max_maf +  '--allow-extra-chr --out ' + pad(os.path.splitext(args.snps)[0])
                
         call(shlex.split(cmd))
         args.force = True
@@ -150,7 +150,7 @@ def matrix_plink(args):
         cmd = """awk 'BEGIN{FS=OFS="\t"} {$1 = $1 OFS $1} 1' """ + args.samples + " > " + args.fam
         tmp_bash(cmd)
 
-        cmd = 'plink --bfile ' + pad(args.plink) + '--allow-extra-chr  --extract ' + pad(args.snps) + ' --keep ' + pad(args.fam) +  '--threads ' + pad(str(args.cpus))+' --make-bed  --indiv-sort f' +pad(args.fam) + ' --out ' + pad(plink_file)
+        cmd = 'plink --bfile ' + pad(os.path.splitext(args.bed)[0]) + '--allow-extra-chr  --extract ' + pad(args.snps) + ' --keep ' + pad(args.fam) +  '--threads ' + pad(str(args.cpus))+' --make-bed  --indiv-sort f' +pad(args.fam) + ' --out ' + pad(plink_file)
         call(shlex.split(cmd))
         cmd = 'plink --bfile ' + pad(plink_file) + '--freq --out ' + pad(plink_file)
         call(shlex.split(cmd))
@@ -208,7 +208,7 @@ if __name__ == '__main__':
     parser.add_argument("--lof", type= str,
                         help="type of lof filter",required = True,choices = ['hc_lof','most_severe'] )
     parser.add_argument('-o',"--out_path",type = str, help = "folder in which to save the results", required = True)
-    parser.add_argument("-p","--plink", type= str,help="Path to plink data ",required = True)
+    parser.add_argument("--bed", type= str,help="Path to bed file ",required = True)
     parser.add_argument("--samples", type=file_exists, help =  "Path to list of samples to keep",required = True)
 
     # not required

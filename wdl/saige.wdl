@@ -1,9 +1,9 @@
 task pheno_saige {
 	
 	File nullfile
-	File lofMatrix
+	File matrix
 	File varianceratiofile = sub(nullfile, ".rda", ".varianceRatio.txt")
-	File samplefile
+	File samples
 	Int minmac
 	String docker
 	Int cpu
@@ -14,12 +14,12 @@ task pheno_saige {
 	command {
 
 	step2_SPAtests.R \
-	--dosageFile=${lofMatrix} \
+	--dosageFile=${matrix} \
 	--dosageFileNrowSkip=1 \
 	--dosageFileNcolSkip=1 \
 	--dosageFilecolnamesSkip="GENE" \
 	--minMAC=10 \
-	--sampleFile=${samplefile} \
+	--sampleFile=${samples} \
 	--LOCO=${loco} \
 	--numLinesOutput=1000 \
 	--IsOutputAFinCaseCtrl=TRUE \
@@ -45,15 +45,80 @@ task pheno_saige {
 }
 
 
+
+task lof_matrix {
+
+
+     File bed_file	
+     File fam_file = sub(bed_file,".bed",".fam")
+     File bim_file = sub(bed_file,".bed",".bim")
+     
+     File annotated_file
+     File exclusion_file
+     Array[File] exclusion_files = read_lines(exclusion_file)
+     File samples
+     
+     Float maxMAF 
+     String pargs
+     String LOF
+     
+     String docker
+     String cpu
+     String mem
+     String disk_size
+     String out  ="/cromwell_root/results/"
+     
+     command {
+
+     python ./Scripts/LOF.py \
+     --annotated_file ${annotated_file} \
+     --lof ${LOF} \
+     -o ${out} \
+     --bed bed_file \
+     --exclude ${sep=' ' exclusion_files }  \
+     --samples ${samples} \
+     --pargs ${pargs} \
+     --maxMAF ${maxMAF} 
+
+     }
+
+     output {
+     File matrix = "${out}" + "${LOF}" + "_matrix.txt"
+  }
+
+
+     runtime {
+
+        docker: "${docker}"
+        cpu: "${cpu}"
+        memory: "${mem} GB"
+        disks: "local-disk ${disk_size} HDD"
+        zones: "europe-west1-b"
+        preemptible: 2
+        noAddress: true
+    }
+
+     }
+
+
 workflow LOF_saige{
 
+ 
+	File samples
 	File null_list
-
 	Array[String] nullfiles = read_lines(null_list)
 
+
+	call lof_matrix {
+	     input: samples = samples
+		        }
+	
 	scatter (nullfile in nullfiles){
 	    call pheno_saige{
-	    	 input : nullfile=nullfile
+	    	 input :
+		       samples = samples,
+		       nullfile=nullfile,
+		       matrix = lof_matrix.matrix
 		 }
 	}
 }

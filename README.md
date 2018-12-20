@@ -6,7 +6,7 @@ This script generates the lof variants and outputs the gene_to_sample matrix bas
 `--annotated_file ` tsv.gz file with columns named gene and `$LOF`. It's used for mapping a variant to gene and LOF\
 `--lof` : type of LOF. At the moment it accepts `most_severe` and `hc_lof`\
 `-o` : out path\
-`--plink` : path to plink files (e.g. `/foo/bar/data`) where `data` is the root of the bim/bed/fam files\
+`--bed` : path to plink bed file \
 `--exclude `: File(s) with list of variants to exclude\
 `--remove ` : File with list of samples to remove`.\
 `--samples ` : File with list of samples to use`.\
@@ -15,7 +15,7 @@ This script generates the lof variants and outputs the gene_to_sample matrix bas
 `--pargs` : the arguments to pass to the plink write-snplist call \
 `--test`  : accepts an integer which is the number of genes to run per cpu. By deafult 0, which runs all genes \
 
-E,g, `python3 ./Scripts/LOF.py --annotated_file /mnt/disks/tera/Data/R2_vep_annotated.tsv.gz --lof most_severe -o /mnt/disks/tera/LOF_test -p /mnt/disks/tera/LOF/plink_test/most_severe --exclude /mnt/disks/tera/Data/variants/lq_variants_0.9.txt /mnt/disks/tera/Data/variants/r2_blacklist_all.txt --samples /mnt/disks/tera/Data/R2_final_samples.txt --pargs "--maf 0.05" `
+E,g, `python3 ./Scripts/LOF.py --annotated_file /mnt/disks/tera/Data/R2_vep_annotated.tsv.gz --lof most_severe -o /mnt/disks/tera/LOF_test --bed /mnt/disks/tera/LOF/plink_test/most_severe.bed --exclude /mnt/disks/tera/Data/variants/lq_variants_0.9.txt /mnt/disks/tera/Data/variants/r2_blacklist_all.txt --samples /mnt/disks/tera/Data/R2_final_samples.txt --pargs "--maf 0.05" `
 `
 ## How it works
 
