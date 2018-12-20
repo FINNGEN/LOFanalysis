@@ -12,7 +12,7 @@
   "LOF_saige.lof_matrix.docker": "eu.gcr.io/finngen-refinery-dev/lof:0.001",
     
   "LOF_saige.samples": "gs://r2-analysis/misc/R2_final_samples.txt",
-  "LOF_saige.null_list": "gs://r2_data/LOF/nulls_test.txt",
+  "LOF_saige.null_list": "gs://r2_data/LOF/nullfiles.txt",
 
   "LOF_saige.pheno_saige.cpu": "1",
   "LOF_saige.pheno_saige.docker": "gcr.io/finngen-refinery-dev/saige:r2-4",
