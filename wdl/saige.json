@@ -2,7 +2,7 @@
    
   "LOF_saige.lof_matrix.LOF": "most_severe",
   "LOF_saige.lof_matrix.mem": "8",
-  "LOF_saige.lof_matrix.pargs": "",
+   #"LOF_saige.lof_matrix.pargs": " --foo bar ",  optional
   "LOF_saige.lof_matrix.annotated_file": "gs://r2-analysis/data/annotation/R2_vep_annotated.tsv.gz",
   "LOF_saige.lof_matrix.exclusion_file": "gs://r2_data/LOF/exclusion_file.txt",
   "LOF_saige.lof_matrix.bed_file": "gs://r2_data/LOF/plink/most_severe.bed",

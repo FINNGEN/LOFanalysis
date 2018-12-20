@@ -59,7 +59,7 @@ task lof_matrix {
      File samples
      
      Float maxMAF 
-     String pargs
+     String? pargs 
      String LOF
      
      String docker
@@ -70,14 +70,13 @@ task lof_matrix {
      
      command {
 
-     python ./Scripts/LOF.py \
+     python3 /Scripts/LOF.py \
      --annotated_file ${annotated_file} \
      --lof ${LOF} \
      -o ${out} \
-     --bed bed_file \
+     --bed ${bed_file} \
      --exclude ${sep=' ' exclusion_files }  \
      --samples ${samples} \
-     --pargs ${pargs} \
      --maxMAF ${maxMAF} 
 
      }
@@ -95,7 +94,7 @@ task lof_matrix {
         disks: "local-disk ${disk_size} HDD"
         zones: "europe-west1-b"
         preemptible: 2
-        noAddress: true
+	
     }
 
      }
