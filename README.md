@@ -15,7 +15,7 @@ This script generates the lof variants and outputs the gene_to_sample matrix bas
 `--cpus `: Number of parallel processes to run, by default the number of cpus of the machine\
 `--maxMAF `: maximum minor allele frequency \
 `--pargs` : the arguments to pass to the plink write-snplist call \
-`--test`  : accepts an integer which is the number of genes to run per cpu. By deafult 0, which runs all genes \
+`--test`  : accepts an integer which is the number of genes to run per cpu. By deafult 0, which runs all genes 
 
 E.g. `python3 ./Scripts/LOF.py --annotated_file /mnt/disks/tera/Data/R2_vep_annotated.tsv.gz --lof most_severe -o /mnt/disks/tera/LOF_test --bed /mnt/disks/tera/LOF/plink_test/most_severe.bed --exclude /mnt/disks/tera/Data/variants/lq_variants_0.9.txt /mnt/disks/tera/Data/variants/r2_blacklist_all.txt --samples /mnt/disks/tera/Data/R2_final_samples.txt --pargs "--maf 0.05"
 `
