@@ -132,7 +132,7 @@ def matrix_plink(args):
             exclude = ''
 
         max_maf = '--max-maf ' + pad(str(args.maxMAF)) if args.maxMAF else ''
-        cmd = 'plink  -bfile ' + pad(os.path.splitext(args.bed)[0]) +  ' --write-snplist --extract' +pad(args.lof_variants) + pad(exclude) + pad(args.pargs) +  '--threads' + pad(str(args.cpus)) + max_maf +  '--allow-extra-chr --out ' + pad(os.path.splitext(args.snps)[0])
+        cmd = 'plink2  -bfile ' + pad(os.path.splitext(args.bed)[0]) +  ' --write-snplist --extract' +pad(args.lof_variants) + pad(exclude) + pad(args.pargs) +  '--threads' + pad(str(args.cpus)) + max_maf +  '--allow-extra-chr --out ' + pad(os.path.splitext(args.snps)[0])
                
         call(shlex.split(cmd))
         args.force = True
@@ -150,9 +150,9 @@ def matrix_plink(args):
         cmd = """awk 'BEGIN{FS=OFS="\t"} {$1 = $1 OFS $1} 1' """ + args.samples + " > " + args.fam
         tmp_bash(cmd)
 
-        cmd = 'plink --bfile ' + pad(os.path.splitext(args.bed)[0]) + '--allow-extra-chr  --extract ' + pad(args.snps) + ' --keep ' + pad(args.fam) +  '--threads ' + pad(str(args.cpus))+' --make-bed  --indiv-sort f' +pad(args.fam) + ' --out ' + pad(plink_file)
+        cmd = 'plink2 --bfile ' + pad(os.path.splitext(args.bed)[0]) + '--allow-extra-chr  --extract ' + pad(args.snps) + ' --keep ' + pad(args.fam) +  '--threads ' + pad(str(args.cpus))+' --make-bed  --indiv-sort f' +pad(args.fam) + ' --out ' + pad(plink_file)
         call(shlex.split(cmd))
-        cmd = 'plink --bfile ' + pad(plink_file) + '--freq --out ' + pad(plink_file)
+        cmd = 'plink2 --bfile ' + pad(plink_file) + '--freq --out ' + pad(plink_file)
         call(shlex.split(cmd))
         args.force = True
     else:
@@ -163,6 +163,7 @@ def matrix_plink(args):
     if not os.path.isfile(args.matrix) or args.force:
               
         remove = '--remove ' + args.remove if args.remove else ''
+        # N.B. DO NOT USE PLINK2 or maj/min alleles will be all over the place!
         cmd = 'plink -bfile ' + pad(plink_file) +  pad(remove) +  '--recode A   --threads' + pad(str(args.cpus)) + '--allow-extra-chr --out' + pad(os.path.splitext(args.matrix)[0])
         print(cmd)
         call(shlex.split(cmd))
@@ -196,9 +197,12 @@ def save_variant_to_gene_dict(args):
                 gene = v2g[variant]
                 g2v[gene].append(variant)
 
+                
         with open(args.g2v,'wb') as o:
             pickle.dump(g2v,o)
-    
+            
+        import json
+        with open(os.path.join(args.out_path, args.lof + '_gene_variants_dict.txt'),'w') as out_file: out_file.write(json.dumps(g2v))
 if __name__ == '__main__':
 
 

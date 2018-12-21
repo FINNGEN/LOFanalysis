@@ -58,8 +58,8 @@ task lof_matrix {
      Array[File] exclusion_files = read_lines(exclusion_file)
      File samples
      
-     Float maxMAF 
-     String? pargs 
+     String? pargs
+     String plink_args = if defined(pargs) then " --pargs " + pargs else ""
      String LOF
      
      String docker
@@ -77,12 +77,14 @@ task lof_matrix {
      --bed ${bed_file} \
      --exclude ${sep=' ' exclusion_files }  \
      --samples ${samples} \
-     --maxMAF ${maxMAF} 
+     ${plink_args}  \
+     
 
      }
 
      output {
      File matrix = "${out}" + "${LOF}" + "_matrix.txt"
+     File gene_dict = "${out}" + "${LOF}" + "_gene_variants_dict.txt"
   }
 
 

@@ -9,5 +9,7 @@ pip3 install networkx && pip3 install numpy --upgrade
 # PLINK 1.9
 RUN wget http://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20181202.zip && unzip plink_linux_x86_64_20181202.zip -d /usr/local/bin/ &&  rm plink*.zip
 
+#PLINK2
+RUN wget http://s3.amazonaws.com/plink2-assets/alpha1/plink2_linux_x86_64.zip  && unzip plink2*.zip -d /usr/local/bin/ &&  rm plink2*.zip
 
 ADD Scripts ../Scripts
