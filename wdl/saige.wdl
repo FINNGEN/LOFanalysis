@@ -77,8 +77,7 @@ task lof_matrix {
      --bed ${bed_file} \
      --exclude ${sep=' ' exclusion_files }  \
      --samples ${samples} \
-     ${plink_args}  \
-     
+     ${plink_args}    
 
      }
 

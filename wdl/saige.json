@@ -7,14 +7,14 @@
     "LOF_saige.lof_matrix.exclusion_file": "gs://r2_data/LOF/exclusion_file.txt",
      #gs://finngen-cromwell-refinery/convert_vcf_plink_merge/ea837f25-7b0c-4443-8b68-b55821ec766b/call-merge_plink/glob-2d54f480a70a41039157efc4f4fc6472/R2.bed path for full. Disk space must be changed accordingly.
     "LOF_saige.lof_matrix.bed_file": "gs://r2_data/LOF/plink/most_severe.bed",
-    "LOF_saige.lof_matrix.disk_size": "100",
+    "LOF_saige.lof_matrix.disk_size": "10",
     "LOF_saige.lof_matrix.cpu": "32",
     "LOF_saige.lof_matrix.docker": "eu.gcr.io/finngen-refinery-dev/lof:0.001",
-    #"LOF_saige.lof_matrix.pargs": " --foo bar ",  optional
+    #"LOF_saige.lof_matrix.pargs": " --maxMAF 0.02 ",  
 
     
     "LOF_saige.samples": "gs://r2-analysis/misc/R2_final_samples.txt",
-    "LOF_saige.null_list": "gs://r2_data/LOF/nullfiles_test.txt",
+    "LOF_saige.null_list": "gs://r2_data/LOF/nullfiles.txt",
 
     "LOF_saige.pheno_saige.cpu": "1",
     "LOF_saige.pheno_saige.docker": "gcr.io/finngen-refinery-dev/saige:r2-4",
