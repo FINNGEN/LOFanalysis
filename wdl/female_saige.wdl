@@ -105,10 +105,10 @@ task lof_matrix {
 workflow LOF_saige{
 
  
-	File samples
+	File female_samples
 		
 	call lof_matrix {
-	     input: samples = samples
+	     input: samples = female_samples
 		        }
 
 	Int minmac
@@ -118,14 +118,14 @@ workflow LOF_saige{
 	String loco
 
 
-	File null_list
-	Array[String] nullfiles = read_lines(null_list)
+	File female_null_list
+	Array[String] female_nullfiles = read_lines(female_null_list)
 	
-	scatter (nullfile in nullfiles){
+	scatter (female_nullfile in female_nullfiles){
 	    call pheno_saige{
 	    	 input :
-		       samples = samples,
-		       nullfile=nullfile,
+		       samples = female_samples,
+		       nullfile= female_nullfile,
 		       matrix = lof_matrix.matrix,
 		       minmac = minmac,
 		       docker = docker,

@@ -16,10 +16,17 @@
     "LOF_saige.samples": "gs://r2-analysis/misc/R2_final_samples.txt",
     "LOF_saige.null_list": "gs://r2_data/LOF/nullfiles.txt",
 
-    "LOF_saige.pheno_saige.cpu": "1",
-    "LOF_saige.pheno_saige.docker": "gcr.io/finngen-refinery-dev/saige:r2-4",
-    "LOF_saige.pheno_saige.minmac": "10",
-    "LOF_saige.pheno_saige.loco": "FALSE",
-    "LOF_saige.pheno_saige.mem": "3"
+    "LOF_saige.male_samples": "gs://r2-analysis/misc/R2_FINAL_MALE_SAMPLES.txt",
+    "LOF_saige.male_null_list": "gs://r2_data/LOF/male_nullfiles.txt",
+
+    "LOF_saige.female_samples": "gs://r2-analysis/misc/R2_FINAL_FEMALE_SAMPLES.txt",
+    "LOF_saige.female_null_list": "gs://r2_data/LOF/female_nullfiles.txt",
+
+    
+    "LOF_saige.cpu": "1",
+    "LOF_saige.docker": "gcr.io/finngen-refinery-dev/saige:r2-4",
+    "LOF_saige.minmac": "10",
+    "LOF_saige.loco": "FALSE",
+    "LOF_saige.mem": "3"
 } 
  

@@ -9,7 +9,7 @@ task pheno_saige {
 	Int cpu
 	Float mem
 	String loco
-	String outfile = basename(nullfile, ".rda") +  ".SAIGE.txt"
+	String outfile = basename(nullfile, ".rda") +  ".MALE.SAIGE.txt"
 
 	command {
 
@@ -105,10 +105,10 @@ task lof_matrix {
 workflow LOF_saige{
 
  
-	File samples
+	File male_samples
 		
 	call lof_matrix {
-	     input: samples = samples
+	     input: samples = male_samples
 		        }
 
 	Int minmac
@@ -118,14 +118,14 @@ workflow LOF_saige{
 	String loco
 
 
-	File null_list
-	Array[String] nullfiles = read_lines(null_list)
+	File male_null_list
+	Array[String] male_nullfiles = read_lines(male_null_list)
 	
-	scatter (nullfile in nullfiles){
+	scatter (male_nullfile in male_nullfiles){
 	    call pheno_saige{
 	    	 input :
-		       samples = samples,
-		       nullfile=nullfile,
+		       samples = male_samples,
+		       nullfile= male_nullfile,
 		       matrix = lof_matrix.matrix,
 		       minmac = minmac,
 		       docker = docker,
@@ -136,5 +136,4 @@ workflow LOF_saige{
 	}
 
 
-	
 }
