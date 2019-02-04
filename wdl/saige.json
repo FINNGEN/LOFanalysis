@@ -1,7 +1,7 @@
 {
    
     "LOF_saige.lof_matrix.LOF": "most_severe",
-    "LOF_saige.lof_matrix.mem": "8",
+    "LOF_saige.lof_matrix.mem": "10",
    
     "LOF_saige.lof_matrix.annotated_file": "gs://r2-analysis/data/annotation/R2_vep_annotated.tsv.gz",
     "LOF_saige.lof_matrix.exclusion_file": "gs://r2_data/LOF/exclusion_file.txt",
@@ -9,20 +9,17 @@
     "LOF_saige.lof_matrix.bed_file": "gs://r2_data/LOF/plink/most_severe.bed",
     "LOF_saige.lof_matrix.disk_size": "10",
     "LOF_saige.lof_matrix.cpu": "32",
-    "LOF_saige.lof_matrix.docker": "eu.gcr.io/finngen-refinery-dev/lof:0.001",
-    #"LOF_saige.lof_matrix.pargs": " --maxMAF 0.02 ",  
-
-    
+    "LOF_saige.lof_matrix.docker": "eu.gcr.io/finngen-refinery-dev/lof:0.002",
+        
     "LOF_saige.samples": "gs://r2-analysis/misc/R2_final_samples.txt",
-    "LOF_saige.null_list": "gs://r2_data/LOF/nullfiles.txt",
+    "LOF_saige.null_list": "gs://r2_data/LOF/nullfiles_test.txt",
 
     "LOF_saige.male_samples": "gs://r2-analysis/misc/R2_FINAL_MALE_SAMPLES.txt",
-    "LOF_saige.male_null_list": "gs://r2_data/LOF/male_nullfiles.txt",
+    "LOF_saige.male_variance_list": "gs://r2_data/LOF/male_variance.txt",
 
     "LOF_saige.female_samples": "gs://r2-analysis/misc/R2_FINAL_FEMALE_SAMPLES.txt",
-    "LOF_saige.female_null_list": "gs://r2_data/LOF/female_nullfiles.txt",
+    "LOF_saige.female_null_list": "gs://r2_data/LOF/female_variance.txt",
 
-    
     "LOF_saige.cpu": "1",
     "LOF_saige.docker": "gcr.io/finngen-refinery-dev/saige:r2-4",
     "LOF_saige.minmac": "10",

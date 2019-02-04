@@ -1,15 +1,16 @@
 task pheno_saige {
 	
-	File nullfile
+	
 	File matrix
-	File varianceratiofile = sub(nullfile, ".rda", ".varianceRatio.txt")
+	File varianceratiofile
+	File nullfile= sub(varianceratiofile, ".varianceRatio.txt", ".rda")
 	File samples
 	Int minmac
 	String docker
 	Int cpu
 	Float mem
 	String loco
-	String outfile = basename(nullfile, ".rda") +  ".SAIGE.txt"
+	String outfile = basename(nullfile, ".rda") +  ".FEMALE.SAIGE.txt"
 
 	command {
 
@@ -118,14 +119,14 @@ workflow LOF_saige{
 	String loco
 
 
-	File female_null_list
-	Array[String] female_nullfiles = read_lines(female_null_list)
+	File female_variance_list
+	Array[String] female_variances = read_lines(female_variance_list)
 	
-	scatter (female_nullfile in female_nullfiles){
+	scatter (female_variance in female_variances){
 	    call pheno_saige{
 	    	 input :
 		       samples = female_samples,
-		       nullfile= female_nullfile,
+		       varianceratiofile= female_variance,
 		       matrix = lof_matrix.matrix,
 		       minmac = minmac,
 		       docker = docker,
@@ -136,5 +137,4 @@ workflow LOF_saige{
 	}
 
 
-	
 }
