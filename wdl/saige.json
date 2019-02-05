@@ -18,7 +18,7 @@
     "LOF_saige.male_variance_list": "gs://r2_data/LOF/male_variance.txt",
 
     "LOF_saige.female_samples": "gs://r2-analysis/misc/R2_FINAL_FEMALE_SAMPLES.txt",
-    "LOF_saige.female_null_list": "gs://r2_data/LOF/female_variance.txt",
+    "LOF_saige.female_variance_list": "gs://r2_data/LOF/female_variance.txt",
 
     "LOF_saige.cpu": "1",
     "LOF_saige.docker": "gcr.io/finngen-refinery-dev/saige:r2-4",

@@ -144,7 +144,7 @@ def return_open_func(f):
 
 def progressBar(value, endvalue, bar_length=20):
     '''
-    Writes progress bar, given value (eg.current row) and endvalue(eg. total number of rows)
+    Writes progress bar, ven value (eg.current row) and endvalue(eg. total number of rows)
     '''
 
     percent = float(value) / endvalue
