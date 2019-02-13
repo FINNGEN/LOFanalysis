@@ -1,15 +1,17 @@
 from file_utils import *
 
-def merge_gender(res_path):
+r2_blacklist = []
 
+def merge_gender(res_path):
+    '''
+    Return the list of LOF prioritizing the phenos that are labeled MALE/FEMALE
+    '''
     all_files = get_filepaths(res_path)
-    print(len(all_files))
     res_files = []
     for f in all_files:
         if 'MALE.SAIGE.' in f:
             res_files.append(f)
 
-    print(len(res_files))
     for f in all_files:
         if f not in res_files:
             #check if male specific phenotype exists
@@ -21,16 +23,37 @@ def merge_gender(res_path):
     return [os.path.join(res_path,f) for f in res_files]
 
 
-def get_hits(res_path,g2v_path,out_path,cutoff = 7,lof = 'most_severe',test = True,sep =','):
+def return_phenos(pheno_paths):
+    '''
+    Return all name of phenotypes
+    '''
+    phenos = []
+    with open(pheno_paths,'rt') as i:
+        for line in i:
+            pheno = line.strip().split('/')[-1].split('.')[0]
+            phenos.append(pheno)
+
+    return phenos
+
+def get_hits(res_path,pheno_paths,g2v_path,out_path,cutoff = 7,lof = 'most_severe',test = True,sep ='\t',blacklist = r2_blacklist):
 
     make_sure_path_exists(out_path)
+    
     # list of files
     file_list = merge_gender(res_path)
+    phenos = return_phenos(pheno_paths)
+    
     # gene to variant dict
     with open(g2v_path,'rb') as i: g2v = pickle.load(i)
     out_file = os.path.join(out_path,lof + '_best_hits.txt')
     tmp_file = os.path.join(out_path,lof + '_best_hits.tmp')
+    
     pretty_print('merging')
+    final_phenos =os.path.join(out_path,lof + '_final_phenos.txt')
+    rej_phenos = os.path.join(out_path,lof + '_rejected_phenos.txt')
+    final = open(final_phenos,'wt')
+    rej = open(rej_phenos,'wt')
+
     with open(tmp_file,'wt') as o:
         if test :
             file_list = file_list[:10]
@@ -39,33 +62,73 @@ def get_hits(res_path,g2v_path,out_path,cutoff = 7,lof = 'most_severe',test = Tr
             progressBar(i,len(file_list))
             #get phenotype
             pheno = f.split('.')[0].split('-')[1]
-            #file iterator
-            iterator = basic_iterator(f,separator = ' ')
-            #get releavant info
-            header = next(iterator)
-            pval_index = header.index('p.value')
-            gene_index = header.index('GENE')
-         
-            
-            #loop through data
-            for entry in iterator:              
-                gene = entry[gene_index]
-                variants = g2v[gene]
-                entry.append(' '.join(variants))
-                out_entry = sep.join([pheno] + entry) + '\n'
-                if cutoff:
-                    pval = np.float128(entry[pval_index])
-                    exp = -np.log10(pval)
-                    if exp > cutoff:
-                        o.write(out_entry)
-                else:
-                    o.write(out_entry)
+            # check if pheno is blacklisted
+            blacklist_check = True
+            for bl in blacklist:
+                if pheno.startswith(bl):
+                    blacklist_check = False
+                    rej.write(pheno + ' blacklisted' + '\n')
+
+            #check if pheno in pheno_list
+            pheno_check = True if pheno in phenos else False
+            if not pheno_check:
+                rej.write(pheno + ' missing' + '\n')
+                
+                
+            if blacklist_check and pheno_check:
+                final.write(pheno + '\n')
+                #file iterator
+                iterator = basic_iterator(f,separator = ' ')
+                #get releavant info
+                header = next(iterator)
+                pval_index = header.index('p.value')
+                gene_index = header.index('GENE')
+                cases_index = header.index('N.Cases')
+                controls_index = header.index('N.Controls')
+                af_cases_index = header.index('AF.Cases')
+                af_controls_index = header.index('AF.Controls')
+                
+                #update header
+                header[cases_index] = 'ref.count.cases'
+                header[controls_index] = 'alt.count.cases'
+                header[af_cases_index] = 'ref.count.ctrls'
+                header[af_controls_index] = 'alt.count.ctrls'
+                
+                #loop through data
+                for entry in iterator:
+                    # convert entries of AC/AF
+                    alt_count_cases = int(round(2*int(entry[cases_index])*float(entry[af_cases_index]),2))
+                    ref_count_cases = int(entry[cases_index]) - int(alt_count_cases)                                       
+                    assert (alt_count_cases + ref_count_cases == int(entry[cases_index]))
                     
-    
+                    alt_count_controls = int(round(2*int(entry[controls_index])*float(entry[af_controls_index]),2))
+                    ref_count_controls = int(entry[controls_index]) - int(alt_count_controls)                                       
+                    assert (alt_count_controls + ref_count_controls == int(entry[controls_index]))                    
+
+                    entry[cases_index] = str(ref_count_cases)               
+                    entry[controls_index] = str(alt_count_cases)
+
+                    entry[af_cases_index] = str(ref_count_controls)                               
+                    entry[af_controls_index] = str(alt_count_controls)
+
+                    gene = entry[gene_index]
+                    variants = g2v[gene]
+                   
+                    entry.append(','.join(variants))
+                    out_entry = sep.join([pheno] + entry) + '\n'
+                   # print(out_entry)
+                    o.write(out_entry)
+
+                
+    rej.close()
+    final.close()
+
     final_header = ['pheno'] + header + ['variants']
     pretty_print('sorting')
     with open(out_file,'wt') as o:o.write(sep.join(final_header) + '\n')
-    cmd = 'sort -g -k ' + str(final_header.index('p.value')+1)  + ' -t' + pad(sep) + pad(tmp_file) + ' >> ' + pad(out_file)
+        
+    cmd = 'sort -g -k ' + str(final_header.index('p.value')+1)  + pad(tmp_file) + ' >> ' + pad(out_file)
+    print(cmd)
     tmp_bash(cmd)
     pretty_print('zipping')
     cmd = 'gzip -f ' + out_file
