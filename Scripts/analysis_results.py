@@ -1,6 +1,5 @@
 from file_utils import *
 
-r2_blacklist = []
 
 def merge_gender(res_path):
     '''
@@ -35,7 +34,7 @@ def return_phenos(pheno_paths):
 
     return phenos
 
-def get_hits(res_path,pheno_paths,g2v_path,out_path,cutoff = 7,lof = 'most_severe',test = True,sep ='\t',blacklist = r2_blacklist):
+def get_hits(res_path,pheno_paths,g2v_path,out_path,cutoff = 7,lof = 'most_severe',test = True,sep ='\t'):
 
     make_sure_path_exists(out_path)
     
@@ -62,20 +61,14 @@ def get_hits(res_path,pheno_paths,g2v_path,out_path,cutoff = 7,lof = 'most_sever
             progressBar(i,len(file_list))
             #get phenotype
             pheno = f.split('.')[0].split('-')[1]
-            # check if pheno is blacklisted
-            blacklist_check = True
-            for bl in blacklist:
-                if pheno.startswith(bl):
-                    blacklist_check = False
-                    rej.write(pheno + ' blacklisted' + '\n')
-
+            
             #check if pheno in pheno_list
             pheno_check = True if pheno in phenos else False
             if not pheno_check:
                 rej.write(pheno + ' missing' + '\n')
-                
-                
-            if blacklist_check and pheno_check:
+                                
+            else:
+                #pheno is approved, need to store the results
                 final.write(pheno + '\n')
                 #file iterator
                 iterator = basic_iterator(f,separator = ' ')
@@ -116,7 +109,6 @@ def get_hits(res_path,pheno_paths,g2v_path,out_path,cutoff = 7,lof = 'most_sever
                    
                     entry.append(','.join(variants))
                     out_entry = sep.join([pheno] + entry) + '\n'
-                   # print(out_entry)
                     o.write(out_entry)
 
                 
