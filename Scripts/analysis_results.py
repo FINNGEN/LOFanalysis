@@ -3,7 +3,7 @@ from file_utils import *
 
 def merge_gender(res_path):
     '''
-    Return the list of LOF prioritizing the phenos that are labeled MALE/FEMALE
+    Return the list of LOF results, prioritizing the phenos that are labeled MALE/FEMALE
     '''
     all_files = get_filepaths(res_path)
     res_files = []
@@ -13,7 +13,7 @@ def merge_gender(res_path):
 
     for f in all_files:
         if f not in res_files:
-            #check if male specific phenotype exists
+            #check if gender specific phenotype exists
             male_test = f.replace('.SAIGE','.MALE.SAIGE')
             female_test = f.replace('.SAIGE','.FEMALE.SAIGE')
             if male_test not in res_files and female_test not in res_files:
@@ -34,26 +34,27 @@ def return_phenos(pheno_paths):
 
     return phenos
 
-def get_hits(res_path,pheno_paths,g2v_path,out_path,cutoff = 7,lof = 'most_severe',test = True,sep ='\t'):
+def get_hits(res_path,pheno_paths,g2v_path,out_path,lof = 'most_severe',test = True,sep ='\t'):
+    '''
+    Merge the SAIGE results, sorting by pvalue and zipping.
+    '''
 
-    make_sure_path_exists(out_path)
-    
     # list of files
     file_list = merge_gender(res_path)
     phenos = return_phenos(pheno_paths)
     
     # gene to variant dict
     with open(g2v_path,'rb') as i: g2v = pickle.load(i)
+
+    #outputs
+    make_sure_path_exists(out_path)
     out_file = os.path.join(out_path,lof + '_best_hits.txt')
     tmp_file = os.path.join(out_path,lof + '_best_hits.tmp')
-    
+       
     pretty_print('merging')
     final_phenos =os.path.join(out_path,lof + '_final_phenos.txt')
     rej_phenos = os.path.join(out_path,lof + '_rejected_phenos.txt')
-    final = open(final_phenos,'wt')
-    rej = open(rej_phenos,'wt')
-
-    with open(tmp_file,'wt') as o:
+    with open(tmp_file,'wt') as o,open(final_phenos,'wt') as final,open(rej_phenos,'wt') as rej:
         if test :
             file_list = file_list[:10]
         #loop through files
@@ -112,9 +113,6 @@ def get_hits(res_path,pheno_paths,g2v_path,out_path,cutoff = 7,lof = 'most_sever
                     o.write(out_entry)
 
                 
-    rej.close()
-    final.close()
-
     final_header = ['pheno'] + header + ['variants']
     pretty_print('sorting')
     with open(out_file,'wt') as o:o.write(sep.join(final_header) + '\n')
@@ -126,54 +124,6 @@ def get_hits(res_path,pheno_paths,g2v_path,out_path,cutoff = 7,lof = 'most_sever
     cmd = 'gzip -f ' + out_file
     call(shlex.split(cmd))
     
-    
-    
-def best_hits(resPath ,iPath,lofString = 'hc_lof'):
-
-
-    lofPath = resPath + '/' + lofString+ '/' 
-    header = lofPath + 'columns.txt'
-    qqPath = lofPath  +lofString + '_qq_data.txt'
-    oPath =  lofPath  +lofString + '_hits.txt'
-    resPath += '/' + lofString +'/results/'
-    print('fetching data from ' + resPath)
-    files = get_filepaths(resPath)
-    lines = []
-    for f in files:
-        pheno = f.split('/')[-1].split('-')[0]
-        print(pheno)
-        pheno = [pheno]
-        with gzip.open(f,'rt') as i:
-            for line in i:
-                line = line.strip().split('\t')
-                pval = line[1]
-                gene = line[0]
-                variants = g2v[gene]
-                try:
-                    p = np.float128(pval)
-                    pExp = -np.log10(p)
-                    line[1] = p
-                    lines.append(pheno + line + variants)
-
-                except:
-                    pass
-    print('sorting...')
-    lines = sorted(lines,key = lambda x:x[2])
-    with open(header,'rt') as i:
-        head = i.readlines()[0]
-
-    head = 'pheno gene ' + head.strip() + ' variants'
-    print(head)
-    with open(oPath,'wt') as o:
-        # add header
-        head = head.replace(' ','\t')
-        o.write(head+'\n')
-        for s in lines:
-            oString = '\t'.join([str(elem) for elem in s])
-            o.write(oString + '\n')
-    cmd = 'gzip -f ' + oPath
-    call(shlex.split(cmd))
-
 
 def get_filepaths(mypath):
     from os import listdir
