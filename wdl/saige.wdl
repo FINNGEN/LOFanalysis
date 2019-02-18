@@ -1,8 +1,9 @@
 task pheno_saige {
 	
-	File nullfile
 	File matrix
-	File varianceratiofile = sub(nullfile, ".rda", ".varianceRatio.txt")
+	File varianceratiofile
+	File nullfile= sub(varianceratiofile, ".varianceRatio.txt", ".rda")
+
 	File samples
 	Int minmac
 	String docker
@@ -44,11 +45,7 @@ task pheno_saige {
     }
 }
 
-
-
-
 task lof_matrix {
-
 
      File bed_file	
      File fam_file = sub(bed_file,".bed",".fam")
@@ -87,7 +84,6 @@ task lof_matrix {
      File gene_dict = "${out}" + "${LOF}" + "_gene_variants_dict.txt"
   }
 
-
      runtime {
 
         docker: "${docker}"
@@ -95,15 +91,11 @@ task lof_matrix {
         memory: "${mem} GB"
         disks: "local-disk ${disk_size} HDD"
         zones: "europe-west1-b"
-        preemptible: 2
-	
+        preemptible: 2	
     }
-
      }
 
-
 workflow LOF_saige{
-
  
 	File samples
 		
@@ -117,15 +109,14 @@ workflow LOF_saige{
 	Float mem
 	String loco
 
-
-	File null_list
-	Array[String] nullfiles = read_lines(null_list)
+	File variance_list
+	Array[String] variances = read_lines(variance_list)
 	
-	scatter (nullfile in nullfiles){
+	scatter (variance in variances){
 	    call pheno_saige{
 	    	 input :
 		       samples = samples,
-		       nullfile=nullfile,
+		       varianceratiofile= variance,
 		       matrix = lof_matrix.matrix,
 		       minmac = minmac,
 		       docker = docker,
@@ -135,6 +126,4 @@ workflow LOF_saige{
 		 }
 	}
 
-
-	
 }

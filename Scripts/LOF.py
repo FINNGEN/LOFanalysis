@@ -115,8 +115,7 @@ def matrix_plink(args):
     '''
     Returns the final list of snps as well as the LOF raw matrix
     '''
-   
-            
+               
     #write final snplists
     args.snps =  os.path.join(args.tmp_path, args.lof + '.snplist')
     if not os.path.isfile(args.snps) or args.force:
@@ -217,7 +216,7 @@ if __name__ == '__main__':
 
     # not required
     parser.add_argument('--pargs',type = str,default = '',help = 'String with kwargs to pass to all plink calls, based on the desired output')
-    parser.add_argument("--maxMAF", type = float, help=  "List of paths to file with list of variants to exclude")
+    parser.add_argument("--maxMAF", type = float, help=  "Max MAF filter")
     parser.add_argument("--exclude", type = file_exists, nargs = '*',help=  "List of paths to file with list of variants to exclude")
     parser.add_argument("--remove", type=file_exists, help =  "Path to list of samples to remove")
     parser.add_argument("--cpus", type=int, help =  "Number of cpus to use",default = cpus)
