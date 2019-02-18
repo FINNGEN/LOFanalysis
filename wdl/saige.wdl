@@ -29,12 +29,12 @@ task pheno_saige {
 	--SAIGEOutputFile=${outfile} 
 
 	}
-	output {
 	
-		File out = outfile
-	    }
- runtime {
-
+	output {	
+	File out = outfile
+	}
+	
+	runtime {
         docker: "${docker}"
         cpu: "${cpu}"
         memory: "${mem} GB"
@@ -42,7 +42,7 @@ task pheno_saige {
         zones: "europe-west1-b"
         preemptible: 2
         noAddress: true
-    }
+    	}
 }
 
 task lof_matrix {
@@ -76,24 +76,22 @@ task lof_matrix {
      --exclude ${sep=' ' exclusion_files }  \
      --samples ${samples} \
      ${plink_args}    
-
      }
 
      output {
      File matrix = "${out}" + "${LOF}" + "_matrix.txt"
      File gene_dict = "${out}" + "${LOF}" + "_gene_variants_dict.txt"
-  }
+     }
 
      runtime {
-
-        docker: "${docker}"
-        cpu: "${cpu}"
-        memory: "${mem} GB"
-        disks: "local-disk ${disk_size} HDD"
-        zones: "europe-west1-b"
-        preemptible: 2	
-    }
+     docker: "${docker}"
+     cpu: "${cpu}"
+     memory: "${mem} GB"
+     disks: "local-disk ${disk_size} HDD"
+     zones: "europe-west1-b"
+     preemptible: 2	
      }
+}
 
 workflow LOF_saige{
  
