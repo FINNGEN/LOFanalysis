@@ -13,7 +13,6 @@ task pheno_saige {
 	String outfile = basename(nullfile, ".rda") +  ".SAIGE.txt"
 
 	command {
-
 	step2_SPAtests.R \
 	--dosageFile=${matrix} \
 	--dosageFileNrowSkip=1 \
@@ -27,7 +26,6 @@ task pheno_saige {
 	--GMMATmodelFile=${nullfile} \
 	--varianceRatioFile=${varianceratiofile} \
 	--SAIGEOutputFile=${outfile} 
-
 	}
 	
 	output {	
