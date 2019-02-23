@@ -48,7 +48,7 @@ def get_hits(res_path,pheno_paths,g2v_path,out_path,lof = 'most_severe',test = T
 
     #outputs
     make_sure_path_exists(out_path)
-    out_file = os.path.join(out_path,lof + '_best_hits.txt')
+    out_file = os.path.join(out_path,lof + '_best_hits.txt.gz')
     tmp_file = os.path.join(out_path,lof + '_best_hits.tmp')
        
     pretty_print('merging')
@@ -114,15 +114,11 @@ def get_hits(res_path,pheno_paths,g2v_path,out_path,lof = 'most_severe',test = T
 
                 
     final_header = ['pheno'] + header + ['variants']
-    pretty_print('sorting')
-    with open(out_file,'wt') as o:o.write(sep.join(final_header) + '\n')
-        
-    cmd = 'sort -g -k ' + str(final_header.index('p.value')+1)  + pad(tmp_file) + ' >> ' + pad(out_file)
+    pretty_print('sorting & zipping')
+    with open(out_file,'wt') as o:o.write(sep.join(final_header) + '\n')      
+    cmd = 'sort -g -k ' + str(final_header.index('p.value')+1)  + pad(tmp_file) + ' | gzip >> ' + pad(out_file)
     print(cmd)
     tmp_bash(cmd)
-    pretty_print('zipping')
-    cmd = 'gzip -f ' + out_file
-    call(shlex.split(cmd))
     
 
 def get_filepaths(mypath):
