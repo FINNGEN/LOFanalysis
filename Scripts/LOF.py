@@ -36,7 +36,7 @@ def merge_chunks(args):
     samples = pd.read_csv(args.matrix,sep = args.sep,usecols = ['IID']).values.flatten()    
     with open(out_file,'wt') as o: o.write('GENE\t' + '\t'.join(samples) + '\n')
     print('samples written...')
-    cmd = "cat " + os.path.join(args.tmp_path, args.lof +'_' + "matrix_chunk*") + "  >> "+ out_file
+    cmd = "cat " + os.path.join(args.tmp_path, args.lof +'_' + "matrix_chunk*") + "  >> "+ out_file 
     tmp_bash(cmd)
     print('done..')
     

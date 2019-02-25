@@ -18,6 +18,19 @@ cpus = multiprocessing.cpu_count()
 rootPath = '/'.join(os.path.realpath(__file__).split('/')[:-2]) + '/'
 # REQUIRED FILES
 
+def get_progress_test(args):
+    
+
+    import glob
+    matrix_chunk_path = os.path.join(args.out_path,'matrix_chunks/')
+    chunk_path = os.path.join(matrix_chunk_path, '*gene_matrix*')
+    files = glob.iglob(chunk_path)
+    lines = 0
+    for f in files:
+        if os.path.getsize(f) > 0:
+            lines += mapcount(f)
+    
+    progressBar(lines,len(args.genes))
 
 def make_sure_path_exists(path):
     import errno
