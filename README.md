@@ -3,29 +3,38 @@
 This script generates the lof variants and outputs the gene_to_sample matrix based on the info score of the batch
 
 ## LOF.py
-
+Usage:
+```
+usage: lof_test.py [-h]
+                   (--annotation ANNOTATION | --lof_variants LOF_VARIANTS) -o
+                   OUT_PATH -c CHROM --vcf VCF --lof {hc_lof,most_severe}
+                   [--info_score INFO_SCORE] [-s SAMPLE_FILE] [--cpus CPUS]
+                   [--force] [--test]
+```
 ### Inputs:
 Required:\
-`--annotated_file ` tsv.gz file with columns named gene and `$LOF`. It's used for mapping a variant to gene and LOF\
+One between:
+`--annotation ` tsv.gz file with columns named gene and `$LOF`. It's used for mapping a variant to gene and LOF\
+`--lof_variants` tsv file where the first column is the variant and the second is the gene. It's the output of the previous flag. \
+
 `--lof` : type of LOF. At the moment it accepts `most_severe` and `hc_lof`\
 `-o` : out path\
-`--bed` : path to plink bed file \
-`--samples ` : File with list of samples to use.
+`--vcf` : path to vcf file \
+`-c` : chromsome number \
+
 
 Optional:\
-`--exclude `: File(s) with list of variants to exclude\
+`--samples ` : File with list of samples to use.
 `--cpus `: Number of parallel processes to run, by default the number of cpus of the machine\
-`--pargs` : the arguments to pass to the plink write-snplist call \
 `--test`  : accepts an integer which is the number of genes to run per cpu. By deafult 0, which runs all genes 
 
-E.g. `python3 ./Scripts/LOF.py --annotated_file /mnt/disks/tera/Data/R2_vep_annotated.tsv.gz --lof most_severe -o /mnt/disks/tera/LOF_test --bed /mnt/disks/tera/LOF/plink_test/most_severe.bed --exclude /mnt/disks/tera/Data/variants/lq_variants_0.9.txt /mnt/disks/tera/Data/variants/r2_blacklist_all.txt --samples /mnt/disks/tera/Data/R2_final_samples.txt --pargs "--maf 0.05"`
 
 ### How it works
 
 The script first reads through the annotated file and saves the LOF carry variants, according to the type of LOF requested. It also builds a variant_to_gene dict.\
-The final snplist is created with plink, passing the LOF variants, the variants to be removed and is then used to build a new small plink file, which reorders the samples to match the sample list passed.\
-From there  the `.raw` matrix is created, which has the sample to variant LOF matrix.\
-Using the list of snpslist and the variant_to_gene_dict a reverse gene_to_variants dict is built so that variants can be merged into genes. The genelist is split into `$cpus` chunks (a smaller subset if `$test` is used) to be run in a different cpu. Each process produces a temporary gene to sample matrix. The matrices are then pasted together adding a top row for finngen ids.
+Then the variants are split into chunks for speedup purposes. For each variant chunk a `bcftools` command filter the vcf for those positions and returns the probability of GP=0 for the variant in a variant to sample matrix.\
+Finally, the variant chunks are merged and transposed so a final sample to variant to matrix is built.\
+Now variants are merged into genes with the sample to gene value being 1 minus the product of the GP=0 for each variant to obtain the final gene to sample variant.
 
 ## Docker
 

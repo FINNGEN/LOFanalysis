@@ -12,7 +12,14 @@ from collections import defaultdict as dd
 def build_gene_matrix(args):
 
     header_file = os.path.join(args.out_path,args.lof + '_' + str(args.chrom) + '_header.txt')
-    with open(header_file,'wt') as o:o.write('GENE\t' + '\t'.join(args.samples) + '\n')
+    #args.samples = np.loadtxt(args.sample_file,dtype = str)
+    with open(header_file,'wt') as o:#o.write('GENE\t' + '\t'.join(args.samples) + '\n')
+        o.write('GENE')
+        with open(args.sample_file,'rt') as i:
+            for line in i:
+                sample = line.strip()
+                o.write('\t' + sample)
+        o.write('\n')
     
     args.gene_matrix = os.path.join(args.out_path,args.lof + '_' + str(args.chrom) + '_gene_matrix.tsv')
     if not os.path.isfile(args.gene_matrix) or args.force:
@@ -22,12 +29,13 @@ def build_gene_matrix(args):
         pools.close()
         matrix_chunk_path = os.path.join(args.out_path,'matrix_chunks/',args.lof + '_CHUNK_gene_matrix.tsv')
         matrix_files = [matrix_chunk_path.replace('CHUNK',str(chunk)) for chunk in range(args.cpus)]
-        cmd = 'cat ' + ' '.join(matrix_files) + ' > ' + args.gene_matrix
+        cmd = f"cat {' '.join(matrix_files)} >> {header_file} && mv {header_file} {args.gene_matrix}"
         tmp_bash(cmd)
-        print('done.')
+        print(' done.')
     else:
         print('gene matrix already calculated')
-    assert(mapcount(args.gene_matrix) == len(args.genes))
+    assert(mapcount(args.gene_matrix) -1 == len(args.genes))
+
     
 def gene_multiproc(args):
     build_gene_matrix_chunk(*args)
@@ -55,14 +63,17 @@ def build_gene_matrix_chunk(args,chunk):
 
 
 def build_raw_matrix(args):
+    """
+    Function that build the variant to sample matrix for lof variants.
+    """
 
     # if sample file is not provided extract from vcf
-    if not os.path.isfile(args.sample_file):
+    if not args.sample_file:
         args.sample_file = os.path.join(args.out_path,'samples.txt')
-        test_filter = ' | head -n20 ' if args.test else ''
-        samples_cmd = 'bcftools query -l ' + pad(args.vcf) + test_filter +' > ' + pad(args.sample_file)
-        tmp_bash(samples_cmd)
-    args.samples = np.loadtxt(args.sample_file,dtype = str)
+        if not os.path.isfile(args.sample_file):
+            test_filter = ' | head -n20 ' if args.test else ''
+            samples_cmd = f"bcftools query -l {args.vcf} test_filter  > {args.sample_file}"
+            tmp_bash(samples_cmd)
     
     args.variant_matrix = os.path.join(args.out_path,args.lof + '_' + str(args.chrom) + '_variant_matrix.tsv')
     if not os.path.isfile(args.variant_matrix) or args.force:
@@ -91,17 +102,17 @@ def build_matrix_chunks(args):
     make_sure_path_exists(matrix_chunk_path)
 
     # write samples
-    sample_string = '-S' + pad(args.sample_file)
+    sample_string = f"-S {args.sample_file}" 
     
     # define chunk paths
     info_filter = ''
     if args.info_score:
-        info_filter = " -i 'INFO>="+str(args.info_score) + "'"
+        info_filter = f" -i 'INFO>={args.info_score}' "
         
     matrix_file = os.path.join(matrix_chunk_path,args.lof + '_CHUNK_matrix.tsv')
     chunk_file = os.path.join(args.chunk_path,'position_chunk_CHUNK.tsv')
     #use bcftools to keep positions and info score if rqeuired. A grepping necessary to filter by exact variant name
-    matrix_cmd = 'bcftools query -R ' + chunk_file + pad(sample_string)+ "-f '%ID[\\t%GP{0}]\\n' " + pad(info_filter) + pad(args.vcf) + " | grep -wf <(sed 's/^/^/g' " +args.variants + ') > '+ pad(matrix_file)
+    matrix_cmd = f"bcftools query -R {chunk_file} {sample_string} -f" + " '%ID[\\t%GP{0}]\\n'"  +f"{info_filter} {args.vcf} | grep  -wf <(sed   's/^/^/g' {args.variants} ) > {matrix_file}"
     
     pools = multiprocessing.Pool(args.cpus)
     pools.map(multiproc_cmd,product([matrix_cmd],range(args.cpus)))
@@ -109,7 +120,7 @@ def build_matrix_chunks(args):
 
     print('merging and transposing chunks')        
     matrix_files = [matrix_file.replace('CHUNK',str(i)) for i in range(args.cpus)]
-    cmd = 'cat ' + ' '.join(matrix_files) + ' | datamash transpose > ' + args.variant_matrix
+    cmd = f"cat {' '.join(matrix_files)}  | datamash transpose > {args.variant_matrix}"
     tmp_bash(cmd)
 
     
@@ -121,6 +132,7 @@ def run_cmd(cmd,chunk):
     Given a basic bash cmd, it runs them in parallel replacing CHUNK with the chunk number
     '''
     cmd = cmd.replace('CHUNK',str(chunk))
+    print(cmd)
     try:
         tmp_bash(cmd)
     except:
@@ -162,20 +174,22 @@ if __name__ == '__main__':
                         help="path to annotated file")
     variant_parser.add_argument("--lof_variants", type= file_exists,
                         help="path to list of lof variants")
-
+    
+    parser.add_argument('-o',"--out_path",type = str, help = "folder in which to save the results", required = True)
+    parser.add_argument('-c','--chrom',type = int,help = 'chromosome number', required = True)
+    
     parser.add_argument("--vcf", type= file_exists,
                         help="path to vcf file",required = True)
     parser.add_argument("--lof", type= str,
                         help="type of lof filter",required = True,choices = ['hc_lof','most_severe'] )
     parser.add_argument("--info_score", type= float, help="Info score filter")    
-    parser.add_argument('-s',"--sample_file",type = str, help = "list of samples", required = True)
-    parser.add_argument('-o',"--out_path",type = str, help = "folder in which to save the results", required = True)
-    parser.add_argument('-c','--chrom',type = int,help = 'chromosome number', required = True)
+    parser.add_argument('-s',"--sample_file",type = file_exists, help = "list of samples", required = False)
     parser.add_argument('--cpus',type = int,help = 'number of parallel processes to run', default = 2)
     parser.add_argument('--force',action = 'store_true',help = 'Replaces files by force')
     parser.add_argument('--test',action = 'store_true',help = 'Runs test version') 
 
     args=parser.parse_args()
+    args.out_path = os.path.join(args.out_path,str(args.chrom))
     #print(args)
 
     main(args)
