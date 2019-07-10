@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+
+
 from Tools.utils import file_exists,make_sure_path_exists,tmp_bash,pad,return_header,progressBar,mapcount,pretty_print
 from file_utils import split_array_chunk,get_progress_test
 import extract_variants

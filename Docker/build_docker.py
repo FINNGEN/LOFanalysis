@@ -15,6 +15,7 @@ if __name__ == "__main__":
     parser.add_argument("--args",type = str,default = '')
     args = parser.parse_args()
 
+    docker_path = "eu.gcr.io/finngen-refinery-dev/"
     cmd = f"docker build -t {docker_path}{args.image}:{args.version} -f Dockerfile .. {args.args}"    
     print(cmd)
     call(shlex.split(cmd))
