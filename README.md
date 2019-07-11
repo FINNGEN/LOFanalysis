@@ -12,11 +12,10 @@ usage: lof_test.py [-h]
                    [--force] [--test]
 ```
 ### Inputs:
-Required:\
 One between:\
 `--annotation ` tsv.gz file with columns named gene and `$LOF`. It's used for mapping a variant to gene and LOF\
-`--lof_variants` tsv file where the first column is the variant and the second is the gene. It's the output of the previous flag. \
-
+`--lof_variants` tsv file where the first column is the variant and the second is the gene. It's the output of the previous flag.\
+Required:\
 `--lof` : type of LOF. At the moment it accepts `most_severe` and `hc_lof`\
 `-o` : out path\
 `--vcf` : path to vcf file \
