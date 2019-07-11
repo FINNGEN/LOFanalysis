@@ -13,7 +13,7 @@ usage: lof_test.py [-h]
 ```
 ### Inputs:
 Required:\
-One between:
+One between:\
 `--annotation ` tsv.gz file with columns named gene and `$LOF`. It's used for mapping a variant to gene and LOF\
 `--lof_variants` tsv file where the first column is the variant and the second is the gene. It's the output of the previous flag. \
 
@@ -38,13 +38,15 @@ Now variants are merged into genes with the sample to gene value being 1 minus t
 
 ## Docker
 
-The `./Docker` folder contains the script `build_docker.py` which builds the docker. `sudo python3 build_docker.py --version 0.001` is the command to run. 
-Within my machine (pete-pet) one can then run `sudo docker run -v /mnt/disks/tera/:/mnt/disks/tera/ -it eu.gcr.io/finngen-refinery-dev/lof:0.001 /bin/bash` to test it locally in order to avoid having to download the massive R2 plink files.
+The `./Docker` folder contains the script `build_docker.py` which builds the docker. `sudo python3 build_docker.py --version $VERSION` is the command to run it. 
 Once the docker is tested, it's enough to rerun `build_docker.py` with the `--push` flag and it will be pushed to gcloud.
 
 ## wdl
 
-`saige.wdl` is the wdl to run. Nothing special to note except for a couple of hacks:
-- The full/complete version of the wdl reuqires the R2 plink file as an input. For testing purposes in case of a new annotated file, it's possible to cut the times by using the plink files generated locally by the `LOF.py` script. In this way the matrix calculation will be extremely fast (10 minutes or so) and the output will be identical. 
-- The flag `--pargs` of the python script is a hack to allow to pass more flags to plink withouth having to modify the python script specifically. However, the pargs are passed only to the part of code which outputs the snplist from the original plink file, so it does not affect the creation of the matrix.
 
+The wdl runs the following steps:\
+1) it generates the LOF matrix for each chromosomes \
+2) it merges the matrix into one single files \
+3) it extracts the phenotype names from the null data \
+4) it runs SAIGE for each pheno \
+5) it merges the results and sorts them by pval
