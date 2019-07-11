@@ -25,8 +25,8 @@ Required:\
 Optional:\
 `--samples ` : File with list of samples to use.\
 `--cpus `: Number of parallel processes to run, by default the number of cpus of the machine\
-`--test`  : accepts an integer which is the number of genes to run per cpu. By deafult 0, which runs all genes 
-
+`--test`  : accepts an integer which is the number of genes to run per cpu. By deafult 0, which runs all genes \
+`--info-score` : float value for which to filter the INFO SCORE of variants
 
 ### How it works
 
