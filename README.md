@@ -2,10 +2,10 @@
 
 This script generates the lof variants and outputs the gene_to_sample matrix based on the info score of the batch
 
-## LOF.py
+## lof.py
 Usage:
 ```
-usage: lof_test.py [-h]
+usage: lof.py [-h]
                    (--annotation ANNOTATION | --lof_variants LOF_VARIANTS) -o
                    OUT_PATH -c CHROM --vcf VCF --lof {hc_lof,most_severe}
                    [--info_score INFO_SCORE] [-s SAMPLE_FILE] [--cpus CPUS]
