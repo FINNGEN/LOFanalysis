@@ -20,11 +20,11 @@ One between:\
 `--lof` : type of LOF. At the moment it accepts `most_severe` and `hc_lof`\
 `-o` : out path\
 `--vcf` : path to vcf file \
-`-c` : chromsome number \
+`-c` : chromsome number 
 
 
 Optional:\
-`--samples ` : File with list of samples to use.
+`--samples ` : File with list of samples to use.\
 `--cpus `: Number of parallel processes to run, by default the number of cpus of the machine\
 `--test`  : accepts an integer which is the number of genes to run per cpu. By deafult 0, which runs all genes 
 
@@ -44,9 +44,9 @@ Once the docker is tested, it's enough to rerun `build_docker.py` with the `--pu
 ## wdl
 
 
-The wdl runs the following steps:\
-1) it generates the LOF matrix for each chromosomes \
-2) it merges the matrix into one single files \
-3) it extracts the phenotype names from the null data \
-4) it runs SAIGE for each pheno \
+The wdl runs the following steps:
+1) it generates the LOF matrix for each chromosomes 
+2) it merges the matrix into one single files 
+3) it extracts the phenotype names from the null data 
+4) it runs SAIGE for each pheno 
 5) it merges the results and sorts them by pval
