@@ -1,0 +1,27 @@
+{
+    # WORKFLOW LEVEL
+    "LOF_saige.chrom_info": "gs://r3_data/convert/chrom_sizes.txt",
+    "LOF_saige.variance_list": "gs://r3_data/LOF/R3_variances.txt",
+    "LOF_saige.docker": "eu.gcr.io/finngen-refinery-dev/lof:r4",
+    # GENE MATRIX
+    "LOF_saige.gene_matrix.lof": "most_severe",
+    "LOF_saige.gene_matrix.lof_variants": "gs://r3_data/LOF/most_severe_variants_genes.txt",
+    "LOF_saige.gene_matrix.chrom_file": "gs://fg-datateam-analysisteam-share/fromdatateam/R3-data/vcf/R3_chrCHROM.vcf.gz",
+    "LOF_saige.gene_matrix.disk_factor": 3,
+    "LOF_saige.gene_matrix.cpu": "4",
+    # MATRIX MERGE
+    "LOF_saige.merge_matrix.name": "R3",
+    # SAIGE
+    "LOF_saige.pheno_saige.variance_basepath": "gs://r3_data/saige/null/R3.grm.v1-PHENO.varianceRatio.txt",
+    "LOF_saige.pheno_saige.samples": "gs://r3_data/samples/R3_146630_samples.txt",
+    "LOF_saige.pheno_saige.cpu": "1",
+    "LOF_saige.pheno_saige.docker": "gcr.io/finngen-refinery-dev/saige:r3",
+    "LOF_saige.pheno_saige.minmac": "10",
+    "LOF_saige.pheno_saige.loco": "FALSE",
+    "LOF_saige.pheno_saige.mem": "3",
+    # MERGE RESULTS
+    "LOF_saige.merge_results.header":"gs://r3_data/LOF/header.txt",
+  
+    
+
+}
