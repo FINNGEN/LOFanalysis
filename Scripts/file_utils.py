@@ -28,3 +28,10 @@ def split_array_chunk(seq, num):
         last += avg
 
     return out
+
+
+def check_positive(value):
+    ivalue = float(value)
+    if ivalue <= 0:
+        raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
+    return ivalue

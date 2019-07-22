@@ -1,127 +1,83 @@
-from file_utils import *
+#!/usr/bin/env python3
+from Tools.utils import tmp_bash,make_sure_path_exists,get_filepaths,progressBar
+import argparse
+import os
 
+def download_dict(args):
 
-def merge_gender(res_path):
-    '''
-    Return the list of LOF results, prioritizing the phenos that are labeled MALE/FEMALE
-    '''
-    all_files = get_filepaths(res_path)
-    res_files = []
-    for f in all_files:
-        if 'MALE.SAIGE.' in f:
-            res_files.append(f)
+    args.dict_path = os.path.join(args.outpath,'dict')
+    make_sure_path_exists(args.dict_path)
+    cmd = f"gsutil cp gs://fg-cromwell/{args.workflow}/{args.id}/call-gene_matrix/**/*dict.txt {args.dict_path}"
+    print(cmd)
+    tmp_bash(cmd)
 
-    for f in all_files:
-        if f not in res_files:
-            #check if gender specific phenotype exists
-            male_test = f.replace('.SAIGE','.MALE.SAIGE')
-            female_test = f.replace('.SAIGE','.FEMALE.SAIGE')
-            if male_test not in res_files and female_test not in res_files:
-                res_files.append(f)
-            
-    return [os.path.join(res_path,f) for f in res_files]
-
-
-def return_phenos(pheno_paths):
-    '''
-    Return all name of phenotypes
-    '''
-    phenos = []
-    with open(pheno_paths,'rt') as i:
-        for line in i:
-            pheno = line.strip().split('/')[-1].split('.')[0]
-            phenos.append(pheno)
-
-    return phenos
-
-def get_hits(res_path,pheno_paths,g2v_path,out_path,lof = 'most_severe',test = True,sep ='\t'):
-    '''
-    Merge the SAIGE results, sorting by pvalue and zipping.
-    '''
-
-    # list of files
-    file_list = merge_gender(res_path)
-    phenos = return_phenos(pheno_paths)
-    
-    # gene to variant dict
-    with open(g2v_path,'rb') as i: g2v = pickle.load(i)
-
-    #outputs
-    make_sure_path_exists(out_path)
-    out_file = os.path.join(out_path,lof + '_best_hits.txt.gz')
-    tmp_file = os.path.join(out_path,lof + '_best_hits.tmp')
-       
-    pretty_print('merging')
-    final_phenos =os.path.join(out_path,lof + '_final_phenos.txt')
-    rej_phenos = os.path.join(out_path,lof + '_rejected_phenos.txt')
-    with open(tmp_file,'wt') as o,open(final_phenos,'wt') as final,open(rej_phenos,'wt') as rej:
-        if test :
-            file_list = file_list[:10]
-        #loop through files
-        for i,f in enumerate(file_list):
-            progressBar(i,len(file_list))
-            #get phenotype
-            pheno = f.split('.')[0].split('-')[1]
-            
-            #check if pheno in pheno_list
-            pheno_check = True if pheno in phenos else False
-            if not pheno_check:
-                rej.write(pheno + ' missing' + '\n')
-                                
-            else:
-                #pheno is approved, need to store the results
-                final.write(pheno + '\n')
-                #file iterator
-                iterator = basic_iterator(f,separator = ' ')
-                #get releavant info
-                header = next(iterator)
-                pval_index = header.index('p.value')
-                gene_index = header.index('GENE')
-                cases_index = header.index('N.Cases')
-                controls_index = header.index('N.Controls')
-                af_cases_index = header.index('AF.Cases')
-                af_controls_index = header.index('AF.Controls')
-                
-                #update header
-                header[cases_index] = 'ref.count.cases'
-                header[controls_index] = 'alt.count.cases'
-                header[af_cases_index] = 'ref.count.ctrls'
-                header[af_controls_index] = 'alt.count.ctrls'
-                
-                #loop through data
-                for entry in iterator:
-                    # convert entries of AC/AF
-                    alt_count_cases = int(round(2*int(entry[cases_index])*float(entry[af_cases_index]),2))
-                    ref_count_cases = int(entry[cases_index]) - int(alt_count_cases)                                       
-                    assert (alt_count_cases + ref_count_cases == int(entry[cases_index]))
-                    
-                    alt_count_controls = int(round(2*int(entry[controls_index])*float(entry[af_controls_index]),2))
-                    ref_count_controls = int(entry[controls_index]) - int(alt_count_controls)                                       
-                    assert (alt_count_controls + ref_count_controls == int(entry[controls_index]))                    
-
-                    entry[cases_index] = str(ref_count_cases)               
-                    entry[controls_index] = str(alt_count_cases)
-
-                    entry[af_cases_index] = str(ref_count_controls)                               
-                    entry[af_controls_index] = str(alt_count_controls)
-
-                    gene = entry[gene_index]
-                    variants = g2v[gene]
-                   
-                    entry.append(','.join(variants))
-                    out_entry = sep.join([pheno] + entry) + '\n'
-                    o.write(out_entry)
-
-                
-    final_header = ['pheno'] + header + ['variants']
-    pretty_print('sorting & zipping')
-    with open(out_file,'wt') as o:o.write(sep.join(final_header) + '\n')      
-    cmd = 'sort -g -k ' + str(final_header.index('p.value')+1)  + pad(tmp_file) + ' | gzip >> ' + pad(out_file)
+    cmd = f"gsutil cp gs://fg-cromwell/{args.workflow}/{args.id}/call-merge_matrix/**/*matrix.tsv {os.path.join(args.outpath,'gene_matrix.tsv')}"
     print(cmd)
     tmp_bash(cmd)
     
+    cmd = f"jq -s  'reduce .[] as $item ({{}}; . * $item)' {args.dict_path}/* > {os.path.join(args.outpath,'gene_dict.json')}"
+    print(cmd)
+    tmp_bash(cmd)
 
-def get_filepaths(mypath):
-    from os import listdir
-    from os.path import isfile, join
-    return [f for f in listdir(mypath) if isfile(join(mypath, f))]
+def download_saige(args):
+    cmd = f"gsutil -m cp gs://fg-cromwell/{args.workflow}/{args.id}/call-pheno_saige/**/*SAIGE.txt {args.saige_path}"
+    tmp_bash(cmd)
+    
+
+def saige_merge(args):
+    
+    files = get_filepaths(args.saige_path)
+    out_file = os.path.join(args.outpath,args.lof + "_gene_results.txt")
+    tmp_file = os.path.join(args.outpath,args.lof + "_tmp.txt")
+
+    if os.path.isfile(out_file):
+        return
+
+    else:
+        print('merging results...')
+        with open(tmp_file,'wt') as o:
+            for i,saige_file in enumerate(files):
+                progressBar(i,len(files))
+                pheno = os.path.basename(saige_file).split('.')[0]
+                with open(saige_file) as i:
+                    header = next(i)
+                    for line in i:
+                        o.write(pheno +" " +line)
+
+        with open(out_file,'wt') as o:
+            o.write("PHENO " +header)
+
+        print('sorting...')
+        pval_index = header.split(' ').index('p.value') + 2
+        cmd = f"sort -gk {pval_index} {tmp_file}  >> {out_file}"
+        tmp_bash(cmd)
+    
+    
+if __name__=="__main__":
+    
+    parser = argparse.ArgumentParser(description="Deal with lof results")
+
+    parser.add_argument('--outpath', type=str, help='output path',required = True)
+    parser.add_argument('--id', type=str, help='worflow id',required = True)
+    parser.add_argument('--workflow', type=str, help='worflow name',default = "LOF_saige")
+    
+    subparsers = parser.add_subparsers(help='help for subcommand',dest ="command")
+    dict_parser = subparsers.add_parser('dict', help='download gene dictionaries and merge them')
+    saige_download_parser = subparsers.add_parser('saige_download', help='download saige results')
+    saige_merge_parser = subparsers.add_parser('saige', help='download saige results')
+    saige_merge_parser.add_argument('--lof', type = str, default = "most_severe")
+    args = parser.parse_args()
+
+    
+    if args.command == 'dict':
+        download_dict(args)
+
+    if args.command == 'saige_download':
+        args.saige_path = os.path.join(args.outpath,'saige')
+        make_sure_path_exists(args.saige_path)
+        download_saige(args)
+
+    if args.command == 'saige':
+        args.saige_path = os.path.join(args.outpath,'saige')
+        make_sure_path_exists(args.saige_path)
+        saige_merge(args)

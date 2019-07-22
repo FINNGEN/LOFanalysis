@@ -2,7 +2,7 @@
 
 
 from Tools.utils import file_exists,make_sure_path_exists,tmp_bash,pad,return_header,progressBar,mapcount,pretty_print
-from file_utils import split_array_chunk,get_progress_test
+from file_utils import split_array_chunk,get_progress_test,check_positive
 import extract_variants
 import argparse,os,multiprocessing,pickle,json
 import numpy as np
@@ -55,8 +55,13 @@ def build_gene_matrix_chunk(args,chunk):
     with open(gene_matrix_file,'wt') as out_file:
             for i,gene in enumerate(gene_chunk):
                 indexcol =[header.index(element) for element in args.g2v[gene]]
-                data = 1 - pd.read_csv(args.variant_matrix,sep ='\t',usecols = indexcol,dtype = float).prod(axis = 1)
-                out_file.write(gene +'\t' + '\t'.join(map(str,data.values)) + '\n')
+                if args.gp0:
+                    data = (1 - pd.read_csv(args.variant_matrix,sep ='\t',usecols = indexcol,dtype = float).prod(axis = 1)).values
+                elif args.hard_call:
+                    best_variant = 1 - pd.read_csv(args.variant_matrix,sep ='\t',usecols = indexcol,dtype = float).min(axis = 1)
+                    data = np.where(best_variant >= args.hard_call,1,0)
+                    
+                out_file.write(gene +'\t' + '\t'.join(map(str,data)) + '\n')
                 get_progress_test(args)
 
 
@@ -107,15 +112,16 @@ def build_matrix_chunks(args):
     # write samples
     sample_string = f"-S {args.sample_file}" 
     
-    # define chunk paths
-    info_filter = ''
+    # make sure the variant is rare
+    variant_filter =  f" -i 'AF< 0.5 "
     if args.info_score:
-        info_filter = f" -i 'INFO>={args.info_score}' "
-        
+        variant_filter += f" & INFO>={args.info_score} "
+    variant_filter += f"& ID=@{args.variants}'"   
+     
     matrix_file = os.path.join(matrix_chunk_path,args.lof + '_CHUNK_matrix.tsv')
     chunk_file = os.path.join(args.chunk_path,'position_chunk_CHUNK.tsv')
-    #use bcftools to keep positions and info score if rqeuired. A grepping necessary to filter by exact variant name
-    matrix_cmd = f"bcftools query -R {chunk_file} {sample_string} -f" + " '%ID[\\t%GP{0}]\\n'"  +f"{info_filter} {args.vcf} | grep  -wf <(sed   's/^/^/g' {args.variants} ) > {matrix_file}"
+    #use bcftools to keep positions and info score if rqeuired.
+    matrix_cmd = f"bcftools query -R {chunk_file} {sample_string} -f" + " '%ID[\\t%GP{0}]\\n'"  +f"{variant_filter} {args.vcf} > {matrix_file}"   
     
     pools = multiprocessing.Pool(args.cpus)
     pools.map(multiproc_cmd,product([matrix_cmd],range(args.cpus)))
@@ -140,8 +146,6 @@ def run_cmd(cmd,chunk):
         tmp_bash(cmd)
     except:
         print(chunk,'failed')
-
-
     
 def save_variant_to_gene_dict(args):
     '''
@@ -160,7 +164,6 @@ def save_variant_to_gene_dict(args):
     with open(os.path.join(args.out_path,args.lof+'_'+str(args.chrom)+'_gene_variants_dict.txt'),'w') as out_file:
         out_file.write(json.dumps(g2v))
 
-
 def main(args):
     make_sure_path_exists(args.out_path)
     pretty_print('CHROMOSOME ' +str(args.chrom))
@@ -177,6 +180,10 @@ if __name__ == '__main__':
                         help="path to annotated file")
     variant_parser.add_argument("--lof_variants", type= file_exists,
                         help="path to list of lof variants")
+
+    call_parser = parser.add_mutually_exclusive_group()
+    call_parser.add_argument('--hard-call',type = check_positive, help = 'Hard call filter')
+    call_parser.add_argument("--gp0", action='store_true', help =  "Works with GP = 0")
     
     parser.add_argument('-o',"--out_path",type = str, help = "folder in which to save the results", required = True)
     parser.add_argument('-c','--chrom',type = int,help = 'chromosome number', required = True)
@@ -185,7 +192,7 @@ if __name__ == '__main__':
                         help="path to vcf file",required = True)
     parser.add_argument("--lof", type= str,
                         help="type of lof filter",required = True,choices = ['hc_lof','most_severe'] )
-    parser.add_argument("--info_score", type= float, help="Info score filter")    
+    parser.add_argument("--info_score", type= float, help="Info score filter")
     parser.add_argument('-s',"--sample_file",type = file_exists, help = "list of samples", required = False)
     parser.add_argument('--cpus',type = int,help = 'number of parallel processes to run', default = 2)
     parser.add_argument('--force',action = 'store_true',help = 'Replaces files by force')
