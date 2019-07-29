@@ -151,9 +151,9 @@ task pheno_saige {
 	Int minmac
 	String loco
 
-	String mem
+	Int mem
 	String docker
-	String cpu
+	Int cpu
 
 	String outfile =  pheno +  ".SAIGE.txt"
 	
@@ -164,7 +164,7 @@ task pheno_saige {
 	--dosageFileNrowSkip=1 \
 	--dosageFileNcolSkip=1 \
 	--dosageFilecolnamesSkip="GENE" \
-	--minMAC=10 \
+	--minMAC=${minmac} \
 	--sampleFile=${samples} \
 	--LOCO=${loco} \
 	--numLinesOutput=1000 \
@@ -211,12 +211,12 @@ task gene_matrix {
      Float call_filter
      String call_type = if call_filter >0 then "--hard-call " + call_filter else "--gp0"
      
-     String? info_score
+     Float? info_score
      String info_filter = if defined(info_score) then "--info_score " + info_score else " "
 
      String lof          
      String docker
-     String cpu
+     Int cpu
 
      command{
      python3 /Scripts/lof.py \

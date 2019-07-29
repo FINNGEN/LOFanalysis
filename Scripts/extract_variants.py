@@ -7,24 +7,28 @@ from collections import defaultdict as dd
 #------PROCESS VARIANTS-----#
 #############################
 
-def split_positions_chunks(args):
+def split_variants_chunks(args):
     '''
-    Splits the lof positions in chunks for multiprocessing with bcftools
+    Splits the lof variants and positions in chunks for multiprocessing with bcftools
     '''
     #read positions
-    positions = []
-    with open(args.positions,'rt') as i:
-        for line in i:positions.append(line)
+    variants = []
+    with open(args.variants,'rt') as i:
+        for line in i:variants.append(line)
 
     args.chunk_path = os.path.join(args.variants_path,'chunks/')
     make_sure_path_exists(args.chunk_path)
     # split positions in chunks and save them to files
-    chunks = split_array_chunk(positions,args.cpus)
+    chunks = split_array_chunk(variants,args.cpus)
     for i,chunk in enumerate(chunks):
-        chunk_file = os.path.join(args.chunk_path,'position_chunk_'+str(i) + '.tsv')
-        with open(chunk_file,'wt') as o:
-            for position in chunk:
-                o.write(position)
+        pos_chunk = os.path.join(args.chunk_path,'position_chunk_'+str(i) + '.tsv')
+        variant_chunk = os.path.join(args.chunk_path,'variant_chunk_'+str(i) + '.txt')
+        with open(variant_chunk,'wt') as v,open(pos_chunk,'wt') as p:
+            for variant in chunk:
+                v.write(variant)
+                chrom,pos,*_ = variant.strip().split('_')
+                p.write('\t'.join([chrom,pos])+ '\n')
+
 
 def return_chrom_variants(args):
     '''
@@ -58,7 +62,9 @@ def return_chrom_variants(args):
         with open(args.v2g,'wb') as o:
             pickle.dump(v2g,o)
 
-    split_positions_chunks(args)
+    split_variants_chunks(args)
+    print("variant chunks created")
+
     
 def return_lof_variants(args):
     '''

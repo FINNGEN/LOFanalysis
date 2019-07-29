@@ -109,24 +109,44 @@ def build_matrix_chunks(args):
     matrix_chunk_path = os.path.join(args.out_path,'matrix_chunks/')
     make_sure_path_exists(matrix_chunk_path)
 
-    # write samples
+    variant_chunk = os.path.join(args.chunk_path,'variant_chunk_CHUNK.txt')
+
+    # sample_filters
     sample_string = f"-S {args.sample_file}" 
-    
-    # make sure the variant is rare
-    variant_filter =  f" -i 'AF< 0.5 "
+    # variant_filters
+    variant_filter = f" -i 'ID=@{variant_chunk}"   
     if args.info_score:
         variant_filter += f" & INFO>={args.info_score} "
-    variant_filter += f"& ID=@{args.variants}'"   
-     
+    
+    # AF < 0.5
+    pretty_print('AF < 0.5')
+    # make sure the variant is rare
+    AF_variant_filter =  variant_filter + f" & AF< 0.5' "
+        
     matrix_file = os.path.join(matrix_chunk_path,args.lof + '_CHUNK_matrix.tsv')
     chunk_file = os.path.join(args.chunk_path,'position_chunk_CHUNK.tsv')
     #use bcftools to keep positions and info score if rqeuired.
-    matrix_cmd = f"bcftools query -R {chunk_file} {sample_string} -f" + " '%ID[\\t%GP{0}]\\n'"  +f"{variant_filter} {args.vcf} > {matrix_file}"   
-    
+    matrix_cmd = f"bcftools query -R {chunk_file} {sample_string} -f" + " '%ID[\\t%GP{0}]\\n'"  +f"{AF_variant_filter} {args.vcf} > {matrix_file}"   
+
     pools = multiprocessing.Pool(args.cpus)
     pools.map(multiproc_cmd,product([matrix_cmd],range(args.cpus)))
     pools.close()
 
+    # AF > 0.5
+    pretty_print('AF > 0.5')
+    AF_variant_filter =  variant_filter + f" & AF > 0.5' "    
+    #use bcftools to keep positions and info score if rqeuired.
+    matrix_cmd = f"bcftools query -R {chunk_file} {sample_string} -f" + " '%ID[\\t%GP{2}]\\n'"  +f"{AF_variant_filter} {args.vcf} >> {matrix_file}"   
+
+    pools = multiprocessing.Pool(args.cpus)
+    pools.map(multiproc_cmd,product([matrix_cmd],range(args.cpus)))
+    pools.close()
+
+    pretty_print("SANITY CHECK")
+    matrix_cmd = f"cat {matrix_file} |wc -l && cut -f1 {matrix_file} | sort | uniq | wc -l"
+    for chunk in range(args.cpus):
+        tmp_bash(matrix_cmd.replace('CHUNK',str(chunk)))
+        
     print('merging and transposing chunks')        
     matrix_files = [matrix_file.replace('CHUNK',str(i)) for i in range(args.cpus)]
     cmd = f"cat {' '.join(matrix_files)}  | datamash transpose > {args.variant_matrix}"

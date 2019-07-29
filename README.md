@@ -15,6 +15,10 @@ usage: lof.py [-h]
 One between:\
 `--annotation ` tsv.gz file with columns named gene and `$LOF`. It's used for mapping a variant to gene and LOF\
 `--lof_variants` tsv file where the first column is the variant and the second is the gene. It's the output of the previous flag.\
+One between:\
+`--hard-call HARD_CALL ` Float at which to convert the GP to boolean \
+`--gp0 ` Works with GP = 0
+
 Required:\
 `--lof` : type of LOF. At the moment it accepts `most_severe` and `hc_lof`\
 `-o` : out path\
@@ -33,7 +37,7 @@ Optional:\
 The script first reads through the annotated file and saves the LOF carry variants, according to the type of LOF requested. It also builds a variant_to_gene dict.\
 Then the variants are split into chunks for speedup purposes. For each variant chunk a `bcftools` command filter the vcf for those positions and returns the probability of GP=0 for the variant in a variant to sample matrix.\
 Finally, the variant chunks are merged and transposed so a final sample to variant to matrix is built.\
-Now variants are merged into genes with the sample to gene value being 1 minus the product of the GP=0 for each variant to obtain the final gene to sample variant.
+Now variants are merged into genes with the sample to gene value being 1 minus the product of the GP=0 for each variant to obtain the final gene to sample variant. Alternatively one can force a cutoff to convert the probabilities into boolean values.
 
 ## Docker
 

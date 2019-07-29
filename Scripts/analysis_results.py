@@ -45,11 +45,12 @@ def saige_merge(args):
                         o.write(pheno +" " +line)
 
         with open(out_file,'wt') as o:
-            o.write("PHENO " +header)
+            o.write("\t".join(["PHENO"] + header.strip().split(" ")) + '\n')
 
         print('sorting...')
         pval_index = header.split(' ').index('p.value') + 2
-        cmd = f"sort -gk {pval_index} {tmp_file}  >> {out_file}"
+        cmd = f"sort -gk {pval_index} {tmp_file} | tr [:blank:] \\\\t >> {out_file}"
+        print(cmd)
         tmp_bash(cmd)
     
     
