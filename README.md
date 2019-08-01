@@ -52,4 +52,4 @@ The wdl runs the following steps:
 2) it merges the matrix into one single files 
 3) it extracts the phenotype names from the null data 
 4) it runs SAIGE for each pheno 
-5) it merges the results and sorts them by pval
+5) it merges the results and sorts them by pvalg

@@ -1,55 +1,97 @@
-workflow LOF_saige{
+ workflow LOF_saige{
 
-     File chrom_info
-     String docker
-     Array[Array[String]] chrom_info_list = read_tsv(chrom_info)
-     String lof
-     File samples
+    File chrom_info
+    String docker
+    Array[Array[String]] chrom_info_list = read_tsv(chrom_info)
+    String lof
+    File samples
 
-
-     call filter_variants{
-     	  input:
-		docker = docker,
-		lof = lof
-          }
-     scatter (data in chrom_info_list){
-
-     	     call gene_matrix{
-	     	  input:
-		  lof = lof,
-		  chrom_data = data,
-		  docker = docker,
-		  samples = samples,
-		  lof_variants = filter_variants.variant_gene_list
-	     }
-     }
-
-     call merge_matrix {
-
-     	  input:
-	  lof = lof,
-	  matrix_files = gene_matrix.matrix_file,
-	  docker =docker
-     }
+    # RETURN SET OF VARIANTS TO RUN
+    call filter_variants{
+     	input:
+        docker = docker,
+	lof = lof
+        }
      
-     File variance_list
-     call return_phenotypes {
-     	  input:
-     	  variance_list = variance_list,
-	  docker = docker
-	  }
-	  
-     scatter (pheno in return_phenotypes.phenotypes){
-     	     call pheno_saige {
-	     	  input:
-		  matrix = merge_matrix.gene_matrix,
-		  pheno = pheno,
-		  samples = samples
-	     	     }
-     	     }
+    # RETURN LIST OF PHENOTYPES TO RUN
+    File variance_list
+    call return_phenotypes {
+     	input:
+	variance_list = variance_list,
+	docker = docker
+    }
 
-     }
+     # RETURN GENE MATRIX FOR EACH CHROM
+    scatter (data in chrom_info_list){
+     	call gene_matrix{
+	    input:
+	    lof = lof,
+	    chrom_data = data,
+	    docker = docker,
+	    samples = samples,
+	    lof_variants = filter_variants.variant_gene_list
+	}
+    }
 
+    # MERGE MATRICES INTO ONE
+    call merge_matrix {
+     	input:
+	lof = lof,
+	matrix_files = gene_matrix.matrix_file,
+	docker =docker
+    }
+
+    
+    # RUN SAIGE FOR EACH PHENO	  
+    scatter (pheno in return_phenotypes.phenotypes){
+     	call pheno_saige {
+	    input:
+	    matrix = merge_matrix.gene_matrix,
+	    pheno = pheno,
+	    samples = samples
+	}
+    }
+
+    # MERGE RESULTS INTO ONE FILE	     
+    call merge_results {         
+        input:
+	docker = docker,
+        lof = lof,
+	saige_results = pheno_saige.saige_result,
+	gene_dicts = gene_matrix.gene_dict
+    }
+}
+
+task merge_results{
+
+    String docker
+    Array[File] saige_results
+    Array[File] gene_dicts
+    String lof
+    
+    command {
+        python3 /Scripts/analysis_results.py \
+        --outpath /cromwell_root/ \
+        saige \
+        --saige_files ${write_lines(saige_results)} \
+        --dict_files ${write_lines(gene_dicts)} 
+    }
+
+    output {
+     	File final_gene_dict = "/cromwell_root/${lof}_gene_dict.json"
+	File final_results = "/cromwell_root/${lof}_gene_results.txt"
+    }
+    
+    runtime {
+        docker: "${docker}"
+        cpu: 1
+        memory: "1 GB"
+        disks: "local-disk 10 HDD"
+        zones: "europe-west1-b"
+        preemptible: 2
+        noAddress: true
+    }     
+}
 
 task filter_variants{
 
@@ -62,14 +104,13 @@ task filter_variants{
 
      String lof
      Float max_maf
-     Float geno
      String docker
 
      String dollar = "$"
 
      command {
      plink_root=$( echo ${lof_bed} | sed 's/.bed//g' )
-     plink2 --bfile ${dollar}plink_root --max-maf ${max_maf} --geno ${geno} --write-snplist --out ${lof}_variants
+     plink2 --bfile ${dollar}plink_root --max-maf ${max_maf} --write-snplist --out ${lof}_variants
      join <(sort ${lof_variant_genes}) <(sort ${lof}_variants.snplist) -t ${dollar}'\t' > ${lof}_gene_list.txt
 
      }
@@ -89,30 +130,6 @@ task filter_variants{
 
 }
 
-task merge_results{
-
-     Array[File] gene_results
-     File header
-     String docker
-     
-     command <<<
-     cat ${header} > gene_results.txt &&\
-     while read f ; do  awk '{gsub(".*/","",FILENAME);gsub(".SAIGE.txt","",FILENAME);print FILENAME" "$0}' $f |  sed -E 1d  >> tmp.txt; done < ${write_lines(gene_results)} && sort -gk 9 tmp.txt| awk '$9>0' >> gene_results.txt && bgzip gene_results.txt
-     
-     >>>
-     output {
-     File results = "gene_results.txt.gz"
-     }
-     runtime {
-        docker: "${docker}"
-        cpu: 1
-        memory: "1 GB"
-        disks: "local-disk 10 HDD"
-        zones: "europe-west1-b"
-        preemptible: 2
-        noAddress: true
-    	}
-     }
 
 
 task return_phenotypes{
@@ -175,7 +192,7 @@ task pheno_saige {
 	}
 	
 	output {	
-	File out = outfile
+	File saige_result = outfile
 	}
 	
 	runtime {

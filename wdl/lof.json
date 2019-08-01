@@ -1,16 +1,15 @@
 {
     # WORKFLOW LEVEL
     "LOF_saige.chrom_info": "gs://r3_data/convert/chrom_sizes.txt",
-    "LOF_saige.variance_list": "gs://r3_data/LOF/oesophagus_test.txt",
+    "LOF_saige.variance_list": "gs://r3_data/LOF/R3_variances.txt",
     "LOF_saige.docker": "eu.gcr.io/finngen-refinery-dev/lof:r4-test",
     "LOF_saige.lof": "most_severe",
     "LOF_saige.samples": "gs://r3_data/samples/R3_135638_samples.txt",
 
     #FILTER VARIANTS       
-    "LOF_saige.filter_variants.lof_plink_root": "gs://r3_data/LOF/plink/R3_GP_most_severe",
+    "LOF_saige.filter_variants.lof_plink_root": "gs://r3_data/LOF/plink/R3_most_severe",
     "LOF_saige.filter_variants.lof_variant_genes": "gs://r3_data/LOF/most_severe_variants_genes.txt",
     "LOF_saige.filter_variants.max_maf": 0.1,
-    "LOF_saige.filter_variants.geno": 0.05,
     
     # GENE MATRIX
     "LOF_saige.gene_matrix.chrom_file": "gs://fg-datateam-analysisteam-share/fromdatateam/R3-data/vcf/R3_chrCHROM.vcf.gz",
