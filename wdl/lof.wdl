@@ -6,7 +6,7 @@
     String lof
     File samples
 
-    # RETURN SET OF VARIANTS TO RUN
+    # RETURN SET OF VARIANTS TO RUN (MAF FILTER)
     call filter_variants{
      	input:
         docker = docker,
@@ -41,7 +41,6 @@
 	docker =docker
     }
 
-    
     # RUN SAIGE FOR EACH PHENO	  
     scatter (pheno in return_phenotypes.phenotypes){
      	call pheno_saige {
@@ -79,7 +78,7 @@ task merge_results{
 
     output {
      	File final_gene_dict = "/cromwell_root/${lof}_gene_dict.json"
-	File final_results = "/cromwell_root/${lof}_gene_results.txt"
+	File final_results = "/cromwell_root/${lof}_gene_results.txt.gz"
     }
     
     runtime {
@@ -108,7 +107,7 @@ task filter_variants{
 
      String dollar = "$"
 
-     command {
+     command {2
      plink_root=$( echo ${lof_bed} | sed 's/.bed//g' )
      plink2 --bfile ${dollar}plink_root --max-maf ${max_maf} --write-snplist --out ${lof}_variants
      join <(sort ${lof_variant_genes}) <(sort ${lof}_variants.snplist) -t ${dollar}'\t' > ${lof}_gene_list.txt

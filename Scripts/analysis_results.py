@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 from Tools.utils import tmp_bash,make_sure_path_exists,get_filepaths,progressBar,file_exists,basic_iterator
 import argparse
 import json
@@ -27,13 +28,25 @@ def download_saige(args):
     
 
 def saige_merge(args):
-    
-    with open(args.dict_files) as i :
-        dict_files = [elem.strip() for elem in i.readlines()]
 
+    # LOAD DICT & SAIGE RESULTS
+    if not args.saige_files:
+        args.saige_files = [f for f in get_filepaths(args.saige_path) if f.endswith('SAIGE.txt')]
+    else:
+        with open(args.saige_files) as i :
+            args.saige_files = [elem.strip() for elem in i.readlines()]
+    print(f"{len(args.saige_files)} saige files.")
+    if not args.dict_files:
+        dict_path = os.path.join(args.outpath,'dict')
+        args.dict_files = [f for f in get_filepaths(dict_path) if f.endswith('dict.txt')]
+    else:
+        with open(args.dict_files) as i :
+            args.dict_files = [elem.strip() for elem in i.readlines()]
+    print(f"{len(args.dict_files)} dict files.")
+    
     # MERGE JSON FILES
     g = {}
-    for f in dict_files:
+    for f in args.dict_files:
         print(f)
         with open(f) as infile:
             g.update(json.load(infile))
@@ -41,36 +54,32 @@ def saige_merge(args):
     gene_json = os.path.join(args.outpath,args.lof + "_gene_dict.json")
     with open(gene_json, "w") as outfile:
         json.dump(g, outfile)
-    
     with open(gene_json) as i :g_dict = json.load(i)
 
-    print('merging results...')
-    out_file = os.path.join(args.outpath,args.lof + "_gene_results.txt")
-    tmp_file = os.path.join(args.outpath,args.lof + "_tmp.txt")
-    
-    with open(args.saige_files) as i :
-        files = [elem.strip() for elem in i.readlines()]
-        
+    # MERGE RESULTS WITHOUT HEADER
+    print('merging results...')                
     tmp_fix = NamedTemporaryFile(delete=True)
     with open(tmp_fix.name,'w') as o:
-        for i,saige_file in enumerate(files):
-            progressBar(i,len(files))
+        for i,saige_file in enumerate(args.saige_files):
+            progressBar(i,len(args.saige_files))
             pheno = os.path.basename(saige_file).split('.')[0]
             with open(saige_file) as i:
                 header = next(i)
                 for line in i:
                     o.write(pheno +" " +line)
 
+    # CREATE TMP FILE & SORT BY PVAL
+    tmp_file = os.path.join(args.outpath,args.lof + "_tmp.txt")
     with open(tmp_file,'wt') as t:
         t.write("\t".join(["PHENO"] + header.strip().split(" ")) + '\n')
-
     print('sorting...')
     pval_index = header.split(' ').index('p.value') + 2
     cmd = f"sort -gk {pval_index} {tmp_fix.name} | tr [:blank:] \\\\t >> {tmp_file}"
     print(cmd)
     tmp_bash(cmd)
 
-    
+    # ADD METADATA TO FINAL FILE
+    out_file = os.path.join(args.outpath,args.lof + "_gene_results.txt")   
     with open(out_file,'wt') as o :
         res_iterator = basic_iterator(tmp_file)
         header = next(res_iterator)
@@ -106,7 +115,7 @@ if __name__=="__main__":
     
     parser = argparse.ArgumentParser(description="Deal with lof results")
 
-    parser.add_argument('--outpath', type=str, help='output path',required = True)
+    parser.add_argument('-o','--outpath', type=str, help='output path',required = True)
     parser.add_argument('--id', type=str, help='worflow id')
     parser.add_argument('--workflow', type=str, help='worflow name',default = "LOF_saige")
     
@@ -132,4 +141,6 @@ if __name__=="__main__":
     if args.command == 'saige':
         args.saige_path = os.path.join(args.outpath,'saige')
         make_sure_path_exists(args.saige_path)
-        saige_merge(args)
+     
+
+        saige_merge(args)    

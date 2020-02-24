@@ -1,35 +1,32 @@
 {
     # WORKFLOW LEVEL
-    "LOF_saige.chrom_info": "gs://r3_data/convert/chrom_sizes.txt",
-    "LOF_saige.variance_list": "gs://r3_data/LOF/R3_variances.txt",
-    "LOF_saige.docker": "eu.gcr.io/finngen-refinery-dev/lof:r4-test",
+    "LOF_saige.chrom_list":  ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22"],
+    "LOF_saige.variance_list": "gs://r4_data_west1/lof/R4_variances.txt",
+    "LOF_saige.docker": "eu.gcr.io/finngen-refinery-dev/lof:r4",
     "LOF_saige.lof": "most_severe",
-    "LOF_saige.samples": "gs://r3_data/samples/R3_135638_samples.txt",
+    "LOF_saige.samples": "gs://r4_data_west1/R4_183694_samples.txt",
 
     #FILTER VARIANTS       
-    "LOF_saige.filter_variants.lof_plink_root": "gs://r3_data/LOF/plink/R3_most_severe",
-    "LOF_saige.filter_variants.lof_variant_genes": "gs://r3_data/LOF/most_severe_variants_genes.txt",
+    "LOF_saige.filter_variants.lof_plink_root": "gs://r4_data_west1/lof/plink/R4_GP_most_severe",
+    "LOF_saige.filter_variants.lof_variant_genes": "gs://r4_data_west1/lof/most_severe_variants_genes.txt",
     "LOF_saige.filter_variants.max_maf": 0.1,
     
     # GENE MATRIX
-    "LOF_saige.gene_matrix.chrom_file": "gs://fg-datateam-analysisteam-share/fromdatateam/R3-data/vcf/R3_chrCHROM.vcf.gz",
+    "LOF_saige.gene_matrix.chrom_file": "gs://r4_data/convert/vcf/finngen_R4_chrCHROM.vcf.gz",
     "LOF_saige.gene_matrix.disk_factor": 3,
     "LOF_saige.gene_matrix.cpu": 4,
     "LOF_saige.gene_matrix.info_score": 0.95,
-    "LOF_saige.gene_matrix.call_filter": 0,
+    "LOF_saige.gene_matrix.call_filter": 0.9,
        
     # MATRIX MERGE
-    "LOF_saige.merge_matrix.name": "R3",
+    "LOF_saige.merge_matrix.name": "R4",
     
     # SAIGE
-    "LOF_saige.pheno_saige.variance_basepath": "gs://r3_data/saige/null/R3.grm.v1-PHENO.varianceRatio.txt",
+    "LOF_saige.pheno_saige.variance_basepath": "gs://r4_data_west1/nulls/R4_GRM_V1-PHENO.varianceRatio.txt",
     "LOF_saige.pheno_saige.cpu": 1,
     "LOF_saige.pheno_saige.docker": "gcr.io/finngen-refinery-dev/saige:r3",
     "LOF_saige.pheno_saige.minmac": 10,
     "LOF_saige.pheno_saige.loco": "FALSE",
-    "LOF_saige.pheno_saige.mem": 3,
-    # MERGE RESULTS
-    "LOF_saige.merge_results.header":"gs://r3_data/LOF/header.txt",
-     
+    "LOF_saige.pheno_saige.mem": 3
 
 }

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 from Tools.utils import file_exists,make_sure_path_exists,tmp_bash,pad,return_header,progressBar,mapcount,pretty_print
 from file_utils import split_array_chunk,get_progress_test,check_positive
 import extract_variants
@@ -9,8 +8,6 @@ import numpy as np
 from itertools import product
 import pandas as pd
 from collections import defaultdict as dd
-
-
 
 def build_gene_matrix(args):
 
@@ -201,12 +198,12 @@ if __name__ == '__main__':
     variant_parser.add_argument("--lof_variants", type= file_exists,
                         help="path to list of lof variants")
 
-    call_parser = parser.add_mutually_exclusive_group()
+    call_parser = parser.add_mutually_exclusive_group(required = True)
     call_parser.add_argument('--hard-call',type = check_positive, help = 'Hard call filter')
     call_parser.add_argument("--gp0", action='store_true', help =  "Works with GP = 0")
     
     parser.add_argument('-o',"--out_path",type = str, help = "folder in which to save the results", required = True)
-    parser.add_argument('-c','--chrom',type = int,help = 'chromosome number', required = True)
+    parser.add_argument('-c','--chrom',choices = list(map(str,range(1,24))) + ['X'],help = 'chromosome number', required = True)
     
     parser.add_argument("--vcf", type= file_exists,
                         help="path to vcf file",required = True)
