@@ -8,6 +8,43 @@ import numpy as np
 from itertools import product
 import pandas as pd
 from collections import defaultdict as dd
+from pathlib import Path
+
+
+
+def to_vcf(args):
+
+    print('building vcf')
+    samples = return_header(args.gene_matrix)[1:]
+    print(len(samples))
+    samples = '\t'.join([f"1a{i+1}" for i in range(len(samples))])
+
+    parent_path = Path(os.path.realpath(__file__)).parent.parent
+    vcf_header = os.path.join(parent_path,'Data/','vcf_header.txt')
+    out_vcf = os.path.join(args.out_path,args.lof + '_' + str(args.chrom) + '_gene.vcf')
+    with open(out_vcf,'wt') as o,open(vcf_header,'rt') as i:
+        ref=['1','POS','ID','A','C','.','.','PR','DS']
+        for line in i:
+            if '[SAMPLES]' in line:
+                line = line.replace('[SAMPLES]',samples)
+            o.write(line)
+        with open(args.gene_matrix,'rt') as g:
+            chrom = int(args.chrom)
+            chrom_pos = chrom*100000
+            pos = 0
+            next(g)
+            for line in g:
+                pos += 1
+                gene,*values = line.strip().split('\t')
+                ref[1],ref[2] = str(chrom_pos + pos),gene
+                line = '\t'.join(ref + values) + '\n'
+                o.write(line)
+                
+    cmd = f'bgzip -f  {out_vcf} '
+    print(cmd)
+    tmp_bash(cmd)
+    print('done')
+    
 
 def build_gene_matrix(args):
 
@@ -53,8 +90,10 @@ def build_gene_matrix_chunk(args,chunk):
             for i,gene in enumerate(gene_chunk):
                 indexcol =[header.index(element) for element in args.g2v[gene]]
                 if args.gp0:
+                    # product of probability that variants are 0
                     data = (1 - pd.read_csv(args.variant_matrix,sep ='\t',usecols = indexcol,dtype = float).prod(axis = 1)).values
                 elif args.hard_call:
+                    # return best variant based on GP, then filter
                     best_variant = 1 - pd.read_csv(args.variant_matrix,sep ='\t',usecols = indexcol,dtype = float).min(axis = 1)
                     data = np.where(best_variant >= args.hard_call,1,0)
                     
@@ -69,7 +108,7 @@ def build_gene_matrix_chunk(args,chunk):
 
 def build_raw_matrix(args):
     """
-    Function that build the variant to sample matrix for lof variants.
+    Function that build the variant GP to sample matrix for lof variants.
     """
 
     # if sample file is not provided extract from vcf
@@ -116,9 +155,9 @@ def build_matrix_chunks(args):
         variant_filter += f" & INFO>={args.info_score} "
     
     # AF < 0.5
-    pretty_print('AF < 0.5')
+    pretty_print(f' AF <= {args.max_maf}')
     # make sure the variant is rare
-    AF_variant_filter =  variant_filter + f" & AF< 0.5' "
+    AF_variant_filter =  variant_filter + f" & AF <= {args.max_maf} '"
         
     matrix_file = os.path.join(matrix_chunk_path,args.lof + '_CHUNK_matrix.tsv')
     chunk_file = os.path.join(args.chunk_path,'position_chunk_CHUNK.tsv')
@@ -130,8 +169,8 @@ def build_matrix_chunks(args):
     pools.close()
 
     # AF > 0.5
-    pretty_print('AF > 0.5')
-    AF_variant_filter =  variant_filter + f" & AF > 0.5' "    
+    pretty_print(f' {1-args.max_maf} <= AF')
+    AF_variant_filter =  variant_filter + f" & {1-args.max_maf} <= AF  "    
     #use bcftools to keep positions and info score if rqeuired.
     matrix_cmd = f"bcftools query -R {chunk_file} {sample_string} -f" + " '%ID[\\t%GP{2}]\\n'"  +f"{AF_variant_filter} {args.vcf} >> {matrix_file}"   
 
@@ -147,6 +186,7 @@ def build_matrix_chunks(args):
     print('merging and transposing chunks')        
     matrix_files = [matrix_file.replace('CHUNK',str(i)) for i in range(args.cpus)]
     cmd = f"cat {' '.join(matrix_files)}  | datamash transpose > {args.variant_matrix}"
+    print(cmd)
     tmp_bash(cmd)
 
     
@@ -187,7 +227,8 @@ def main(args):
     extract_variants.return_chrom_variants(args)
     build_raw_matrix(args)
     build_gene_matrix(args)
-
+    to_vcf(args)
+    
 if __name__ == '__main__':
 
 
@@ -211,14 +252,13 @@ if __name__ == '__main__':
                         help="type of lof filter",required = True,choices = ['hc_lof','most_severe'] )
     parser.add_argument("--info_score", type= float, help="Info score filter")
     parser.add_argument('-s',"--sample_file",type = file_exists, help = "list of samples", required = False)
+    parser.add_argument('--max-maf',type = float,help = 'MAX Minor allele frequency', default = 0.1)
     parser.add_argument('--cpus',type = int,help = 'number of parallel processes to run', default = 2)
     parser.add_argument('--force',action = 'store_true',help = 'Replaces files by force')
-    parser.add_argument('--test',action = 'store_true',help = 'Runs test version') 
-
+    parser.add_argument('--test',action = 'store_true',help = 'Runs test version')
+    
     args=parser.parse_args()
     args.out_path = os.path.join(args.out_path,str(args.chrom))
     #print(args)
-
+    args.max_maf = round(min(args.max_maf,1-args.max_maf),2)
     main(args)
-
-        

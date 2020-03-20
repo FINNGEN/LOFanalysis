@@ -23,6 +23,6 @@ if __name__ == "__main__":
     call(shlex.split(cmd))
 
     if args.push:
-        cmd = f"gcloud docker -- push {docker_path}{args.image}:{args.version}"       
+        cmd = f"docker -- push {docker_path}{args.image}:{args.version}"       
         call(shlex.split(cmd))
 
