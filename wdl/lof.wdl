@@ -10,17 +10,16 @@
 
     # test mode
     Boolean test
-    String v_list = if test then sub(variance_list,".txt","_test.txt") else variance_list
-    File var_list = v_list
+    String var_list = if test then sub(variance_list,".txt","_test.txt") else variance_list
+     
     # RETURN LIST OF PHENOTYPES TO RUN
-    
     call return_phenotypes {
-     	input:
+        input:
 	variance_list = var_list,
 	docker = docker
     }
 
-     # RETURN GENE MATRIX FOR EACH CHROM
+    # RETURN GENE MATRIX FOR EACH CHROM
     scatter (chrom in chrom_list){
      	call gene_matrix{
 	    input:
@@ -42,52 +41,69 @@
         prefix = prefix
     }
 
-    # scatter (pheno in return_phenotypes.phenotypes){
-    #  	call pheno_saige {
-    #         input:
-    #         gene_vcf = merge_matrix.gene_vcf,
-    #         gene_tbi = merge_matrix.gene_tbi,
-    #         pheno = pheno,
-    #         samples = samples,
-    #     }
-    # }
-    #  call merge_saige{
-    #  	 input:
-    #      gene_results = pheno_saige.out,
-    #      prefix = prefix,
-    #      lof = lof,
-    #      docker = docker
-    #  }
+    # RUN SAIGE FOR EACH PHENO
+    scatter (pheno in return_phenotypes.phenotypes){
+     	call pheno_saige {
+            input:
+            gene_vcf = merge_matrix.gene_vcf,
+            gene_tbi = merge_matrix.gene_tbi,
+            pheno = pheno,
+            samples = samples,
+        }
+    }
+
+    # MERGE SAIGE RESULTS & SORT
+    call merge_saige{
+     	input:
+        gene_results = pheno_saige.out,
+        dict = merge_matrix.gene_json,
+        prefix = prefix,
+        lof = lof,
+        docker = docker
+    }
         
 }
+
 
 
 task merge_saige {
 
     Array[File] gene_results
-
+    File dict
+    
+    String? merge_docker
     String docker
+    String? final_docker = if defined(merge_docker) then merge_docker else docker    
     String lof
     String prefix
 
-    String out_file =  "${prefix}_${lof}_gene.txt"
-
-    command <<<
-    head -n1 ${gene_results[0]} > ${out_file}
-    COL=$(head -1 ${out_file} | sed 's/ /\n/g' | nl | grep -w p.value | grep -v NA | cut -f1)
-    while read f; do echo $f && cat $f | sed -E 1d >> tmp.txt ; done < ${write_lines(gene_results)}
-    sort -gk $COL tmp.txt | awk -v col="$COL" '$col>0' >> ${out_file}
-    bgzip ${out_file}
-
+    String out_file =  "${prefix}_${lof}_gene_results.txt.gz"
+    String out_json =  "${prefix}_${lof}_gene_results.json"
     
+    command <<<
+
+    # merge the results
+    head -n1 ${gene_results[0]} > results
+    while read f; do echo $f && cat $f | sed -E 1d >> results ; done < ${write_lines(gene_results)}
+
+    # create final file
+
+    python3 /Scripts/analysis_results.py \
+    -o . \
+    --prefix "${prefix}_${lof}" \
+    --saige-file results \
+    --dict-file ${dict}
+
+    mv ${dict} ${out_json}
     >>>
 
     output {
-        File result = "${out_file}.gz"
+        File result = out_file
+        File json = out_json 
         }
 
      runtime {
-        docker: "${docker}"
+        docker: "${final_docker}"
         cpu: 1
         memory: "1 GB"
         disks: "local-disk 10 HDD"
@@ -120,18 +136,16 @@ task pheno_saige {
     --GMMATmodelFile=${rda} \
     --varianceRatioFile=${variance} \
     --sampleFile=${samples} \
-    --SAIGEOutputFile=${outfile} \
+    --SAIGEOutputFile=tmp.txt \
     --IsOutputAFinCaseCtrl=TRUE \
     --LOCO=FALSE \
     --IsOutputNinCaseCtrl=TRUE \
     --chrom 1
 
-    cut -f 3- -d " " ${outfile} > tmp.txt
-    jq -r 'to_entries|map("\(.key)\t\(.value|@csv|tostring)")|.[]' ./finngen_R5_most_severe_gene.json | sort |  tr -d '"'> json_map.txt
-
-    
+    #PREPREND PHENO TO COLUMNS
     head -n1 tmp.txt | sed 's|SNPID|GENE|g' |  awk '{print "PHENO "$0}' > ${outfile}
     cat tmp.txt  | sed -E 1d |  awk '{print "${pheno} "$0}' >> ${outfile}
+    
     >>>
 
     	output {	
@@ -221,9 +235,11 @@ task merge_matrix {
     String out_json = "${prefix}_${lof}_gene.json"
 
     command <<<
+    # MERGE VCFS
     bcftools concat -f ${write_lines(vcfs)} -Oz -o ${out_vcf}
     tabix -f ${out_vcf}
 
+    # MERGE JSON FILES FROM ALL CHROMS
     touch ${out_json} 
     while read f; do echo $f && jq -n 'reduce inputs as $i ({}; . * $i)' ${out_json} $f > tmp && mv tmp ${out_json}; done < ${write_lines(dicts)}
     

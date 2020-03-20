@@ -1,146 +1,102 @@
 #!/usr/bin/env python3
 
-from Tools.utils import tmp_bash,make_sure_path_exists,get_filepaths,progressBar,file_exists,basic_iterator
-import argparse
-import json
-import os
+from file_utils import tmp_bash,make_sure_path_exists,file_exists,basic_iterator,return_header
+import argparse,json,os
 from tempfile import NamedTemporaryFile
-
-def download_dict(args):
-
-    args.dict_path = os.path.join(args.outpath,'dict')
-    make_sure_path_exists(args.dict_path)
-    cmd = f"gsutil cp gs://fg-cromwell/{args.workflow}/{args.id}/call-gene_matrix/**/*dict.txt {args.dict_path}"
-    print(cmd)
-    tmp_bash(cmd)
-
-    cmd = f"gsutil cp gs://fg-cromwell/{args.workflow}/{args.id}/call-merge_matrix/**/*matrix.tsv {os.path.join(args.outpath,'gene_matrix.tsv')}"
-    print(cmd)
-    tmp_bash(cmd)
-    
-    #cmd = f"jq -s  'reduce .[] as $item ({{}}; . * $item)' {args.dict_path}/* > {os.path.join(args.outpath,'gene_dict.json')}"
-    #print(cmd)
-    #tmp_bash(cmd)
-
-def download_saige(args):
-    cmd = f"gsutil -m cp gs://fg-cromwell/{args.workflow}/{args.id}/call-pheno_saige/**/*SAIGE.txt {args.saige_path}"
-    tmp_bash(cmd)
-    
+   
+# fields that need to be there
+required_fields =['PHENO', 'GENE', 'p.value', 'BETA', 'SE', 'AC', 'AF', 'N', 'N.Cases', 'N.Controls', 'AF.Cases', 'AF.Controls']
+# fields that the script adds
+additional_fields = ['ref.count.cases','alt.count.cases','ref.count.controls','alt.count.controls','variants']
 
 def saige_merge(args):
-
-    # LOAD DICT & SAIGE RESULTS
-    if not args.saige_files:
-        args.saige_files = [f for f in get_filepaths(args.saige_path) if f.endswith('SAIGE.txt')]
-    else:
-        with open(args.saige_files) as i :
-            args.saige_files = [elem.strip() for elem in i.readlines()]
-    print(f"{len(args.saige_files)} saige files.")
-    if not args.dict_files:
-        dict_path = os.path.join(args.outpath,'dict')
-        args.dict_files = [f for f in get_filepaths(dict_path) if f.endswith('dict.txt')]
-    else:
-        with open(args.dict_files) as i :
-            args.dict_files = [elem.strip() for elem in i.readlines()]
-    print(f"{len(args.dict_files)} dict files.")
-    
+   
     # MERGE JSON FILES
-    g = {}
-    for f in args.dict_files:
-        print(f)
-        with open(f) as infile:
-            g.update(json.load(infile))
-
-    gene_json = os.path.join(args.outpath,args.lof + "_gene_dict.json")
-    with open(gene_json, "w") as outfile:
-        json.dump(g, outfile)
-    with open(gene_json) as i :g_dict = json.load(i)
-
+    with open(args.dict_file) as infile: g_dict = json.load(infile)
+    j = {}
+    for gene in g_dict:
+        j[gene] =  ','.join(g_dict[gene])
+    
     # MERGE RESULTS WITHOUT HEADER
-    print('merging results...')                
-    tmp_fix = NamedTemporaryFile(delete=True)
-    with open(tmp_fix.name,'w') as o:
-        for i,saige_file in enumerate(args.saige_files):
-            progressBar(i,len(args.saige_files))
-            pheno = os.path.basename(saige_file).split('.')[0]
-            with open(saige_file) as i:
-                header = next(i)
-                for line in i:
-                    o.write(pheno +" " +line)
+    print('merging results...')
+    
+    tmp_file = os.path.join(args.outpath, "tmp.txt")
+    out_file = os.path.join(args.outpath, f"{args.prefix}_gene_results.txt")       
+    
+    saige_iterator = basic_iterator(args.saige_file)
+    with open(tmp_file,'w') as t,open(out_file,'w') as o :
+        # gather all required column indexes, replacing values if needed
+        header = next(saige_iterator)
+        for key in args.fields_dict:
+            header[header.index(key)] = args.fields_dict[key]          
+        # write new header adding new columns
+        new_header = header+ additional_fields
+        o.write('\t'.join(new_header) + '\n')
+        # relevant fields that i need to process while parsing the file
+        gene_idx = new_header.index("GENE")
+        idx_list = [new_header.index(elem) for elem in ['N.Cases','N.Controls','AF.Cases','AF.Controls']]
+        for line in saige_iterator:
+            gene = line[gene_idx]
+            cases,controls,af_cases,af_controls = list(map(float,[line[idx] for idx in idx_list]))
+            # create new required entries (additional fields)
+            alt_count_cases = af_cases * cases*2
+            ref_count_cases = cases - alt_count_cases
+            alt_count_controls = af_controls*controls*2
+            ref_count_controls = controls - alt_count_controls
+            res = list(map(int,[ref_count_cases,alt_count_cases,ref_count_controls,alt_count_controls]))
+            # create out_line
+            new_line = line +  list(map(str,res)) + [j[gene]] 
+            assert len(new_line) == len(new_header)
+            t.write('\t'.join(new_line) + '\n')
 
-    # CREATE TMP FILE & SORT BY PVAL
-    tmp_file = os.path.join(args.outpath,args.lof + "_tmp.txt")
-    with open(tmp_file,'wt') as t:
-        t.write("\t".join(["PHENO"] + header.strip().split(" ")) + '\n')
-    print('sorting...')
-    pval_index = header.split(' ').index('p.value') + 2
-    cmd = f"sort -gk {pval_index} {tmp_fix.name} | tr [:blank:] \\\\t >> {tmp_file}"
+    print('sorting by pval..')
+    sort_col = 1 + header.index('p.value')
+    cmd = f' sort -gk {sort_col} {tmp_file} >> {out_file}'
     print(cmd)
     tmp_bash(cmd)
-
-    # ADD METADATA TO FINAL FILE
-    out_file = os.path.join(args.outpath,args.lof + "_gene_results.txt")   
-    with open(out_file,'wt') as o :
-        res_iterator = basic_iterator(tmp_file)
-        header = next(res_iterator)
-        # replace column headers
-        idx_list =[ header.index(elem) for elem in ['N.Cases','N.Controls','AF.Cases','AF.Controls']]
-        for i,elem in enumerate(['ref.count.cases','alt.count.cases','ref.count.controls','alt.count.controls']):
-            header[idx_list[i]] = elem
-          
-        header.append('variants')
-        o.write('\t'.join(header) +'\n')
-
-        count = 0
-        for entry in res_iterator:
-            cases,controls,af_cases,af_controls = list(map(float,[entry[ix] for ix in idx_list]))
-            alt_cases = af_cases * cases*2
-            ref_cases = cases - alt_cases
-            alt_controls = af_controls*controls*2
-            ref_controls = controls - alt_controls
-            res = list(map(str,[ref_cases,alt_cases,ref_controls,alt_controls]))
-            for i,ix in enumerate(idx_list):
-                entry[ix] = res[i]
-
-            variants = ','.join(g_dict[entry[1]])
-            entry.append(variants)
-            o.write('\t'.join(entry) +'\n')
-            
-    os.remove(tmp_file)
+   
     print('zipping...')
-    cmd = f"bgzip {out_file}"
+    cmd = f"bgzip -f {out_file}"
+    print(cmd)
     tmp_bash(cmd)
     
 if __name__=="__main__":
     
     parser = argparse.ArgumentParser(description="Deal with lof results")
 
-    parser.add_argument('-o','--outpath', type=str, help='output path',required = True)
-    parser.add_argument('--id', type=str, help='worflow id')
-    parser.add_argument('--workflow', type=str, help='worflow name',default = "LOF_saige")
-    
-    subparsers = parser.add_subparsers(help='help for subcommand',dest ="command")
-    dict_parser = subparsers.add_parser('dict', help='download gene dictionaries and merge them')
-    saige_download_parser = subparsers.add_parser('saige_download', help='download saige results')
+    parser.add_argument('-o','--outpath', type=str, help='output path',default = os.getcwd())      
+    parser.add_argument('--saige-file', type = file_exists)
+    parser.add_argument('--dict-file', type = file_exists)
+    parser.add_argument('--prefix', type = str, default = "finngen")
+    #COLUMN NAMES
+    parser.add_argument('--pheno-col', type = str, default = "PHENO")
+    parser.add_argument('--gene-col', type = str, default = "GENE")
+    parser.add_argument('--ac-col', type = str, default = "AC_Allele2")
+    parser.add_argument('--af-col', type = str, default = "AF_Allele2")
+    parser.add_argument('--n-col', type = str, default = "N")
+    parser.add_argument('--beta-col', type = str, default = "BETA")
+    parser.add_argument('--se-col', type = str, default = "SE")
+    parser.add_argument('--pval-col', type = str, default = "p.value")    
+    parser.add_argument('--cases-col', type = str, default = "N.Cases")
+    parser.add_argument('--controls-col', type = str, default = "N.Controls")
+    parser.add_argument('--af-cases-col', type = str, default = "AF.Cases")
+    parser.add_argument('--af-controls-col', type = str, default = "AF.Controls")
 
-    saige_merge_parser = subparsers.add_parser('saige', help='download saige results')
-    saige_merge_parser.add_argument('--saige_files', type = file_exists)
-    saige_merge_parser.add_argument('--dict_files', type = file_exists)
-    saige_merge_parser.add_argument('--lof', type = str, default = "most_severe")
     args = parser.parse_args()
 
+    # the values are the required entries on pheweb
+    args.fields_dict = {}
+    for i,elem in enumerate([args.pheno_col,args.gene_col,args.pval_col,args.beta_col,args.se_col,args.ac_col,args.af_col,args.n_col,args.cases_col,args.controls_col,args.af_cases_col,args.af_controls_col]):
+        args.fields_dict[elem] = required_fields[i]
     
-    if args.command == 'dict':
-        download_dict(args)
+    print(args.fields_dict.values())
 
-    if args.command == 'saige_download':
-        args.saige_path = os.path.join(args.outpath,'saige')
-        make_sure_path_exists(args.saige_path)
-        download_saige(args)
-
-    if args.command == 'saige':
-        args.saige_path = os.path.join(args.outpath,'saige')
-        make_sure_path_exists(args.saige_path)
-     
-
-        saige_merge(args)    
+    header = return_header(args.saige_file)
+    
+    for key in args.fields_dict:
+        if key not in header:
+            raise ValueError(f"{key} not found in file header")
+      
+    print('all columns in header')
+    saige_merge(args)    
+        

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-from Tools.utils import file_exists,make_sure_path_exists,tmp_bash,pad,return_header,progressBar,mapcount,pretty_print
-from file_utils import split_array_chunk,get_progress_test,check_positive
+from file_utils import file_exists,make_sure_path_exists,tmp_bash,pad,return_header,progressBar,mapcount,pretty_print,split_array_chunk,get_progress_test,check_positive,basic_iterator
 import extract_variants
 import argparse,os,multiprocessing,pickle,json
 import numpy as np
@@ -28,17 +27,13 @@ def to_vcf(args):
             if '[SAMPLES]' in line:
                 line = line.replace('[SAMPLES]',samples)
             o.write(line)
-        with open(args.gene_matrix,'rt') as g:
-            chrom = int(args.chrom)
-            chrom_pos = chrom*100000
-            pos = 0
-            next(g)
-            for line in g:
-                pos += 1
-                gene,*values = line.strip().split('\t')
-                ref[1],ref[2] = str(chrom_pos + pos),gene
-                line = '\t'.join(ref + values) + '\n'
-                o.write(line)
+            
+        chrom_pos = int(args.chrom)*100000
+        for pos,entry in basic_iterator(args.gene_matrix,skiprows =1,count = True):
+            gene,*values = entry
+            ref[1],ref[2] = str(chrom_pos + pos),gene
+            line = '\t'.join(ref + values) + '\n'
+            o.write(line)
                 
     cmd = f'bgzip -f  {out_vcf} '
     print(cmd)
@@ -126,12 +121,13 @@ def build_raw_matrix(args):
     else:
         print('variant matrix already calculated')
 
-    args.g2v_file = os.path.join(args.variants_path, args.lof + '_gene_variants_dict.p')
+    args.g2v_file = os.path.join(args.out_path,args.lof+'_'+str(args.chrom)+'_gene_variants_dict.txt')
     if not os.path.isfile(args.g2v_file) or args.force:
         args.force = True
         save_variant_to_gene_dict(args)
-        
-    with open(args.g2v_file,'rb') as i: args.g2v = pickle.load(i)
+
+    with open(args.g2v_file) as infile: args.g2v = json.load(infile)
+                                
     args.genes = np.array(list(args.g2v.keys()))
 
     print(len(return_header(args.variant_matrix)), ' lof variants')
@@ -209,22 +205,22 @@ def save_variant_to_gene_dict(args):
     Reads the final list of variants and dumps a gene to variant dictionary 
     '''
     
-    #get variant to gene mapping from full list of variants
+    #get variant to gene mapping from full list of variants,it's created by extract_variants
     with open(args.v2g,'rb') as i:v2g = pickle.load(i)
         
     g2v = dd(list)
-    final_variants = return_header(args.variant_matrix)
-    for variant in final_variants:
+    for variant in return_header(args.variant_matrix):
         g2v[v2g[variant]].append(variant)
                
-    with open(args.g2v_file,'wb') as o:pickle.dump(g2v,o)
     with open(os.path.join(args.out_path,args.lof+'_'+str(args.chrom)+'_gene_variants_dict.txt'),'w') as out_file:
         out_file.write(json.dumps(g2v))
 
 def main(args):
     make_sure_path_exists(args.out_path)
     pretty_print('CHROMOSOME ' +str(args.chrom))
+    
     extract_variants.return_chrom_variants(args)
+    
     build_raw_matrix(args)
     build_gene_matrix(args)
     to_vcf(args)
