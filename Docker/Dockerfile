@@ -6,7 +6,6 @@ RUN apt-get install wget make  gcc g++ datamash jq --yes unzip
 RUN apt-get install python3 python3-numpy python3-pip  python3-pandas --yes
 RUN pip3 install numpy --upgrade
 
-
 # SAMTOOLS
 RUN wget https://github.com/samtools/htslib/releases/download/1.10/htslib-1.10.tar.bz2 && \
 tar -xvjf htslib-1.10.tar.bz2 && cd htslib-1.10 && ./configure && make && make install && cd .. && rm  htslib-1.*tar*
@@ -17,6 +16,22 @@ RUN wget https://github.com/samtools/bcftools/releases/download/1.10.2/bcftools-
 
 #PLINK
 RUN wget http://s3.amazonaws.com/plink2-assets/alpha2/plink2_linux_x86_64.zip && unzip plink2*.zip -d /usr/local/bin/ &&  rm plink2*.zip
+
+# CONDA
+RUN wget --quiet https://repo.anaconda.com/archive/Anaconda3-2019.10-Linux-x86_64.sh -O ~/anaconda.sh && \
+    /bin/bash ~/anaconda.sh -b -p /opt/conda && \
+    rm ~/anaconda.sh
+    
+RUN  ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
+    echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.profile && \
+    find /opt/conda/ -follow -type f -name '*.a' -delete  && \
+    find /opt/conda/ -follow -type f -name '*.js.map' -delete && \
+    /opt/conda/bin/conda clean -afy
+
+# PYTHON PACKAGES
+ADD ./Docker/requirements.txt .
+RUN /opt/conda/bin/conda install --file requirements.txt --yes
+ENV PATH "/opt/conda/bin:$PATH"
 
 ADD Scripts ../Scripts
 ADD Data ../Data
