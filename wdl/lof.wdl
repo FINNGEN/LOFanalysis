@@ -7,6 +7,8 @@
     File samples
     File gene_list   
     String variance_list
+    Float max_maf
+    Float info_score    
 
     # test mode
     Boolean test
@@ -22,11 +24,14 @@
     ##############
     #---MATRIX---#
     ##############
+    Array[String] c_list = if test then  ["19","20","21","22"] else chrom_list
     # RETURN GENE MATRIX FOR EACH CHROM
-    scatter (chrom in chrom_list){
+     scatter (chrom in c_list){
      	call gene_matrix{
 	    input:
 	    lof = lof,
+            max_maf = max_maf,
+            info_score = info_score,
 	    chrom = chrom,
 	    docker = docker,
 	    samples = samples,
@@ -75,7 +80,9 @@
         dict = merge_matrix.gene_json,
         lof = lof,
         docker = docker,
-        prefix = prefix
+        prefix = prefix,
+        max_maf = max_maf,
+        info_score = info_score
      }
 }
 
@@ -92,22 +99,27 @@ task analysis {
     String prefix
     Int disk_size = ceil(size(results,'GB')) + 10
     Int mem = ceil(size(results,'GB')) + 4
-    
-    String out_json =  "${prefix}_${lof}_gene_results.json"
+
+    Float max_maf
+    Float info_score
+    String release_notes = " MAF=${max_maf},INFO_SCORE=${info_score}"
+       
     
     command <<<
      python3 /Scripts/analysis_results.py \
     -o . \
     --prefix "${prefix}_${lof}" \
     --saige-file ${results} \
-    --dict-file ${dict}
+    --dict-file ${dict} \
+    --release_dict ${release_notes} \
+    --release
 
-    mv ${dict} ${out_json}
     >>>
     output {
-        File json = out_json
-        File saige_results = sub(out_json,'.json','.txt.gz')
-        File pdf = sub(out_json,'.json','.pdf')
+        File readme = "${prefix}_${lof}_lof_readme"
+        File gene_results = "data/${prefix}_${lof}_gene_results.txt.gz"
+        File json_dict = "data/${prefix}_${lof}_gene.json"
+        File qq  = "documentation/${prefix}_${lof}_gene_qq.pdf"
         }
 
      runtime {
@@ -221,9 +233,10 @@ task gene_matrix {
     Float call_filter
     String call_type = if call_filter >0 then "--hard-call " + call_filter else "--gp0"
     
-    Float? info_score
-    String info_filter = if defined(info_score) then "--info_score " + info_score else " "
     Float max_maf
+    Float info_score
+    
+    String info_filter = "--info_score " + info_score
     
     String lof          
     String? matrix_docker

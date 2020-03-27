@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 
-from file_utils import tmp_bash,make_sure_path_exists,file_exists,basic_iterator,return_header
-import argparse,json,os,scipy
+from file_utils import tmp_bash,make_sure_path_exists,file_exists,basic_iterator,return_header,get_filepaths,mapcount,StoreDictKeyPair
+import argparse,json,os,scipy,subprocess,shlex,shutil
 from tempfile import NamedTemporaryFile
+from pathlib import Path
 import numpy as np
 from collections import defaultdict,Counter
 import matplotlib as mpl
 mpl.use('Agg')
 from matplotlib import pyplot as plt
 import seaborn as sns
-#sns.set(palette='Set2')
 sns.set(palette='Reds')
 
 # fields that need to be there
@@ -18,17 +18,26 @@ required_fields =['PHENO', 'GENE', 'p.value', 'BETA', 'SE', 'AC', 'AF', 'N', 'N.
 additional_fields = ['ref.count.cases','alt.count.cases','ref.count.controls','alt.count.controls','variants']
 
 def saige_merge(args):
+
    
+    tmp_file = os.path.join(args.outpath, "tmp.txt")
+    out_file = os.path.join(args.outpath, f"{args.prefix}_gene_results.txt")       
+    args.out_file = out_file+'.gz'
+
+    args.json = os.path.join(args.outpath, f"{args.prefix}_gene.json")       
+    subprocess.call(shlex.split(f"cp {args.dict_file} {args.json}"))
+        
+    if os.path.isfile(args.out_file):
+        print('all files already generated')
+        return
+
+    print("editing metadata...")
+
     # MERGE JSON FILES
-    with open(args.dict_file) as infile: g_dict = json.load(infile)
+    with open(args.json) as infile: g_dict = json.load(infile)
     j = {}
     for gene in g_dict:
         j[gene] =  ','.join(g_dict[gene])
-    
-
-    print("editing metadata...")
-    tmp_file = os.path.join(args.outpath, "tmp.txt")
-    out_file = os.path.join(args.outpath, f"{args.prefix}_gene_results.txt")       
     
     saige_iterator = basic_iterator(args.saige_file)
     with open(tmp_file,'w') as t,open(out_file,'w') as o :
@@ -67,9 +76,6 @@ def saige_merge(args):
     print('zipping:',cmd)
     tmp_bash(cmd)
 
-    out_file += '.gz'
-    plot_qq(out_file,savefig = out_file.replace('.txt.gz','.pdf'))
-
 
 
 ##############################
@@ -85,16 +91,23 @@ def return_pheno_counts(f,bin_col):
     for pheno,pval,cases in count_iterator:
         cases_count[pheno] = int(float(cases))
         pheno_pvals[pheno].append(float(pval))
-    return cases_count,pheno_pvals
+    return cases_count,pheno_pvals  
+
+
+def plot_qq(f,cases_count = None,pheno_pvals = None,bin_col = 'N.Cases'):
+
+    args.qq = f.replace('results.txt.gz','qq.pdf')
+    print(args.qq)
+    if os.path.isfile(args.qq):
+        return
     
-
-
-def plot_qq(f,cases_count = None,pheno_pvals = None,savefig = '/mnt/disks/r5/lof/results/test.pdf',bin_col = 'N.Cases'):
-
     # count cases for each pheno
     if not cases_count and not pheno_pvals:
         cases_count,pheno_pvals = return_pheno_counts(f,bin_col)
-
+        
+    with open(os.path.join(args.outpath,'phenos.txt'),'wt') as o:
+        for pheno in pheno_pvals:o.write(pheno + '\n')
+        
     bins = [1,200,500,1000,10000,int(max(cases_count.values()))+1]
     labels = [str((bins[i],bins[i+1])) for i in range(len(bins)-1)]
 
@@ -143,17 +156,58 @@ def plot_qq(f,cases_count = None,pheno_pvals = None,savefig = '/mnt/disks/r5/lof
     leg = plt.legend(loc = 'lower right',fontsize = 6)
     leg.set_title('cases range | pheno count | lambda',prop={'size':7})
     
-    fig.savefig(savefig)
+    fig.savefig(args.qq)
     plt.close()
-    print(savefig,'done')      
 
 def lambda_inflation(pvalues):
     stats = scipy.stats.chi2.ppf(1-pvalues,1)
     inflation_factor = round(np.median(stats) /scipy.stats.chi2.ppf(0.5, 1) ,2)
     return inflation_factor
 
+def release(args):
 
+    doc_path = os.path.join(args.outpath,'documentation')
+    data_path = os.path.join(args.outpath,'data')
+    for path in [doc_path,data_path]:
+        make_sure_path_exists(path)
+        for f in get_filepaths(path): os.remove(f) # clean path else shutil.copy might fail
+    for f in [args.out_file,args.json]:
+        shutil.copy(f,os.path.join(data_path,os.path.basename(f)))
+    for f in [args.qq]:
+        shutil.copy(f,os.path.join(doc_path,os.path.basename(f)))
+        
 
+    # get variant/gene counts & summary
+    with open(args.json) as infile: g_dict = json.load(infile)
+    genes = len(g_dict.keys())
+    variants = np.sum([len(g_dict[k]) for k in g_dict])
+    
+    gene_summary = "|# of variants in gene | count|\n|--|--|\n"
+    counter = Counter([len(g_dict[k]) for k in g_dict])
+    for n in sorted(counter.keys(),reverse=True):
+        gene_summary += "|" + "|".join(list(map(str,[n,counter[n]]))) + '|\n'
+
+    phenos = mapcount(os.path.join(args.outpath,'phenos.txt'))
+    
+    parent_path = Path(os.path.realpath(__file__)).parent.parent
+    readme = os.path.join(parent_path,'Data','lof.README')    
+    with open( os.path.join(args.outpath,args.prefix + '_lof_readme'),'wt') as o, open(readme,'rt') as i:
+        word_map = {
+            '[PREFIX]':args.prefix,
+            '[N_VARIANTS]' : variants,
+            '[N_GENES]' : genes,
+            '[GENE_SUMMARY]':gene_summary,
+            '[PHENOS]': phenos
+            }
+        
+        word_map.update(args.release_dict)
+       
+        for line in i:
+            for kw in word_map:
+                if kw in line:
+                    line = line.replace(kw,str(word_map[kw]))
+                    
+            o.write(line)
 
 if __name__=="__main__":
     
@@ -163,6 +217,7 @@ if __name__=="__main__":
     parser.add_argument('--saige-file', type = file_exists)
     parser.add_argument('--dict-file', type = file_exists)
     parser.add_argument('--prefix', type = str, default = "finngen")
+    parser.add_argument('--release', action = 'store_true')
     #COLUMN NAMES
     parser.add_argument('--pheno-col', type = str, default = "PHENO")
     parser.add_argument('--gene-col', type = str, default = "GENE")
@@ -176,9 +231,10 @@ if __name__=="__main__":
     parser.add_argument('--controls-col', type = str, default = "N.Controls")
     parser.add_argument('--af-cases-col', type = str, default = "AF.Cases")
     parser.add_argument('--af-controls-col', type = str, default = "AF.Controls")
+    parser.add_argument("--release_dict", action=StoreDictKeyPair, metavar="KEY1=VAL1,KEY2=VAL2...")
 
     args = parser.parse_args()
-
+    
     # the values are the required entries on pheweb
     args.fields_dict = {}
     for i,elem in enumerate([args.pheno_col,args.gene_col,args.pval_col,args.beta_col,args.se_col,args.ac_col,args.af_col,args.n_col,args.cases_col,args.controls_col,args.af_cases_col,args.af_controls_col]):
@@ -193,5 +249,8 @@ if __name__=="__main__":
             raise ValueError(f"{key} not found in file header")
       
     print('all columns in header')
-    saige_merge(args)    
-        
+    saige_merge(args)
+    plot_qq(args.out_file)
+    if args.release:
+        print('release!')
+        release(args)

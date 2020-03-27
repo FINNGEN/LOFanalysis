@@ -2,21 +2,21 @@
 # WORKFLOW LEVEL
     "LOF_saige.test": False,
     "LOF_saige.chrom_list":  ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22"],
+
     "LOF_saige.variance_list": "gs://r5_data/lof/variance_list.txt",
     "LOF_saige.lof": "most_severe",
     "LOF_saige.samples": "gs://r5_data/R5_224737_samples.txt",
     "LOF_saige.gene_list": "gs://r4_data_west1/lof/most_severe_variants_genes.txt",
     "LOF_saige.prefix": "finngen_R5",
-    
+    "LOF_saige.max_maf": 0.1,
+    "LOF_saige.info_score": 0.95,    
+
     # GENE MATRIX
     "LOF_saige.gene_matrix.chrom_file": "gs://r5_data/convert/vcf/finngen_R5_chrCHROM.vcf.gz",
     "LOF_saige.gene_matrix.cpu": 4,
-    "LOF_saige.gene_matrix.info_score": 0.95,
     "LOF_saige.gene_matrix.call_filter": 0,
-    "LOF_saige.gene_matrix.max_maf": 0.1,
-    
     #DOCKERS
-    "LOF_saige.docker": "eu.gcr.io/finngen-refinery-dev/lof:r5-final",
+    "LOF_saige.docker": "eu.gcr.io/finngen-refinery-dev/lof:r5-analysis",
     #"LOF_saige.gene_matrix.matrix_docker": "String? (optional)",
     #"LOF_saige.merge_matrix.merge_docker": "String? (optional)",
     "LOF_saige.pheno_saige.docker": "gcr.io/finngen-refinery-dev/saige:0.36.3.2.fg",
