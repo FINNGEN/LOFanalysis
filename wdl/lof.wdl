@@ -102,7 +102,7 @@ task analysis {
 
     Float max_maf
     Float info_score
-    String release_notes = " MAF=${max_maf},INFO_SCORE=${info_score}"
+    String release_notes = " MAF=${max_maf},INFO_SCORE=${info_score},[LOF]=${lof}"
        
     
     command <<<

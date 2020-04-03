@@ -21,7 +21,7 @@
     #"LOF_saige.merge_matrix.merge_docker": "String? (optional)",
     "LOF_saige.pheno_saige.docker": "gcr.io/finngen-refinery-dev/saige:0.36.3.2.fg",
     #"LOF_saige.merge_saige.merge_docker": "eu.gcr.io/finngen-refinery-dev/lof:r5-test",
-    #"LOF_saige.analysis.analysis_docker": "eu.gcr.io/finngen-refinery-dev/lof:r5-analysis",
+    "LOF_saige.analysis.analysis_docker": "eu.gcr.io/finngen-refinery-dev/lof:r5-analysis.3",
     
     # SAIGE
     "LOF_saige.pheno_saige.variance_basepath": "gs://r5_data/nulls/R5_GRM_V1-PHENO.varianceRatio.txt",

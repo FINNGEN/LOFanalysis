@@ -23,15 +23,17 @@ def saige_merge(args):
     tmp_file = os.path.join(args.outpath, "tmp.txt")
     out_file = os.path.join(args.outpath, f"{args.prefix}_gene_results.txt")       
     args.out_file = out_file+'.gz'
-
+    
     args.json = os.path.join(args.outpath, f"{args.prefix}_gene.json")       
     subprocess.call(shlex.split(f"cp {args.dict_file} {args.json}"))
-        
+
+    print(args.out_file)
     if os.path.isfile(args.out_file):
         print('all files already generated')
         return
 
-    print("editing metadata...")
+    sanitize_inputs(args)
+    print("editing metadata...",args.out_file)
 
     # MERGE JSON FILES
     with open(args.json) as infile: g_dict = json.load(infile)
@@ -93,12 +95,12 @@ def return_pheno_counts(f,bin_col):
         pheno_pvals[pheno].append(float(pval))
     return cases_count,pheno_pvals  
 
-
 def plot_qq(f,cases_count = None,pheno_pvals = None,bin_col = 'N.Cases'):
 
     args.qq = f.replace('results.txt.gz','qq.pdf')
     print(args.qq)
     if os.path.isfile(args.qq):
+        print('qq plot already generated')
         return
     
     # count cases for each pheno
@@ -197,7 +199,7 @@ def release(args):
             '[N_VARIANTS]' : variants,
             '[N_GENES]' : genes,
             '[GENE_SUMMARY]':gene_summary,
-            '[PHENOS]': phenos
+            '[N_PHENOS]': phenos
             }
         
         word_map.update(args.release_dict)
@@ -208,6 +210,23 @@ def release(args):
                     line = line.replace(kw,str(word_map[kw]))
                     
             o.write(line)
+            
+def sanitize_inputs(args):
+    # the values are the required entries on pheweb
+    args.fields_dict = {}
+    for i,elem in enumerate([args.pheno_col,args.gene_col,args.pval_col,args.beta_col,args.se_col,args.ac_col,args.af_col,args.n_col,args.cases_col,args.controls_col,args.af_cases_col,args.af_controls_col]):
+        args.fields_dict[elem] = required_fields[i]
+    
+    print(args.fields_dict.values())
+
+    header = return_header(args.saige_file)
+
+    missing_keys = [key for key in args.fields_dict if key not in header]
+    if missing_keys:
+        print(header)
+        raise ValueError(f"{missing_keys} missing in header")
+      
+    print('all columns in header')
 
 if __name__=="__main__":
     
@@ -235,20 +254,7 @@ if __name__=="__main__":
 
     args = parser.parse_args()
     
-    # the values are the required entries on pheweb
-    args.fields_dict = {}
-    for i,elem in enumerate([args.pheno_col,args.gene_col,args.pval_col,args.beta_col,args.se_col,args.ac_col,args.af_col,args.n_col,args.cases_col,args.controls_col,args.af_cases_col,args.af_controls_col]):
-        args.fields_dict[elem] = required_fields[i]
-    
-    print(args.fields_dict.values())
-
-    header = return_header(args.saige_file)
-    
-    for key in args.fields_dict:
-        if key not in header:
-            raise ValueError(f"{key} not found in file header")
-      
-    print('all columns in header')
+ 
     saige_merge(args)
     plot_qq(args.out_file)
     if args.release:
