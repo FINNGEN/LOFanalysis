@@ -212,7 +212,7 @@ def release(args):
             o.write(line)
             
 def sanitize_inputs(args):
-    # the values are the required entries on pheweb
+    # dictionary that assigns to each column name the matching required field in pheweb
     args.fields_dict = {}
     for i,elem in enumerate([args.pheno_col,args.gene_col,args.pval_col,args.beta_col,args.se_col,args.ac_col,args.af_col,args.n_col,args.cases_col,args.controls_col,args.af_cases_col,args.af_controls_col]):
         args.fields_dict[elem] = required_fields[i]
