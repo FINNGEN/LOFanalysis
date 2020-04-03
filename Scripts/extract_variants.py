@@ -1,5 +1,5 @@
-from Tools.utils import basic_iterator,return_header,file_exists,make_sure_path_exists
-from file_utils import split_array_chunk
+from file_utils import basic_iterator,return_header,file_exists,make_sure_path_exists,split_array_chunk
+
 import os,argparse,pickle
 from collections import defaultdict as dd
 
@@ -78,7 +78,7 @@ def return_lof_variants(args):
     args.lof_variants =os.path.join(args.variants_path, args.lof + '_variants.txt')
     print('saving lof variants to  ', args.lof_variants)
     header = return_header(args.annotation)
-    info_iterator = basic_iterator(args.annotation,skiprows=1,columns = [header.index(elem) for elem in ['#variant','gene',args.lof]])
+    info_iterator = basic_iterator(args.annotation,skiprows=1,columns = [header.index(elem) for elem in ['variant','gene',args.lof]])
 
     with open(args.lof_variants,'wt') as o:
         for variant,gene,lof in info_iterator:

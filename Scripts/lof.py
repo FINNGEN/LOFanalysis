@@ -1,13 +1,45 @@
 #!/usr/bin/env python3
 
-from Tools.utils import file_exists,make_sure_path_exists,tmp_bash,pad,return_header,progressBar,mapcount,pretty_print
-from file_utils import split_array_chunk,get_progress_test,check_positive
+from file_utils import file_exists,make_sure_path_exists,tmp_bash,pad,return_header,progressBar,mapcount,pretty_print,split_array_chunk,get_progress_test,check_positive,basic_iterator
 import extract_variants
 import argparse,os,multiprocessing,pickle,json
 import numpy as np
 from itertools import product
 import pandas as pd
 from collections import defaultdict as dd
+from pathlib import Path
+
+
+
+def to_vcf(args):
+
+    print('building vcf')
+    samples = return_header(args.gene_matrix)[1:]
+    print(len(samples))
+    samples = '\t'.join([f"1a{i+1}" for i in range(len(samples))])
+
+    parent_path = Path(os.path.realpath(__file__)).parent.parent
+    vcf_header = os.path.join(parent_path,'Data/','vcf_header.txt')
+    out_vcf = os.path.join(args.out_path,args.lof + '_' + str(args.chrom) + '_gene.vcf')
+    with open(out_vcf,'wt') as o,open(vcf_header,'rt') as i:
+        ref=['1','POS','ID','A','C','.','.','PR','DS']
+        for line in i:
+            if '[SAMPLES]' in line:
+                line = line.replace('[SAMPLES]',samples)
+            o.write(line)
+            
+        chrom_pos = int(args.chrom)*100000
+        for pos,entry in basic_iterator(args.gene_matrix,skiprows =1,count = True):
+            gene,*values = entry
+            ref[1],ref[2] = str(chrom_pos + pos),gene
+            line = '\t'.join(ref + values) + '\n'
+            o.write(line)
+                
+    cmd = f'bgzip -f  {out_vcf} '
+    print(cmd)
+    tmp_bash(cmd)
+    print('done')
+    
 
 def build_gene_matrix(args):
 
@@ -53,8 +85,10 @@ def build_gene_matrix_chunk(args,chunk):
             for i,gene in enumerate(gene_chunk):
                 indexcol =[header.index(element) for element in args.g2v[gene]]
                 if args.gp0:
+                    # product of probability that variants are 0
                     data = (1 - pd.read_csv(args.variant_matrix,sep ='\t',usecols = indexcol,dtype = float).prod(axis = 1)).values
                 elif args.hard_call:
+                    # return best variant based on GP, then filter
                     best_variant = 1 - pd.read_csv(args.variant_matrix,sep ='\t',usecols = indexcol,dtype = float).min(axis = 1)
                     data = np.where(best_variant >= args.hard_call,1,0)
                     
@@ -69,7 +103,7 @@ def build_gene_matrix_chunk(args,chunk):
 
 def build_raw_matrix(args):
     """
-    Function that build the variant to sample matrix for lof variants.
+    Function that build the variant GP to sample matrix for lof variants.
     """
 
     # if sample file is not provided extract from vcf
@@ -87,12 +121,13 @@ def build_raw_matrix(args):
     else:
         print('variant matrix already calculated')
 
-    args.g2v_file = os.path.join(args.variants_path, args.lof + '_gene_variants_dict.p')
+    args.g2v_file = os.path.join(args.out_path,args.lof+'_'+str(args.chrom)+'_gene_variants_dict.txt')
     if not os.path.isfile(args.g2v_file) or args.force:
         args.force = True
         save_variant_to_gene_dict(args)
-        
-    with open(args.g2v_file,'rb') as i: args.g2v = pickle.load(i)
+
+    with open(args.g2v_file) as infile: args.g2v = json.load(infile)
+                                
     args.genes = np.array(list(args.g2v.keys()))
 
     print(len(return_header(args.variant_matrix)), ' lof variants')
@@ -116,9 +151,9 @@ def build_matrix_chunks(args):
         variant_filter += f" & INFO>={args.info_score} "
     
     # AF < 0.5
-    pretty_print('AF < 0.5')
+    pretty_print(f' AF <= {args.max_maf}')
     # make sure the variant is rare
-    AF_variant_filter =  variant_filter + f" & AF< 0.5' "
+    AF_variant_filter =  variant_filter + f" & AF <= {args.max_maf} '"
         
     matrix_file = os.path.join(matrix_chunk_path,args.lof + '_CHUNK_matrix.tsv')
     chunk_file = os.path.join(args.chunk_path,'position_chunk_CHUNK.tsv')
@@ -130,8 +165,8 @@ def build_matrix_chunks(args):
     pools.close()
 
     # AF > 0.5
-    pretty_print('AF > 0.5')
-    AF_variant_filter =  variant_filter + f" & AF > 0.5' "    
+    pretty_print(f' {1-args.max_maf} <= AF')
+    AF_variant_filter =  variant_filter + f" & {1-args.max_maf} <= AF  "    
     #use bcftools to keep positions and info score if rqeuired.
     matrix_cmd = f"bcftools query -R {chunk_file} {sample_string} -f" + " '%ID[\\t%GP{2}]\\n'"  +f"{AF_variant_filter} {args.vcf} >> {matrix_file}"   
 
@@ -147,6 +182,7 @@ def build_matrix_chunks(args):
     print('merging and transposing chunks')        
     matrix_files = [matrix_file.replace('CHUNK',str(i)) for i in range(args.cpus)]
     cmd = f"cat {' '.join(matrix_files)}  | datamash transpose > {args.variant_matrix}"
+    print(cmd)
     tmp_bash(cmd)
 
     
@@ -169,25 +205,26 @@ def save_variant_to_gene_dict(args):
     Reads the final list of variants and dumps a gene to variant dictionary 
     '''
     
-    #get variant to gene mapping from full list of variants
+    #get variant to gene mapping from full list of variants,it's created by extract_variants
     with open(args.v2g,'rb') as i:v2g = pickle.load(i)
         
     g2v = dd(list)
-    final_variants = return_header(args.variant_matrix)
-    for variant in final_variants:
+    for variant in return_header(args.variant_matrix):
         g2v[v2g[variant]].append(variant)
                
-    with open(args.g2v_file,'wb') as o:pickle.dump(g2v,o)
     with open(os.path.join(args.out_path,args.lof+'_'+str(args.chrom)+'_gene_variants_dict.txt'),'w') as out_file:
         out_file.write(json.dumps(g2v))
 
 def main(args):
     make_sure_path_exists(args.out_path)
     pretty_print('CHROMOSOME ' +str(args.chrom))
+    
     extract_variants.return_chrom_variants(args)
+    
     build_raw_matrix(args)
     build_gene_matrix(args)
-
+    to_vcf(args)
+    
 if __name__ == '__main__':
 
 
@@ -211,14 +248,13 @@ if __name__ == '__main__':
                         help="type of lof filter",required = True,choices = ['hc_lof','most_severe'] )
     parser.add_argument("--info_score", type= float, help="Info score filter")
     parser.add_argument('-s',"--sample_file",type = file_exists, help = "list of samples", required = False)
+    parser.add_argument('--max-maf',type = float,help = 'MAX Minor allele frequency', default = 0.1)
     parser.add_argument('--cpus',type = int,help = 'number of parallel processes to run', default = 2)
     parser.add_argument('--force',action = 'store_true',help = 'Replaces files by force')
-    parser.add_argument('--test',action = 'store_true',help = 'Runs test version') 
-
+    parser.add_argument('--test',action = 'store_true',help = 'Runs test version')
+    
     args=parser.parse_args()
     args.out_path = os.path.join(args.out_path,str(args.chrom))
     #print(args)
-
+    args.max_maf = round(min(args.max_maf,1-args.max_maf),2)
     main(args)
-
-        
