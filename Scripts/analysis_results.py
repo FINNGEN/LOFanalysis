@@ -113,13 +113,14 @@ def plot_qq(f,cases_count = None,pheno_pvals = None,bin_col = 'N.Cases'):
     bins = [1,200,500,1000,10000,int(max(cases_count.values()))+1]
     labels = [str((bins[i],bins[i+1])) for i in range(len(bins)-1)]
 
-    # create bins 
+    # assign bin label to each pheno 
     print('binning phenotypes')
     pheno_bin = {} 
     for pheno in cases_count:
         pheno_bin[pheno] = labels[np.digitize(cases_count[pheno],bins)-1] 
     
     print('binning pvalues')
+    # create pvalue list for each bin
     pval_bin =defaultdict(list)
     for pheno in pheno_pvals:
         pval_bin[pheno_bin[pheno]] += pheno_pvals[pheno]
