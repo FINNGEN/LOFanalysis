@@ -1,6 +1,7 @@
 workflow LOF_regenie{
 
     Array[String] chrom_list
+    Boolean test
     scatter (chrom in chrom_list){
         call convert_vcf_pgen{
             input:
@@ -17,13 +18,14 @@ workflow LOF_regenie{
             psams = convert_vcf_pgen.psam
             }
 
-    call split_phenos {}
+    call split_phenos {input: test = test}
 
     scatter (pheno_list in split_phenos.pheno_lists){
       call step2 {
         input:
         null_list = pheno_list,
-        n_phenos = split_phenos.n_phenos,
+        chrom_list = chrom_list,
+        test = test,
         pgen = merge_pgen.pgen,
         psam = merge_pgen.psam,
         pvar = merge_pgen.pvar
@@ -37,7 +39,14 @@ task step2{
 
     File null_list
     Array[File] nulls = read_lines(null_list)
-    String out_root = "/cromwell_root/finngen_lof" + basename(null_list)
+    String out_root = "/cromwell_root/finngen_lof/"
+    Boolean test
+
+    Array[String] chrom_list
+    Array[String] chrom = if test then ["22"] else chrom_list
+    String regenie_args
+    Int max_retries
+    String name
 
     File covarFile
     String covariates
@@ -50,9 +59,8 @@ task step2{
     File annotation
 
     String docker
-    Int n_phenos
-    Int disk_size =  2*ceil(size(pgen,'GB'))+ n_phenos*(ceil(size(nulls[0],"GB"))) +10
-
+    Int disk_size =  2*ceil(size(pgen,'GB'))+ length(nulls)*(ceil(size(nulls[0],"GB"))) +10
+    Int cpus
 
     command <<<
     find /cromwell_root/ -name '*loco.gz'  > local_null_list.txt
@@ -60,38 +68,23 @@ task step2{
     paste phenos.txt local_null_list.txt > pred_list.txt
     cat pred_list.txt
 
-    pheno_cols=`cut -f1 pred_list.txt |paste -s -d,`
-
-    regenie \
-    --step 2 \
-    --bt  \
-    --pgen ${sub(pgen,"lof.pgen","lof")} \
-    --ref-first \
-    --covarFile ${covarFile} \
-    --covarColList ${covariates} \
-    --pred pred_list.txt \
-    --phenoFile  ${covarFile} \
-    --phenoColList $pheno_cols \
-    --set-list ${sets} \
-    --anno-file ${annotation} \
-    --mask-def ${mask} \
-    --threads ${n_phenos} \
-    --firth \
-    --approx \
-    --aaf-bins 0.01,0.1,0.5 \
-    --bsize 200 \
-    --out ${out_root}
+    python3 /Scripts/regenie.py -o ${out_root} --covariates ${covariates} \
+     --annot ${annotation} --pred pred_list.txt  --pgen ${pgen} \
+     --mask ${mask}  --sets ${sets}  --pheno-file ${covarFile}  \
+     --chrom ${sep=',' chrom}  --regenie-args ${regenie_args}  \
+     --max-retries ${max_retries}  --name ${name}
 
     >>>
 
     output {
-    Array[File] results = glob("/cromwell_root/*regenie")
-    File run_log = out_root +".log"
-
+    Array[File] results = glob("${out_root}/*regenie")
+    Array[File] logs = glob("${out_root}/*log")
+    File failed = out_root + name + "_failed.txt"
     }
+
     runtime {
         docker: "${docker}"
-        cpu: n_phenos
+        cpu: "${cpus}"
         disks: "local-disk ${disk_size} HDD"
         zones: "europe-west1-b europe-west1-c europe-west1-d"
         memory: "8 GB"
