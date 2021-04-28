@@ -5,14 +5,14 @@
 
     "LOF_saige.variance_list": "gs://r6_data/lof/variance_list.txt",
     "LOF_saige.lof": "most_severe",
-    "LOF_saige.samples": "gs://r6_data/R6_271341_samples.txt",
+    "LOF_saige.samples": "gs://r7_data/R7_321464_samples.txt",
     "LOF_saige.gene_list": "gs://r4_data_west1/lof/most_severe_variants_genes.txt",
     "LOF_saige.prefix": "finngen_R6",
     "LOF_saige.max_maf": 0.1,
     "LOF_saige.info_score": 0.95,    
 
     # GENE MATRIX
-    "LOF_saige.gene_matrix.chrom_file": "gs://r6_data/vcf/finngen_R6_renamed_samples_passed_chrCHROM.vcf.gz",
+    "LOF_saige.gene_matrix.chrom_file": "gs://finngen-production-library-red/finngen_R7/genotype_2.0/data/finngen_R7_chrCHROM.vcf.gz",
     "LOF_saige.gene_matrix.cpu": 4,
     "LOF_saige.gene_matrix.call_filter": 0,
     #DOCKERS

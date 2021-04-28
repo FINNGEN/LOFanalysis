@@ -27,19 +27,19 @@ def to_vcf(args):
             if '[SAMPLES]' in line:
                 line = line.replace('[SAMPLES]',samples)
             o.write(line)
-            
+
         chrom_pos = int(args.chrom)*100000
         for pos,entry in basic_iterator(args.gene_matrix,skiprows =1,count = True):
             gene,*values = entry
             ref[1],ref[2] = str(chrom_pos + pos),gene
             line = '\t'.join(ref + values) + '\n'
             o.write(line)
-                
+
     cmd = f'bgzip -f  {out_vcf} '
     print(cmd)
     tmp_bash(cmd)
     print('done')
-    
+
 
 def build_gene_matrix(args):
 
@@ -52,7 +52,7 @@ def build_gene_matrix(args):
                 sample = line.strip()
                 o.write('\t' + sample)
         o.write('\n')
-    
+
     args.gene_matrix = os.path.join(args.out_path,args.lof + '_' + str(args.chrom) + '_gene_matrix.tsv')
     if not os.path.isfile(args.gene_matrix) or args.force:
         args.force = True
@@ -68,10 +68,10 @@ def build_gene_matrix(args):
         print('gene matrix already calculated')
     assert(mapcount(args.gene_matrix) -1 == len(args.genes))
 
-    
+
 def gene_multiproc(args):
     build_gene_matrix_chunk(*args)
-    
+
 def build_gene_matrix_chunk(args,chunk):
     '''
     Merges all variants into their respective genes for a chunk of genes
@@ -91,7 +91,7 @@ def build_gene_matrix_chunk(args,chunk):
                     # return best variant based on GP, then filter
                     best_variant = 1 - pd.read_csv(args.variant_matrix,sep ='\t',usecols = indexcol,dtype = float).min(axis = 1)
                     data = np.where(best_variant >= args.hard_call,1,0)
-                    
+
                 out_file.write(gene +'\t' + '\t'.join(map(str,data)) + '\n')
                 get_progress_test(args)
 
@@ -113,7 +113,7 @@ def build_raw_matrix(args):
             test_filter = ' | head -n20 ' if args.test else ''
             samples_cmd = f"bcftools query -l {args.vcf} test_filter  > {args.sample_file}"
             tmp_bash(samples_cmd)
-    
+
     args.variant_matrix = os.path.join(args.out_path,args.lof + '_' + str(args.chrom) + '_variant_matrix.tsv')
     if not os.path.isfile(args.variant_matrix) or args.force:
         args.force = True
@@ -127,12 +127,12 @@ def build_raw_matrix(args):
         save_variant_to_gene_dict(args)
 
     with open(args.g2v_file) as infile: args.g2v = json.load(infile)
-                                
+
     args.genes = np.array(list(args.g2v.keys()))
 
     print(len(return_header(args.variant_matrix)), ' lof variants')
     print(len(args.genes), ' lof genes')
-    
+
 def build_matrix_chunks(args):
     '''
     Runs a multiproc query for each chunk of lof variants.
@@ -144,21 +144,21 @@ def build_matrix_chunks(args):
     variant_chunk = os.path.join(args.chunk_path,'variant_chunk_CHUNK.txt')
 
     # sample_filters
-    sample_string = f"-S {args.sample_file}" 
+    sample_string = f"-S {args.sample_file}"
     # variant_filters
-    variant_filter = f" -i 'ID=@{variant_chunk}"   
+    variant_filter = f" -i 'ID=@{variant_chunk}"
     if args.info_score:
         variant_filter += f" & INFO>={args.info_score} "
-    
+
     # AF < 0.5
     pretty_print(f' AF <= {args.max_maf}')
     # make sure the variant is rare
     AF_variant_filter =  variant_filter + f" & AF <= {args.max_maf} '"
-        
+
     matrix_file = os.path.join(matrix_chunk_path,args.lof + '_CHUNK_matrix.tsv')
     chunk_file = os.path.join(args.chunk_path,'position_chunk_CHUNK.tsv')
     #use bcftools to keep positions and info score if rqeuired.
-    matrix_cmd = f"bcftools query -R {chunk_file} {sample_string} -f" + " '%ID[\\t%GP{0}]\\n'"  +f"{AF_variant_filter} {args.vcf} > {matrix_file}"   
+    matrix_cmd = f"bcftools query -R {chunk_file} {sample_string} -f" + " '%ID[\\t%GP{0}]\\n'"  +f"{AF_variant_filter} {args.vcf} > {matrix_file}"
 
     pools = multiprocessing.Pool(args.cpus)
     pools.map(multiproc_cmd,product([matrix_cmd],range(args.cpus)))
@@ -166,9 +166,9 @@ def build_matrix_chunks(args):
 
     # AF > 0.5
     pretty_print(f' {1-args.max_maf} <= AF')
-    AF_variant_filter =  variant_filter + f" & {1-args.max_maf} <= AF  "    
+    AF_variant_filter =  variant_filter + f" & {1-args.max_maf} <= AF  "
     #use bcftools to keep positions and info score if rqeuired.
-    matrix_cmd = f"bcftools query -R {chunk_file} {sample_string} -f" + " '%ID[\\t%GP{2}]\\n'"  +f"{AF_variant_filter} {args.vcf} >> {matrix_file}"   
+    matrix_cmd = f"bcftools query -R {chunk_file} {sample_string} -f" + " '%ID[\\t%GP{2}]\\n'"  +f"{AF_variant_filter} {args.vcf} >> {matrix_file}"
 
     pools = multiprocessing.Pool(args.cpus)
     pools.map(multiproc_cmd,product([matrix_cmd],range(args.cpus)))
@@ -178,17 +178,17 @@ def build_matrix_chunks(args):
     matrix_cmd = f"cat {matrix_file} |wc -l && cut -f1 {matrix_file} | sort | uniq | wc -l"
     for chunk in range(args.cpus):
         tmp_bash(matrix_cmd.replace('CHUNK',str(chunk)))
-        
-    print('merging and transposing chunks')        
+
+    print('merging and transposing chunks')
     matrix_files = [matrix_file.replace('CHUNK',str(i)) for i in range(args.cpus)]
     cmd = f"cat {' '.join(matrix_files)}  | datamash transpose > {args.variant_matrix}"
     print(cmd)
     tmp_bash(cmd)
 
-    
+
 def multiproc_cmd(args):
     run_cmd(*args)
-        
+
 def run_cmd(cmd,chunk):
     '''
     Given a basic bash cmd, it runs them in parallel replacing CHUNK with the chunk number
@@ -199,32 +199,32 @@ def run_cmd(cmd,chunk):
         tmp_bash(cmd)
     except:
         print(chunk,'failed')
-    
+
 def save_variant_to_gene_dict(args):
     '''
-    Reads the final list of variants and dumps a gene to variant dictionary 
+    Reads the final list of variants and dumps a gene to variant dictionary
     '''
-    
+
     #get variant to gene mapping from full list of variants,it's created by extract_variants
     with open(args.v2g,'rb') as i:v2g = pickle.load(i)
-        
+
     g2v = dd(list)
     for variant in return_header(args.variant_matrix):
         g2v[v2g[variant]].append(variant)
-               
+
     with open(os.path.join(args.out_path,args.lof+'_'+str(args.chrom)+'_gene_variants_dict.txt'),'w') as out_file:
         out_file.write(json.dumps(g2v))
 
 def main(args):
     make_sure_path_exists(args.out_path)
     pretty_print('CHROMOSOME ' +str(args.chrom))
-    
+
     extract_variants.return_chrom_variants(args)
-    
+
     build_raw_matrix(args)
     build_gene_matrix(args)
     to_vcf(args)
-    
+
 if __name__ == '__main__':
 
 
@@ -238,10 +238,10 @@ if __name__ == '__main__':
     call_parser = parser.add_mutually_exclusive_group(required = True)
     call_parser.add_argument('--hard-call',type = check_positive, help = 'Hard call filter')
     call_parser.add_argument("--gp0", action='store_true', help =  "Works with GP = 0")
-    
+
     parser.add_argument('-o',"--out_path",type = str, help = "folder in which to save the results", required = True)
     parser.add_argument('-c','--chrom',choices = list(map(str,range(1,24))) + ['X'],help = 'chromosome number', required = True)
-    
+
     parser.add_argument("--vcf", type= file_exists,
                         help="path to vcf file",required = True)
     parser.add_argument("--lof", type= str,
@@ -252,7 +252,7 @@ if __name__ == '__main__':
     parser.add_argument('--cpus',type = int,help = 'number of parallel processes to run', default = 2)
     parser.add_argument('--force',action = 'store_true',help = 'Replaces files by force')
     parser.add_argument('--test',action = 'store_true',help = 'Runs test version')
-    
+
     args=parser.parse_args()
     args.out_path = os.path.join(args.out_path,str(args.chrom))
     #print(args)

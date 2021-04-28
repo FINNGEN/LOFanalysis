@@ -15,13 +15,13 @@ RUN wget https://github.com/samtools/bcftools/releases/download/1.10.2/bcftools-
 ./configure && make && make install && cd ..  && rm  bcftools-1.10.2.tar.bz2 && export BCFTOOLS_PLUGINS=~/bcftools-1.10.2/plugins/
 
 #PLINK
-RUN wget http://s3.amazonaws.com/plink2-assets/alpha2/plink2_linux_x86_64.zip && unzip plink2*.zip -d /usr/local/bin/ &&  rm plink2*.zip
+RUN wget https://s3.amazonaws.com/plink2-assets/plink2_linux_avx2_latest.zip && unzip plink2*.zip -d /usr/local/bin/ &&  rm plink2*.zip
 
 # CONDA
 RUN wget --quiet https://repo.anaconda.com/archive/Anaconda3-2019.10-Linux-x86_64.sh -O ~/anaconda.sh && \
     /bin/bash ~/anaconda.sh -b -p /opt/conda && \
     rm ~/anaconda.sh
-    
+
 RUN  ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
     echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.profile && \
     find /opt/conda/ -follow -type f -name '*.a' -delete  && \
@@ -32,6 +32,8 @@ RUN  ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
 ADD ./Docker/requirements.txt .
 RUN /opt/conda/bin/conda install --file requirements.txt --yes
 ENV PATH "/opt/conda/bin:$PATH"
+
+RUN wget https://github.com/rgcgithub/regenie/releases/download/v2.0.2/regenie_v2.0.2.gz_x86_64_Linux_mkl.zip && unzip regen* && mv regenie_v2.0.2.gz_x86_64_Linux_mkl /usr/bin/regenie
 
 ADD Scripts ../Scripts
 ADD Data ../Data
