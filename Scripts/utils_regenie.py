@@ -1,6 +1,8 @@
 from collections import defaultdict
 from subprocess import Popen,PIPE
 import shlex,os
+from file_utils import mapcount
+from itertools import product
 
 def copy_nulls_with_name(cromwell_id,dest_bucket = "gs://r7_data/regenie/nulls/",cromwell_machine = "fg-cromwell_fresh",workflow = 'regenie'):
 
@@ -20,7 +22,7 @@ def copy_nulls_with_name(cromwell_id,dest_bucket = "gs://r7_data/regenie/nulls/"
         _,out,_ = get_exitcode_stdout_stderr(f"gsutil cat {pred_list}")
         pheno_mapping = build_pheno_mapping(out)
         print("id-pheno mapping built")
-        
+
         # now i need to get all the loco.gz files
 
         # this is the generic command which takes into account globbing and attempts.
@@ -34,8 +36,8 @@ def copy_nulls_with_name(cromwell_id,dest_bucket = "gs://r7_data/regenie/nulls/"
             exitcode,out,err = get_exitcode_stdout_stderr(f"gsutil cp {loco_path} {dest_bucket}{pheno_mapping[f_id]}.loco.gz")
             # check if there's any problem
             if not exitcode: print(err)
-            
-    return 
+
+    return
 
 
 
@@ -49,7 +51,7 @@ def build_pheno_mapping(output):
         f_id = f.split('.loco.gz')[0].split('_')[-1]
         pheno_mapping[f_id] = pheno
     return pheno_mapping
-    
+
 
 def get_exitcode_stdout_stderr(cmd):
     """
@@ -75,7 +77,7 @@ def filter_annotation(annot_file,tags,out_root = None):
 
     if not out_root: out_root = tags.replace('_tags.txt','')
 
-    
+
     out_genes = out_root + '_genes.txt'
     print(out_genes)
     if not os.path.isfile(out_genes):
@@ -105,19 +107,19 @@ def filter_annotation(annot_file,tags,out_root = None):
             assert data[0].strip().split()[1] in genes
             for line in data:
                 o.write(line)
-    return 
-        
+    return
+
 
 
 def gene_iterator(annot_file,genes):
 
     with open(annot_file) as i:
-        
+
         line = next(i)
         variant_data = line.strip().split()
         current_gene = variant_data[1]
         gene_data = [line]
-        
+
         for line in i:
             # read new data
             variant_data = line.strip().split()
@@ -132,11 +134,11 @@ def gene_iterator(annot_file,genes):
                 # in any case, reset gene data
                 gene_data = [line]
                 current_gene = gene
-                
+
     if current_gene in genes:
         yield gene_data
-                
-            
+
+
 
 def create_annotation_file(annot,out_annot):
     """
@@ -155,7 +157,7 @@ def create_sets(annot,set_file):
 
     """
     gene_dict = defaultdict(list)
-    
+
     with open(annot) as i:
         for line in i:
             snp,gene,most_severe = line.strip().split()
@@ -173,5 +175,49 @@ def create_sets(annot,set_file):
                 print(gene,chrom_set)
 
 
+def check_error_regenie(stdout):
+    return "ERROR" in stdout or "End time" not in stdout
 
-                
+
+def read_phenos(pred):
+    with open(pred) as i: phenos = [elem.strip().split()[0] for elem in i]
+    return phenos
+
+def get_param_list(out,name,pred,chrom_list,phenos,force):
+    """
+    Get list of missing regenie logs
+    """
+
+    param_list = list(product(phenos,chrom_list))
+
+    if force:
+        return param_list
+
+    else:
+        params = []
+        for pheno,chrom in param_list:
+            log_file = os.path.join(out,f"{name}_{chrom}_{pheno}.log")
+            regenie_file = os.path.join(out,f"{name}_{chrom}_{pheno}.regenie")
+            check_run = True
+
+            # if force it needs to be run
+            if force:
+                check_run = False
+            # if the regenie output file doesn't exist or is empty
+            if os.path.isfile(regenie_file):
+                if not mapcount(regenie_file):
+                    check_run = False
+            else:
+                check_run = False
+            # if the log exists and it doesn't show signs of failure
+            if os.path.isfile(log_file):
+                with open(log_file) as i: stdout = i.read()
+                if check_error_regenie(stdout):
+                    check_run = False
+            else:
+                check_run = False
+
+            if not check_run:
+                params.append((chrom,pheno))
+        print(f"Run params: {params}")
+        return params

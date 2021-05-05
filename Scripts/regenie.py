@@ -1,83 +1,80 @@
-from utils_regenie import get_exitcode_stdout_stderr
-from file_utils import progressBar,file_exists,make_sure_path_exists
-import multiprocessing,time,argparse,os
+from utils_regenie import get_exitcode_stdout_stderr,get_param_list,check_error_regenie,read_phenos
 from itertools import product
-from functools import partial
+from file_utils import progressBar,file_exists,make_sure_path_exists,mapcount,get_filepaths
+import multiprocessing,time,argparse,os
 cpus = multiprocessing.cpu_count()
 
 # DEFAULTS FOR TIME BEING
 covar_list=" SEX_IMPUTED,AGE_AT_DEATH_OR_END_OF_FOLLOWUP,PC{1:10},IS_FINNGEN2_CHIP,BATCH_DS1_BOTNIA_Dgi_norm,BATCH_DS10_FINRISK_Palotie_norm,BATCH_DS11_FINRISK_PredictCVD_COROGENE_Tarto_norm,BATCH_DS12_FINRISK_Summit_norm,BATCH_DS13_FINRISK_Bf_norm,BATCH_DS14_GENERISK_norm,BATCH_DS15_H2000_Broad_norm,BATCH_DS16_H2000_Fimm_norm,BATCH_DS17_H2000_Genmets_norm,BATCH_DS18_MIGRAINE_1_norm,BATCH_DS19_MIGRAINE_2_norm,BATCH_DS2_BOTNIA_T2dgo_norm,BATCH_DS20_SUPER_1_norm,BATCH_DS21_SUPER_2_norm,BATCH_DS22_TWINS_1_norm,BATCH_DS23_TWINS_2_norm,BATCH_DS24_SUPER_3_norm,BATCH_DS25_BOTNIA_Regeneron_norm,BATCH_DS3_COROGENE_Sanger_norm,BATCH_DS4_FINRISK_Corogene_norm,BATCH_DS5_FINRISK_Engage_norm,BATCH_DS6_FINRISK_FR02_Broad_norm,BATCH_DS7_FINRISK_FR12_norm,BATCH_DS8_FINRISK_Finpcga_norm,BATCH_DS9_FINRISK_Mrpred_norm "
 
 
-def regenie_cmd(pred,pgen,set_list,mask,annotation,covar_file, out, covars = covar_list, regenie_args = " --bsize 200   --aaf-bins 0.01,0.1,0.5" ,chrom_list = range(1,23)):
-    """
+def regenie_cmd(pred,pgen,set_list,mask,annotation,covar_file, covars = covar_list, regenie_args = " --bsize 200   --aaf-bins 0.01,0.1,0.5"):
+    """out
     Produces regenie run commands
     """
-    basic_cmd = f"regenie --step 2 --bt --ref-first --firth --approx --threads 1  --out {out}_CHROM"
+    basic_cmd = f"regenie --step 2 --bt --ref-first --firth --approx --threads 1  "
 
     # regenie burden required files
     basic_cmd += f" --pred {pred} --pgen {pgen.replace('.pgen','')} --mask-def {mask} --set-list {set_list} --anno-file {annotation}"
     basic_cmd += f" --covarFile {covar_file} --covarColList {covars} --phenoFile {covar_file} "
     basic_cmd += f" {regenie_args} "
-    print(basic_cmd)
-
     return basic_cmd
 
 
-def regenie_run(basic_cmd,pheno,chr,max_retries = 10):
+def regenie_run(basic_cmd,args,pheno,chrom):
     """
     Single regenie run, it will retry until it successfully runs, else it will log
     """
 
     # update command with chrom/pheno info
-    cmd = basic_cmd + f" --chr {chr} --phenoColList {pheno} "
-    cmd = cmd.replace("CHROM",str(chr))
-
+    out_file = os.path.join(args.out,args.name)
+    cmd = basic_cmd + f" --chr {chrom} --phenoColList {pheno} --out {out_file}_{chrom}"
     # re-run fun until either success or exceeded max retries
     retries,success = 0,False
-    while retries < max_retries and not success:
+    while retries < args.max_retries and not success:
         exitcode,stdout,err = get_exitcode_stdout_stderr(cmd)
+        if check_error_regenie(stdout):retries += 1
+        else:success = True
 
-        if check_error_regenie(stdout):
-            retries += 1
-        else:
-            success = True
+    print(f"\n{pheno} {chrom} Success:{success} ")
 
-    print(f"\nSuccess:{success} {pheno} {chr}")
+    # log results
+    with open(f"{out_file}_{chrom}_{pheno}.log",'wt') as o,open(out_file + "_failed.txt",'at') as f:
+        o.write(stdout)
+        if not success:
+            f.write(f"{chrom}_{pheno}\n")
 
-    return pheno,chr,success,stdout
+    return pheno,chrom,success,stdout
 
 def wrapper_func(args):
     return regenie_run(*args)
 
-def check_error_regenie(stdout):
-    return "ERROR" in stdout
+def merge_results(args):
+    params = product(args.phenos,args.chrom)
+    out_regenie = os.path.join(args.out,f"{args.name}.regenie")
+    print(out_regenie)
+    with open(out_regenie,'wt') as o:
+        for pheno,chrom in params:
+            result = os.path.join(args.out,f"{args.name}_{chrom}_{pheno}.regenie")
+            with open(result) as i:
+                next(i),next(i)
+                for line in i:
+                    o.write(f"{pheno} {line}")
+    return
 
-def read_phenos(pred):
-    with open(pred) as i: phenos = [elem.strip().split()[0] for elem in i]
-    return phenos
+def main(args):
 
+    # clear previous failed runs
+    os.remove(args.out + f"{args.name}_failed.txt") if os.path.isfile(args.out + f"{args.name}_failed.txt") else None
 
-def log_results(out,res):
-    """
-    Write stdout of each run to log and stores failed runs
-    """
-    f = open(out + "_failed.txt",'wt')
-    for entry in res.get():
-        pheno,chrom,success,stdout = entry
-        with open(f"{out}_{pheno}_{chrom}.log",'wt') as o:
-            o.write(stdout)
-        if not success:
-            f.write(f"{pheno}_{chr}\n")
-    f.close()
+    basic_cmd =regenie_cmd(args.pred ,args.pgen,args.sets,args.mask , args.annotation,args.pheno_file,args.covariates,args.regenie_args)
+    params = [(basic_cmd,args,pheno,chrom) for chrom,pheno in get_param_list(args.out,args.name,args.pred,args.chrom,args.phenos,args.force)]
 
-def main(pred,pgen,set_list,mask,annotation,covar_file, out, covar_list = covar_list,regenie_args = " --bsize 200   --aaf-bins 0.01,0.1,0.5" ,chrom_list = range(1,23),max_retries = 10):
+    if not params:
+        print("All phenos ran")
+        return
 
-    basic_cmd =regenie_cmd(pred ,pgen,set_list,mask , annotation,covar_file,out,covar_list,regenie_args,chrom_list)
-    phenos = read_phenos(pred)
-
-    params = list(product([basic_cmd],phenos,chrom_list,[max_retries]))
-
+    print(f"{len(params)} combinations to loop over.")
     pools = multiprocessing.Pool(cpus - 1)
     results = pools.map_async(wrapper_func,params)
     while not results.ready():
@@ -86,7 +83,9 @@ def main(pred,pgen,set_list,mask,annotation,covar_file, out, covar_list = covar_
 
     progressBar(len(params) - results._number_left,len(params))
     pools.close()
-    log_results(out,results)
+
+
+
 
 
 if __name__ == '__main__':
@@ -102,19 +101,23 @@ if __name__ == '__main__':
     parser.add_argument("--pred",type = file_exists,help = "Regenie pred file",required = True)
 
     parser.add_argument("--covariates",type = str, help = "Covariates",default = covar_list)
-    parser.add_argument('-c','--chrom',choices = list(map(str,range(1,24))) + ['X'],help = 'chromosome number',  default = range(1,22))
+    parser.add_argument('-c','--chrom',nargs="+",type=str,choices = list(map(str,range(1,24))) + ['X'],help = 'chromosome number',  default = range(1,23))
     parser.add_argument("--regenie-args",type = str,help = "Extra kwarg to pass to regenie",default = " --bsize 200   --aaf-bins 0.01,0.1,0.5" )
     parser.add_argument("--name",type =str, help = "output root",default = "finngen_lof")
     parser.add_argument('--cpus',type = int,help = 'number of parallel processes to run', default = cpus)
-    parser.add_argument('--max-retries',type = int,help = 'Maximum regenie retries', default = 10)
+    parser.add_argument('--max-retries',type = int,help = 'Maximum regenie retries', default = 2)
     parser.add_argument('--test',action = 'store_true',help = 'Runs test version')
+    parser.add_argument('--force',action = 'store_true',help = 'Re runs everything')
 
     args=parser.parse_args()
     make_sure_path_exists(args.out)
-    args.out = os.path.join(args.out,args.name)
+
     #print(args)
     if args.test:
-        args.chrom = [22]
+        args.chrom = ["21","22"]
+
+    args.phenos = read_phenos(args.pred)
 
     print(args)
-    main(args.pred,args.pgen,args.sets,args.mask,args.annotation,args.pheno_file,args.out,args.covariates,args.regenie_args,args.chrom,args.max_retries)
+    main(args)
+    merge_results(args)

@@ -20,12 +20,15 @@ workflow LOF_regenie{
 
     call split_phenos {input: test = test}
 
-    scatter (pheno_list in split_phenos.pheno_lists){
+    Array[File] pheno_lists = split_phenos.pheno_lists
+    String name
+    scatter (idx in range(length(pheno_lists))) {
       call step2 {
         input:
-        null_list = pheno_list,
+        null_list = pheno_lists[idx],
         chrom_list = chrom_list,
         test = test,
+        name = name + "_" + idx,
         pgen = merge_pgen.pgen,
         psam = merge_pgen.psam,
         pvar = merge_pgen.pvar
@@ -43,7 +46,6 @@ task step2{
     Boolean test
 
     Array[String] chrom_list
-    Array[String] chrom = if test then ["22"] else chrom_list
     String regenie_args
     Int max_retries
     String name
@@ -71,15 +73,16 @@ task step2{
     python3 /Scripts/regenie.py -o ${out_root} --covariates ${covariates} \
      --annot ${annotation} --pred pred_list.txt  --pgen ${pgen} \
      --mask ${mask}  --sets ${sets}  --pheno-file ${covarFile}  \
-     --chrom ${sep=',' chrom}  --regenie-args ${regenie_args}  \
-     --max-retries ${max_retries}  --name ${name}
+     --chrom ${sep=' ' chrom_list}  --regenie-args ${regenie_args}  \
+     --max-retries ${max_retries} \
+      --name ${name} ${if test then "--test "  else ""}
 
     >>>
 
     output {
-    Array[File] results = glob("${out_root}/*regenie")
-    Array[File] logs = glob("${out_root}/*log")
-    File failed = out_root + name + "_failed.txt"
+    Array[File] logs = glob("${out_root}/${name}_*.log")
+    File results = out_root + name + ".regenie"
+    File failed  = out_root + name + "_failed.txt"
     }
 
     runtime {
@@ -98,10 +101,9 @@ task split_phenos{
 
     String docker
     Boolean test
-    String test_filter = if test then "| head -n " + split_size*2 else ""
 
     command <<<
-    cat ${null_list} ${test_filter} | split -l ${split_size} -d - pheno_list
+    cat ${null_list} ${if test then "| head -n " + split_size*2 else ""} | split -l ${split_size} -d - pheno_list
     >>>
     output {
       Array[File] pheno_lists = glob("/cromwell_root/pheno_list*")
