@@ -1,6 +1,7 @@
 from collections import defaultdict
 from subprocess import Popen,PIPE
-import shlex,os
+import shlex,os,gzip
+import numpy as np
 from file_utils import mapcount
 from itertools import product
 
@@ -66,6 +67,19 @@ def get_exitcode_stdout_stderr(cmd):
     return exitcode, out.decode("utf-8").strip() , err
 
 
+
+def annotation_filter(annot_file,variant_file,out_root):
+    """
+    Function that filters the small annotation file to only include variants in the lof pgen.
+    """
+    variants = set(np.loadtxt(variant_file,dtype = str))
+    with gzip.open(annot_file) as i,open(out_root + "annotation.tsv",'wt') as o:
+        next(i)
+        for line in i:
+            variant,_,gene,most_severe = line.strip().decode("utf-8").split()
+            variant = "chr" + "_".join(variant.split(':'))
+            if variant in variants:
+                o.write("\t".join([variant,gene,most_severe]) + "\n")
 
 
 def filter_annotation(annot_file,tags,out_root = None):

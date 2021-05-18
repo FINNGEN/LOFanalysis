@@ -1,18 +1,20 @@
+
+
 workflow LOF_regenie{
 
     Array[String] chrom_list
     Boolean test
+    Float max_maf
     scatter (chrom in chrom_list){
         call convert_vcf_pgen{
             input:
-                chrom = chrom}
+              max_maf = max_maf,
+              chrom = chrom}
 
         }
 
-    call sum {input: values = convert_vcf_pgen.size}
     call merge_pgen {
         input:
-            sizes =  sum.out,
             pgens = convert_vcf_pgen.pgen,
             pvars = convert_vcf_pgen.pvar,
             psams = convert_vcf_pgen.psam
@@ -20,22 +22,74 @@ workflow LOF_regenie{
 
     call split_phenos {input: test = test}
 
+    call annotate {
+      input :
+        freq = merge_pgen.freq
+    }
+
     Array[File] pheno_lists = split_phenos.pheno_lists
     String name
     scatter (idx in range(length(pheno_lists))) {
       call step2 {
         input:
+        annotation = annotate.annot,
+        sets = annotate.sets,
         null_list = pheno_lists[idx],
+        max_maf = max_maf,
         chrom_list = chrom_list,
         test = test,
         name = name + "_" + idx,
         pgen = merge_pgen.pgen,
         psam = merge_pgen.psam,
-        pvar = merge_pgen.pvar
+        pvar = merge_pgen.pvar,
+        freq = merge_pgen.freq
       }
 
     }
+    call merge_results{
+      input:
+        name = name,
+        max_maf = max_maf,
+        regenie_results = step2.results,
+        header = step2.header[0],
+        regenie_logs = step2.log
+    }
 }
+
+task merge_results{
+
+
+  Array[File] regenie_results
+  Array[File] regenie_logs
+  Float max_maf
+  File header
+  String docker
+  String name
+
+
+  command <<<
+  cat ${header} | bgzip -c > ${name}_results.txt.gz
+  while read f; do cat $f | sed 's/.most_severe.${max_maf}//g'   >> tmp.txt ; done < ${write_lines(regenie_results)}
+
+  cat tmp.txt |sort -rgk 12 | bgzip -c >> ${name}_results.txt.gz
+
+  while read f; do cat $f   >> ${name}_logs.txt ; done < ${write_lines(regenie_logs)}
+  >>>
+  output {
+    File merged_log = "./${name}_logs.txt"
+    File merged_results = "./${name}_results.txt.gz"
+  }
+  runtime {
+      docker: "${docker}"
+      cpu: 1
+      disks: "local-disk 10 HDD"
+      zones: "europe-west1-b europe-west1-c europe-west1-d"
+      memory: "2 GB"
+      preemptible: 2
+  }
+}
+
+
 
 
 task step2{
@@ -46,6 +100,7 @@ task step2{
     Boolean test
 
     Array[String] chrom_list
+    Float max_maf
     String regenie_args
     Int max_retries
     String name
@@ -55,6 +110,7 @@ task step2{
     File pgen
     File psam
     File pvar
+    File freq
 
     File mask
     File sets
@@ -75,13 +131,15 @@ task step2{
      --mask ${mask}  --sets ${sets}  --pheno-file ${covarFile}  \
      --chrom ${sep=' ' chrom_list}  --regenie-args ${regenie_args}  \
      --max-retries ${max_retries} \
-      --name ${name} ${if test then "--test "  else ""}
+     --aaf-bins ${max_maf} --aaf-file ${freq} \
+     --name ${name} ${if test then "--test "  else ""}
 
     >>>
 
     output {
-    Array[File] logs = glob("${out_root}/${name}_*.log")
+    File log = out_root + name + ".log"
     File results = out_root + name + ".regenie"
+    File header =  out_root + name + ".header"
     File failed  = out_root + name + "_failed.txt"
     }
 
@@ -94,6 +152,37 @@ task step2{
     }
 
 }
+
+
+task annotate{
+
+  File annotation
+  File freq
+  String docker
+  Int disk_size = ceil(size(annotation,"GB")) + 10
+
+  command <<<
+  python3 /Scripts/annotate_regenie.py -o /cromwell_root/ --annot ${annotation} --variant-file ${freq}
+
+  >>>
+
+  output {
+    File annot = "./annot.tsv"
+    File sets = "./sets.tsv"
+
+  }
+
+  runtime {
+      docker: "${docker}"
+      cpu: 1
+      disks: "local-disk ${disk_size} HDD"
+      zones: "europe-west1-b europe-west1-c europe-west1-d"
+      memory: "2 GB"
+      preemptible: 2
+  }
+
+}
+
 task split_phenos{
 
     File null_list
@@ -115,6 +204,7 @@ task split_phenos{
         disks: "local-disk 10 HDD"
         zones: "europe-west1-b europe-west1-c europe-west1-d"
         memory: "8 GB"
+        preemptible: 2
     }
 }
 
@@ -124,9 +214,7 @@ task merge_pgen {
     Array[File] pvars
     Array[File] psams
 
-    Int sizes
-    Int disk_size = sizes*3 + 10
-
+    Int size = ceil(size(pgens[10],'GB')) * length(pgens) * 3 + 10
     String docker
 
     command <<<
@@ -134,18 +222,22 @@ task merge_pgen {
     while read f; do echo $f | cut -f 1 -d '.'  >> merge_list.txt ; done < <(cat ${write_lines(pgens)} |  sort -V)
     cat merge_list.txt
     plink2 --pmerge-list merge_list.txt --out lof
+    plink2 --pfile lof --freq --out lof
+    cut -f 2,5 lof.afreq | sed -E 1d > lof.freq
     >>>
     runtime {
         docker: "${docker}"
         cpu: 16
-        disks: "local-disk " + "${disk_size}" + " HDD"
+        disks: "local-disk " + "${size}" + " HDD"
         zones: "europe-west1-b europe-west1-c europe-west1-d"
         memory: "8 GB"
+        preemptible: 2
     }
     output {
         File pgen = "./lof.pgen"
         File pvar = "./lof.pvar"
         File psam = "./lof.psam"
+        File freq = "./lof.freq"
        }
 }
 
@@ -158,12 +250,13 @@ task convert_vcf_pgen {
     File chrom_tbi = chrom_vcf + ".tbi"
     File lof_variants
     String plink_params
+    Float max_maf
 
     String disk_size = 2*ceil(size(chrom_vcf,'GB'))+10
     String docker
 
     command <<<
-    plink2 --vcf ${chrom_vcf}  --extract ${lof_variants}  ${plink_params}  --make-pgen  --out ${chrom}_lof
+    plink2 --vcf ${chrom_vcf}  --extract ${lof_variants}  ${plink_params}  --make-pgen  --out ${chrom}_lof --max-maf ${max_maf}
     >>>
 
     runtime {
@@ -180,25 +273,4 @@ task convert_vcf_pgen {
         File psam = "${chrom}_lof.psam"
         Int size = ceil(size(chrom_vcf,'GB'))
        }
-}
-
-
-task sum {
-
-  Array[Float] values
-  String docker
-
-  command <<<
-    python -c "print(int(${sep="+" values}))"
-  >>>
-  output {
-    Int out = read_int(stdout())
-  }
-  runtime {
-    docker: "${docker}"
-    memory: "1 GB"
-    zones: "europe-west1-b europe-west1-c europe-west1-d"
-    disks: "local-disk 10 HDD"
-    cpu: 1
-  }
 }
