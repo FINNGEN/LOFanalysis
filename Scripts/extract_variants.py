@@ -78,12 +78,14 @@ def return_lof_variants(args):
     args.lof_variants =os.path.join(args.variants_path, args.lof + '_variants.txt')
     print('saving lof variants to  ', args.lof_variants)
     header = return_header(args.annotation)
-    info_iterator = basic_iterator(args.annotation,skiprows=1,columns = [header.index(elem) for elem in ['variant','gene',args.lof]])
+    info_iterator = basic_iterator(args.annotation,skiprows=1,columns = [header.index(elem) for elem in ['variant','gene_most_severe',args.lof]])
 
     with open(args.lof_variants,'wt') as o:
         for variant,gene,lof in info_iterator:
             if (lof in lof_filter):
                 variant =variant.replace(':','_')
+                if not variant.startswith('chr'):
+                    variant = 'chr'+ variant
                 o.write(variant + '\t' + gene + '\n')
 
     
