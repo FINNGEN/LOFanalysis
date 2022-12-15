@@ -17,7 +17,6 @@ RUN wget https://github.com/samtools/bcftools/releases/download/1.10.2/bcftools-
 #PLINK
 RUN wget https://s3.amazonaws.com/plink2-assets/plink2_linux_avx2_latest.zip && unzip plink2*.zip -d /usr/local/bin/ &&  rm plink2*.zip
 
-RUN wget https://github.com/rgcgithub/regenie/releases/download/v2.0.2/regenie_v2.0.2.gz_x86_64_Linux_mkl.zip && unzip regen* && mv regenie_v2.0.2.gz_x86_64_Linux_mkl /usr/bin/regenie
-
-ADD Scripts ../Scripts
-ADD Data ../Data
+RUN wget https://github.com/rgcgithub/regenie/releases/download/v3.2.3/regenie_v3.2.3.gz_x86_64_Linux_mkl.zip && unzip regen* && mv regenie_v3.2.3.gz_x86_64_Linux_mkl /usr/bin/regenie
+ADD scripts ../scripts
+ADD data ../data
