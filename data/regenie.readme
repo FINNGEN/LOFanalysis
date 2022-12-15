@@ -1,0 +1,29 @@
+# FINNGEN LOF RESULTS
+
+## R7 lof data
+
+The pipeline runs burden tests for genes using regenie (https://rgcgithub.github.io/regenie/).
+
+Finngen R7 data is filtered to only variants with consequences in the annotation file being included in the mask file. This produces a data set with 6879 variants.
+
+The pgen file is then passed to step 2 of regenie using the same nulls used in the single variant GWAS. Variants with MAF > 0.1 are filtered out. After filtering, 4512 genes are kept in the analysis.
+
+Finally, results are merged and sorted by -log(pval). Logs are also merged.
+
+## File structure
+
+### Data
+| File |  Description  |
+|---|---|
+|finngen_R7_lof_results.txt.gz | merged regenie outputs sorted by pvalue  |
+
+
+### Documentation
+
+| File |  Description  |
+|---|---|
+|finngen_R7_lof_logs.txt | QQ plot for association test, binned by number of cases  |
+|finngen_R7_lof_excluded_phenos.txt | List of phenotypes for which regenie would not converge |
+|finngen_R7_annot.tsv | Annotation file used for the run |
+|finngen_R7_sets.tsv | Set file (gene to variant mapping) used for the run |
+|finngen_R7_most_severe_mask.txt | Mask file (list of consequences) used for the run |

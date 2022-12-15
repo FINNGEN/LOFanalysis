@@ -1,0 +1,7 @@
+##fileformat=VCFv4.2
+##fileDate=20171104
+##source=PLINKv1.90
+##contig=<ID=1,length=100001>
+##INFO=<ID=PR,Number=0,Type=Flag,Description="Provisionalreferenceallele,maynotbebasedonrealreferencegenome">
+##FORMAT=<ID=DS,Number=1,Type=Float,Description="Dosage">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	[SAMPLES]

@@ -1,0 +1,31 @@
+# FINNGEN LOF RESULTS
+
+## [PREFIX] lof data
+
+The pipeline takes as an input the vcf files and subets them to a list of lof variants generated with VEP (https://github.com/Ensembl/ensembl-vep). `[LOF]` variants are defined as having consequences in the list ```["frameshift_variant","splice_donor_variant","stop_gained","splice_acceptor_variant"]```.The composition of the number of variants for each gene is as such:
+
+[GENE_SUMMARY]
+
+Total number of variants : [N_VARIANTS]
+Total number of genes: [N_GENES]
+
+Each chromosome vcf is filtered for the above variants and for maf <= MAF (rare variants), as well as for high info score  > INFO_SCORE. A variant to sample matrix is built, where the ij-th element of the matrix is the genotyping probability of not carrying the alt allele. This allows us, for each gene, to build a gene to sample matrix where the ij -th element is the probability that sample i does not carry any of the variants in gene j. Practically, this is accomplished by returning 1 - \prod_{v \in G} GP_{v}[0] for all variants v in gene G.
+
+The matrices are merged into one vcf file that is then passed to SAIGE (https://github.com/weizhouUMICH/SAIGE) for returning the association between gene and phenotypes. The same nulls as used in the single variant GWAS are used. In total [N_PHENOS] phenotypes are used to run association tests.
+
+Finally, the results are merged and sorted by pvalue.
+
+## File structure
+
+### Data
+| File |  Description  |
+|---|---|
+|[PREFIX]_gene_results.txt.gz | merged SAIGE outputs sorted by pvalue  |
+|[PREFIX]_gene.json | Gene to variant dict|
+
+
+### Documentation
+
+| File |  Description  |
+|---|---|
+|[PREFIX]_gene_qq.pdf | QQ plot for association test, binned by number of cases  |
