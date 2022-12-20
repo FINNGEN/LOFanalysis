@@ -1,4 +1,4 @@
-from file_utils import basic_iterator,return_header,file_exists,make_sure_path_exists,split_array_chunk
+from file_utils import basic_iterator,return_header,file_exists,make_sure_path_exists,split_array_chunk,mapcount
 
 import os,argparse,pickle
 from collections import defaultdict as dd
@@ -40,8 +40,9 @@ def return_chrom_variants(args):
     '''
     args.variants_path = os.path.join(args.out_path,'variants/')
     make_sure_path_exists(args.variants_path)
-    
+
     if not args.lof_variants:
+        # extract them if missing
         return_lof_variants(args)
 
     args.positions =os.path.join(args.variants_path, args.lof + '_' + str(args.chrom) + '_positions.txt')

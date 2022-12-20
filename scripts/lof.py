@@ -16,10 +16,11 @@ def to_vcf(args):
     print('building vcf')
     samples = return_header(args.gene_matrix)[1:]
     print(len(samples))
-    samples = '\t'.join([f"1a{i+1}" for i in range(len(samples))])
+    #samples = '\t'.join([f"1a{i+1}" for i in range(len(samples))])
+    samples = '\t'.join(samples)
 
     parent_path = Path(os.path.realpath(__file__)).parent.parent
-    vcf_header = os.path.join(parent_path,'Data/','vcf_header.txt')
+    vcf_header = os.path.join(parent_path,'data/','vcf_header.txt')
     out_vcf = os.path.join(args.out_path,args.lof + '_' + str(args.chrom) + '_gene.vcf')
     with open(out_vcf,'wt') as o,open(vcf_header,'rt') as i:
         ref=['1','POS','ID','A','C','.','.','PR','DS']
@@ -44,7 +45,7 @@ def to_vcf(args):
 def build_gene_matrix(args):
 
     header_file = os.path.join(args.out_path,args.lof + '_' + str(args.chrom) + '_header.txt')
-    #args.samples = np.loadtxt(args.sample_file,dtype = str)
+    args.samples = np.loadtxt(args.sample_file,dtype = str)
     with open(header_file,'wt') as o:#o.write('GENE\t' + '\t'.join(args.samples) + '\n')
         o.write('GENE')
         with open(args.sample_file,'rt') as i:
@@ -147,8 +148,7 @@ def build_matrix_chunks(args):
     sample_string = f"-S {args.sample_file}"
     # variant_filters
     variant_filter = f" -i 'ID=@{variant_chunk}"
-    if args.info_score:
-        variant_filter += f" & INFO>={args.info_score} "
+    if args.info_score: variant_filter += f" & INFO>={args.info_score} "
 
     # AF < 0.5
     pretty_print(f' AF <= {args.max_maf}')

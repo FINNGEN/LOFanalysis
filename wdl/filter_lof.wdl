@@ -1,6 +1,6 @@
 version 1.0
 
-workflow regenie_lof{
+workflow filter_lof{
 
   input {
     String docker
@@ -54,6 +54,9 @@ task merge_vcf {
     File lof_bgen   = out_file + ".bgen"
     File lof_sample = out_file + ".sample"
     File lof_index  = out_file + ".bgen.bgi"
+    File lof_vcf    = out_file + ".vcf.gz"
+    File lof_vcf_tbi= out_file + ".vcf.gz.tbi"
+    
   }
 
 }
@@ -89,7 +92,7 @@ task convert_vcf {
   echo "building index ..."
   tabix ~{out_file}
   # sanity check that all variants are there
-  paste <(wc -l < chrom_lof_variants.txt) <(bcftools index -s ~{out_file} | cut -f 3 ) > ~{log_file}
+  paste <(wc -l < chrom_lof_variants.txt) <(bcftools index -s ~{out_file} | cut -f 3) > ~{log_file}
 
   >>>
   
@@ -106,26 +109,48 @@ task convert_vcf {
     File chrom_lof_vcf = out_file
     File chrom_lof_vcf_index  = out_file + ".tbi"
     File chrom_log = log_file
-    }
-
-  
+    } 
 
 }
+
+
 task extract_variants {
 
   input {
     File annotated_variants
     Array[String] lof_list
     String docker
+
+    File freq_file
+    Float max_maf
+    
+    File info_score_file
+    String info_filter
   }
+
+  Int disk_size = ceil(size(info_score_file,"GB") + size(freq_file,"GB")) + 10
+  Float upper_maf = 1- max_maf
+  
   command <<<
-  zcat ~{annotated_variants} | cut -f 3,5,6 | grep -wf ~{write_lines(lof_list)}  > lof_variants.txt
+
+  #get info score
+  zcat ~{info_score_file} | sed -E 1d |  cut -f1,2 | awk '$2 >  ~{info_filter}' | cut -f1 | sort > info_filter.txt
+  wc -l info_filter.txt
+  # MAF filter
+  cat ~{freq_file} | sed -E 1d | cut -f 2,5 | awk '$2 < ~{max_maf} || $2 > ~{upper_maf}' | cut -f1 | sort > maf_filter.txt
+  wc -l maf_filter.txt
+  # shared variants
+  comm -12 maf_filter.txt info_filter.txt > pass_variants.txt
+  wc -l pass_variants.txt
+  # lof variants
+  zcat ~{annotated_variants} | cut -f 3,5,6 | grep -wf ~{write_lines(lof_list)} | sort -k1  > lof_tmp.txt
+  join -t $'\t' pass_variants.txt lof_tmp.txt > lof_variants.txt
 
   >>>
   runtime {
     docker: "~{docker}"
     cpu: "1"
-    disks:   "local-disk 5 HDD"
+    disks:   "local-disk ~{disk_size} HDD"
     memory: "2 GB"
     zones: "europe-west1-b europe-west1-c europe-west1-d"
     preemptible: 2
