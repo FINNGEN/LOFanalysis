@@ -4,9 +4,10 @@ from collections import defaultdict
 from itertools import chain
 from functools import partial 
 import numpy as np
-import argparse,os,multiprocessing,logging,time
-from file_utils import file_exists,make_sure_path_exists,tmp_bash,spin_bash,progressBar,pretty_print,log_levels,mapcount,cpus
+import argparse,os,multiprocessing,logging,time,datetime
+from file_utils import file_exists,make_sure_path_exists,tmp_bash,spin_bash,progressBar,pretty_print,log_levels,mapcount,cpus,int_or_float
 import pandas as pd
+from pathlib import Path
 
 ######################################
 #------------VARIANTS----------------#
@@ -16,12 +17,15 @@ def gene_lof_map(lof_map):
     Returns gene to variant dict sorted by count.
     """
     lof_dict = defaultdict(list)
+    gene_chrom_map = {}
     with open(lof_map) as i:
         for line in i :
             variant,gene,*_ = line.strip().split()
             lof_dict[gene].append(variant)
-
-    return lof_dict
+            chrom = variant.split('_')[0].split('chr')[1]
+            gene_chrom_map[gene] = int(chrom)
+    
+    return lof_dict,gene_chrom_map
 
 def extract_vcf_variants(vcf,lof_dict,out_path):
     """
@@ -36,7 +40,7 @@ def extract_vcf_variants(vcf,lof_dict,out_path):
 
 def shared_variants(vcf,lof_map,out_path):
 
-    lof_dict = gene_lof_map(lof_map)
+    lof_dict,gene_chrom_map = gene_lof_map(lof_map)
     logging.info(f"{len(lof_dict.keys())} genes in the mapping.")
     lof_variants = list(chain(*lof_dict.values()))
     logging.info(f"{len(lof_variants)} variants across all genes.")
@@ -50,8 +54,9 @@ def shared_variants(vcf,lof_map,out_path):
         variants =[elem for elem in lof_dict[gene] if elem in vcf_variants]
         if variants:
             new_dict[gene] = variants
-            
-    ordered_genes = sorted(new_dict, key=lambda k: len(lof_dict[k]), reverse=True)
+
+    # order by chromosome
+    ordered_genes = sorted(new_dict, key=lambda k: int(gene_chrom_map[k]))
     logging.info(f"{len(ordered_genes)} genes left.")
     lof_variants = list(chain(*new_dict.values()))
     logging.info(f"{len(lof_variants)} variants across all genes.")
@@ -59,14 +64,14 @@ def shared_variants(vcf,lof_map,out_path):
         for gene in new_dict:
             o.write(gene + '\t' + ','.join(new_dict[gene]) + '\n')
             
-    return new_dict,ordered_genes
+    return new_dict,ordered_genes,gene_chrom_map
 
 
 #####################################
 #------------  VCF  ----------------#
 #####################################
 
-def merge_gene_chunks(lof_genes,lof_dict,vcf,out_path,test):
+def merge_gene_chunks(lof_genes,lof_dict,vcf,out_path,test,force):
     """
     Creates the vcf from the gene chunks
     """
@@ -81,19 +86,29 @@ def merge_gene_chunks(lof_genes,lof_dict,vcf,out_path,test):
     make_sure_path_exists(tmp_path)
     
     # MULTIPROC APPROACH
-    genes = lof_genes if not test else lof_genes[:cpus]
-    print(f"{len(genes)} genes to parse.")
-    print(f"{cpus} cpus being used.")
-    pool = multiprocessing.Pool(cpus)
-    multiproc_func = partial(gene_chunk,lof_dict=lof_dict,vcf=vcf,out_path=tmp_path,sample_header=sample_header)
-    map(multiproc_func,genes)
-    results = pool.map_async(multiproc_func,genes,chunksize=1)
-    while not results.ready():
-        time.sleep(2)
-        progressBar(len(genes) - results._number_left,len(genes))
-    progressBar(len(genes),len(genes))
-    print('\ndone')
-    #multiproc_func(lof_genes[10])
+    gene_matrix = os.path.join(out_path,'lof_genes.txt')
+    if not os.path.isfile(gene_matrix) or args.force:
+        genes = lof_genes if not test else lof_genes[:cpus]
+        print(f"{len(genes)} genes to parse.")
+        print(f"{cpus} cpus being used.")
+        pool = multiprocessing.Pool(cpus)
+        multiproc_func = partial(gene_chunk,lof_dict=lof_dict,vcf=vcf,out_path=tmp_path,sample_header=sample_header)
+        results = pool.map_async(multiproc_func,genes,chunksize=1)
+        while not results.ready():
+            time.sleep(2)
+            progressBar(len(genes) - results._number_left,len(genes))
+        progressBar(len(genes),len(genes))
+        pool.close()
+        print('\ndone')
+        
+        # dump results
+        with open(gene_matrix,'wt') as o:
+            for entry in results.get():
+                o.write(entry + '\n')
+    else:
+        logging.info(f"{gene_matrix} already generated: using cache.")
+        
+    return gene_matrix,sample_header
     
 def gene_chunk(gene,lof_dict,vcf,out_path,sample_header):
     """
@@ -108,7 +123,10 @@ def gene_chunk(gene,lof_dict,vcf,out_path,sample_header):
     with open(gene_variants,'wt') as o:
         for variant in lof_dict[gene]:o.write(variant + '\n')
     # WRITE SAMPLES HEADER
-    header_cmd = f"cat {sample_header}| tr '\\n' '\\t' > {gene_chunk} "
+    sample_data = np.loadtxt(sample_header,dtype=str)
+    with open(gene_chunk,'wt') as o:
+        o.write('\t'.join(sample_data) + '\n')
+    #header_cmd = f"cat {sample_header}| tr '\\n' '\\t' > {gene_chunk} && echo '\n' >> {gene_chunk} "
     # TREAT VARIANTS <0.5
     variant_filter = f" -i 'ID=@{gene_variants} & AF <= 0.5 ' "
     min_af_cmd = f"bcftools query --regions {chrom}  -f " + "'%ID[\\t%GP{0}]\\n' " + f" {variant_filter} {vcf} >> {gene_chunk} "
@@ -116,24 +134,61 @@ def gene_chunk(gene,lof_dict,vcf,out_path,sample_header):
     variant_filter = f" -i 'ID=@{gene_variants} & AF > 0.5 ' "
     max_af_cmd = f"bcftools query --regions {chrom}  -f " + "'%ID[\\t%GP{2}]\\n' " + f" {variant_filter} {vcf} >> {gene_chunk} "
     # JOIN COMMANDS
-    matrix_cmd = f"{header_cmd} && {min_af_cmd} && {max_af_cmd}"
+    matrix_cmd = f"{min_af_cmd} && {max_af_cmd}"
     logging.debug(matrix_cmd)
     tmp_bash(matrix_cmd)
 
     logging.debug('Reading in data and merging')
     merged_gene = os.path.join(out_path,gene + '.txt')
     logging.debug(merged_gene)
-    data = 1 - pd.read_csv(gene_chunk,sep ='\t',index_col=0).T.prod(axis = 1).values
-    with open(merged_gene,'wt') as o : o.write(gene +'\t'.join(list(map(str,data)))+'\n')
-        
+    data = '\t'.join([gene] + list(map(str, np.round(1 - pd.read_csv(gene_chunk,sep ='\t',index_col=0).T.prod(axis = 1).values,2))))
+    
+    return data
+
+
+def build_vcf(gene_matrix,sample_header,gene_chrom_map,out_path):
+    # get vcf header
+    parent_path = Path(os.path.realpath(__file__)).parent.parent
+    vcf_header = os.path.join(parent_path,'data/','dosage_header.txt')
+
+    # read in sample data
+    samples = '\t'.join(np.loadtxt(sample_header,dtype=str)[1:])
+
+    out_vcf = os.path.join(out_path,'lof_gene.vcf')
+    with open(out_vcf,'wt') as o,open(vcf_header,'rt') as i,open(gene_matrix) as gm:
+        # update header info
+        for line in i:
+            line = line.replace('[DATE]',datetime.datetime.now().strftime("%Y%m%d"))
+            if '[SAMPLES]' in line:
+                line = line.replace('[SAMPLES]',samples)
+            o.write(line)
+            
+        # loop through matrix and enter sample data
+        ref=['','POS','ID','A','C','.','.','.','GT:GP']
+        for j,line in enumerate(gm):
+            # get gene data
+            gene,*data = line.strip().split()
+            chrom = gene_chrom_map[gene]
+            logging.debug(f"{gene} {chrom}")
+            # create bogus position and update data
+            ref[0],ref[1],ref[2] = str(chrom),str(chrom*100000 + j),gene
+            # go through entries and create bogus GTs and GPs
+            gps = ["0|0:"+ ','.join(map(str,map(int_or_float,[round(1-float(elem),2),round(float(elem),2),0]))) for elem in data]
+            line = '\t'.join(ref + gps) + '\n'
+            o.write(line)
+
+    cmd = f'bgzip -f  {out_vcf} && tabix -f {out_vcf}'
+    tmp_bash(cmd)
+    
 def main(args):
 
     pretty_print("PROCESSING VARIANTS")
-    lof_dict,ordered_genes = shared_variants(args.vcf,args.lof_map,args.out_path)
+    lof_dict,ordered_genes,gene_chrom_map = shared_variants(args.vcf,args.lof_map,args.out_path)
 
     pretty_print("GENES")
-    merge_gene_chunks(ordered_genes,lof_dict,args.vcf,args.out_path,args.test)
-                             
+    gene_matrix,sample_header = merge_gene_chunks(ordered_genes,lof_dict,args.vcf,args.out_path,args.test,args.force)
+    build_vcf(gene_matrix,sample_header,gene_chrom_map,args.out_path)
+    
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Builds vcf with custom processing of gene merging.")
@@ -147,6 +202,7 @@ if __name__ == '__main__':
     #MISC
     parser.add_argument( "-log",  "--log",  default="warning", choices = log_levels, help=(  "Provide logging level. " "Example --log debug', default='warning'"))
     parser.add_argument('--test',action = 'store_true',help = 'Runs test version')
+    parser.add_argument('--force',action = 'store_true',help = 'Runs regardless of cache.')
 
     args=parser.parse_args()
     # logging level

@@ -339,3 +339,8 @@ class StoreDictKeyPair(argparse.Action):
              my_dict[k] = v
          setattr(namespace, self.dest, my_dict)
 
+
+def int_or_float(x):
+    if int(x)==float(x):
+        return int(x)
+    return float(x)
