@@ -1,0 +1,7 @@
+{
+    "gp_lof.docker": "eu.gcr.io/finngen-refinery-dev/lof:r10.1",
+    "gp_lof.lof_map": "gs://r10-data/lof/lof_variants.txt",
+    "gp_lof.lof_vcf": "gs://r10-data/lof/lof.vcf.gz",    
+    "gp_lof.build_gp_vcf.cpus": 32
+}
+

@@ -36,7 +36,7 @@ task merge_vcf {
   tabix ~{out_file}.vcf.gz
   bcftools index -n ~{out_file}.vcf.gz
   # BGEN CONVERSION
-  qctool -g ~{out_file}.vcf.gz -og ~{out_file}.bgen ~{bargs} -os ~{out_file}.sample 
+  qctool -g ~{out_file}.vcf.gz -og ~{out_file}.bgen ~{bargs} e-os ~{out_file}.sample 
   bgenix -g ~{out_file}.bgen -clobber -index
   >>>
 

@@ -60,7 +60,7 @@ def shared_variants(vcf,lof_map,out_path):
     logging.info(f"{len(ordered_genes)} genes left.")
     lof_variants = list(chain(*new_dict.values()))
     logging.info(f"{len(lof_variants)} variants across all genes.")
-    with open(os.path.join(out_path,'gene_dict.tsv'),'wt') as o:
+    with open(os.path.join(out_path,'lof_gene_gp_dict.tsv'),'wt') as o:
         for gene in new_dict:
             o.write(gene + '\t' + ','.join(new_dict[gene]) + '\n')
             
@@ -123,10 +123,10 @@ def gene_chunk(gene,lof_dict,vcf,out_path,sample_header):
     with open(gene_variants,'wt') as o:
         for variant in lof_dict[gene]:o.write(variant + '\n')
     # WRITE SAMPLES HEADER
-    sample_data = np.loadtxt(sample_header,dtype=str)
-    with open(gene_chunk,'wt') as o:
-        o.write('\t'.join(sample_data) + '\n')
-    #header_cmd = f"cat {sample_header}| tr '\\n' '\\t' > {gene_chunk} && echo '\n' >> {gene_chunk} "
+    with open(gene_chunk,'wt') as o:o.write('\t'.join(np.loadtxt(sample_header,dtype=str)) + '\n')
+
+    ## I need take into account allele frequency in order to choose which GP to extract.
+    
     # TREAT VARIANTS <0.5
     variant_filter = f" -i 'ID=@{gene_variants} & AF <= 0.5 ' "
     min_af_cmd = f"bcftools query --regions {chrom}  -f " + "'%ID[\\t%GP{0}]\\n' " + f" {variant_filter} {vcf} >> {gene_chunk} "
@@ -141,20 +141,30 @@ def gene_chunk(gene,lof_dict,vcf,out_path,sample_header):
     logging.debug('Reading in data and merging')
     merged_gene = os.path.join(out_path,gene + '.txt')
     logging.debug(merged_gene)
-    data = '\t'.join([gene] + list(map(str, np.round(1 - pd.read_csv(gene_chunk,sep ='\t',index_col=0).T.prod(axis = 1).values,2))))
+
+    # This is where the action happens. The gene data is read merged.
+    variant_data = pd.read_csv(gene_chunk,sep ='\t',index_col=0).T
+    # data is aggregated across all variants to give us the probablity of carrying all the non LOF variants
+    gene_data = variant_data.prod(axis=1).values
+    # 1- gene_data gives us the probabily of carrying *at least* one LOF variant
+    lof_data = np.round(1- gene_data,2)
+    data = '\t'.join([gene] + list(map(str, lof_data)))
     
     return data
 
 
 def build_vcf(gene_matrix,sample_header,gene_chrom_map,out_path):
+    """
+    Main function that builds the vcf. It reads in the chunk gene data and appends it to the vcf adding bogus pos/ref/alt data. Chrom instead is taken from the actual variant value.
+    """
     # get vcf header
     parent_path = Path(os.path.realpath(__file__)).parent.parent
-    vcf_header = os.path.join(parent_path,'data/','dosage_header.txt')
+    vcf_header = os.path.join(parent_path,'data/','vcf_header.txt')
 
     # read in sample data
     samples = '\t'.join(np.loadtxt(sample_header,dtype=str)[1:])
 
-    out_vcf = os.path.join(out_path,'lof_gene.vcf')
+    out_vcf = os.path.join(out_path,'lof_gene_gp.vcf')
     with open(out_vcf,'wt') as o,open(vcf_header,'rt') as i,open(gene_matrix) as gm:
         # update header info
         for line in i:
@@ -177,7 +187,11 @@ def build_vcf(gene_matrix,sample_header,gene_chrom_map,out_path):
             line = '\t'.join(ref + gps) + '\n'
             o.write(line)
 
-    cmd = f'bgzip -f  {out_vcf} && tabix -f {out_vcf}'
+    logging.info("bgzipping...")
+    cmd = f'bgzip -f  {out_vcf} '
+    tmp_bash(cmd)
+    logging.info("indexing ...")
+    cmd = "tabix -f {out_vcf}.gz"
     tmp_bash(cmd)
     
 def main(args):
@@ -187,10 +201,15 @@ def main(args):
 
     pretty_print("GENES")
     gene_matrix,sample_header = merge_gene_chunks(ordered_genes,lof_dict,args.vcf,args.out_path,args.test,args.force)
+
+    pretty_print("VCF")
     build_vcf(gene_matrix,sample_header,gene_chrom_map,args.out_path)
     
 if __name__ == '__main__':
 
+    """
+    Builds custom vcf where genotype is probability of carrying at lest one LOF variant.
+    """
     parser = argparse.ArgumentParser(description="Builds vcf with custom processing of gene merging.")
     parser.add_argument('-o',"--out_path",type = str, help = "folder in which to save the results", required = True)
     # MAPPING

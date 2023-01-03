@@ -3,7 +3,7 @@ import time,sys,os,mmap,gzip,subprocess
 import numpy as np
 from functools import partial
 import multiprocessing,csv
-from pyspin.spin import make_spin, Spin1
+from halo import Halo
 from itertools import cycle
 
 
@@ -267,7 +267,7 @@ def tmp_bash(cmd,check = False):
         subprocess.call(scriptFile.name,stderr = subprocess.DEVNULL)
     
 
-@make_spin(Spin1, "Running ...")
+@Halo(text='Running', spinner='dots')
 def spin_bash(cmd,check = False):
     from tempfile import NamedTemporaryFile
 
