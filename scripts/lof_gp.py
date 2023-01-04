@@ -187,11 +187,12 @@ def build_vcf(gene_matrix,sample_header,gene_chrom_map,out_path):
             line = '\t'.join(ref + gps) + '\n'
             o.write(line)
 
-    logging.info("bgzipping...")
+            
     cmd = f'bgzip -f  {out_vcf} '
+    logging.info(f"bgzipping ... {cmd}")
     tmp_bash(cmd)
-    logging.info("indexing ...")
-    cmd = "tabix -f {out_vcf}.gz"
+    cmd = f"tabix -f {out_vcf}.gz"
+    logging.info(f"indexing ... {cmd}" )
     tmp_bash(cmd)
     
 def main(args):

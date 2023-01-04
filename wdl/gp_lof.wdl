@@ -6,12 +6,84 @@ workflow gp_lof{
     File lof_vcf
     String docker
     File lof_map
+    File null_map
   }
 
   call build_gp_vcf    { input : docker = docker, lof_map=lof_map,lof_vcf = lof_vcf }
   call bgen_conversion { input : docker = docker, lof_vcf = build_gp_vcf.gene_vcf}
+  call create_chunks   { input : docker = docker, null_map = null_map }
+
+  scatter (chunk in create_chunks.chunks) {
+    call regenie_gp_lof {  input : chunk = chunk, lof_bgen = bgen_conversion.lof_bgen}
+  }
 }
 
+task regenie_gp_lof {
+
+  input {
+    String regenie_docker
+    File lof_bgen
+    File cov_file
+    File chunk
+    String covariates
+    String bargs
+    Int cpus
+    Int mem
+  }
+
+  Int disk_size = ceil(size(lof_bgen,"GB"))*2 + 10
+
+  File lof_index =  lof_bgen + ".bgi"
+  File lof_sample = lof_bgen + ".sample"
+  
+  # this localizes the files
+  Map [String,File] pheno_map = read_map(chunk)
+  # get list of phenos only
+  Array[String] phenos = transpose(read_tsv(chunk))[0]
+    
+  command <<<
+  regenie --out ./R10_lof \
+  ~{bargs}  --bgen ~{lof_bgen} --sample ~{lof_sample} --pred ~{write_map(pheno_map)}  \
+  --phenoFile ~{cov_file} --covarFile ~{cov_file} --phenoColList ~{sep="," phenos} --covarVolList ~{covariates}  
+  
+  >>>
+  runtime {
+    docker: "~{regenie_docker}"
+    cpu: "~{cpus}"
+    disks:  "local-disk ~{disk_size} HDD"
+    memory: "~{mem} GB"
+    zones: "europe-west1-b europe-west1-c europe-west1-d"
+    preemptible : 1
+  }
+  
+  
+}
+
+
+task create_chunks{
+  input {
+    String docker
+    File null_map
+    Int chunks
+  }
+
+  command <<<
+  split -den r/~{chunks} ~{null_map} chunk --additional-suffix=.txt
+  >>>
+  
+  runtime {
+    docker: "~{docker}"
+    cpu: 2
+    disks:  "local-disk 1 HDD"
+    memory: "2 GB"
+    zones: "europe-west1-b europe-west1-c europe-west1-d"
+    preemptible : 1
+  }
+  
+  output {
+    Array[File] chunks = glob("./chunk*")
+  }
+}
 
 task bgen_conversion{
 
@@ -25,7 +97,7 @@ task bgen_conversion{
   String out_root = basename(lof_vcf,".vcf.gz")
   
   command <<<
-  qctool -g ~{lof_vcf} -og ~{out_root}.bgen -os ~{out_root}.sample -vcf-genotype-field GP -filetype vcf
+  qctool -g ~{lof_vcf} -og ~{out_root}.bgen -os ~{out_root}.bgen.sample -vcf-genotype-field GP -filetype vcf
   bgenix -g ~{out_root}.bgen -clobber -index
   >>>
   
@@ -40,7 +112,7 @@ task bgen_conversion{
   output {
     File lof_bgen   = out_root + ".bgen"
     File lof_index  = out_root + ".bgen.bgi"
-    File lof_sample = out_root + ".sample"
+    File lof_sample = out_root + ".bgen.sample"
   }
 }
 
@@ -59,7 +131,7 @@ task build_gp_vcf {
   
   command <<<
   df -h .
-  python3.7 /scripts/lof_gp.py --vcf ~{lof_vcf} --lof_map ~{lof_map} -o .
+  python3 /scripts/lof_gp.py --vcf ~{lof_vcf} --lof_map ~{lof_map} -o . --log info
   df -h .
   >>>
 

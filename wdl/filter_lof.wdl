@@ -5,17 +5,21 @@ workflow filter_lof{
   input {
     String docker
     Array[String] chrom_list
+    String bargs
   }
 
+  # get lof variants
   call extract_variants { input: docker = docker}
 
+  # subset vcf to lof variants in each chrom
   scatter (chrom in chrom_list){
     call convert_vcf {input: docker = docker,chrom=chrom,lof_variants = extract_variants.lof_variants }
   }
 
-  call merge_vcf {input: docker = docker, vcfs = convert_vcf.chrom_lof_vcf}
+  # merge lof chroms + build vcf/bgen
+  call merge_vcf    { input: docker = docker, vcfs = convert_vcf.chrom_lof_vcf,bargs=bargs}
+  
 }
-
 
 
 task merge_vcf {
@@ -36,7 +40,7 @@ task merge_vcf {
   tabix ~{out_file}.vcf.gz
   bcftools index -n ~{out_file}.vcf.gz
   # BGEN CONVERSION
-  qctool -g ~{out_file}.vcf.gz -og ~{out_file}.bgen ~{bargs} e-os ~{out_file}.sample 
+  qctool -g ~{out_file}.vcf.gz -og ~{out_file}.bgen  -os ~{out_file}.bgen.sample  ~{bargs}
   bgenix -g ~{out_file}.bgen -clobber -index
   >>>
 
@@ -52,7 +56,7 @@ task merge_vcf {
     
   output{
     File lof_bgen   = out_file + ".bgen"
-    File lof_sample = out_file + ".sample"
+    File lof_sample = out_file + ".bgen.sample"
     File lof_index  = out_file + ".bgen.bgi"
     File lof_vcf    = out_file + ".vcf.gz"
     File lof_vcf_tbi= out_file + ".vcf.gz.tbi"
