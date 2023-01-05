@@ -1,5 +1,4 @@
-#simplified version where the input is already the vcf filtered with only LOF. SO the input should be only the mapping really and it should be processed as a whole. I should try to loop over the genes directly, removing a lot of intermediate steps.
-
+import random
 from collections import defaultdict
 from itertools import chain
 from functools import partial 
@@ -38,7 +37,7 @@ def extract_vcf_variants(vcf,lof_dict,out_path):
         spin_bash(cmd)
     return np.loadtxt(vcf_tmp,dtype=str)
 
-def shared_variants(vcf,lof_map,out_path):
+def shared_variants(vcf,lof_map,out_path,test):
 
     lof_dict,gene_chrom_map = gene_lof_map(lof_map)
     logging.info(f"{len(lof_dict.keys())} genes in the mapping.")
@@ -57,13 +56,22 @@ def shared_variants(vcf,lof_map,out_path):
 
     # order by chromosome
     ordered_genes = sorted(new_dict, key=lambda k: int(gene_chrom_map[k]))
+    if test:
+        chroms = list(set(gene_chrom_map.values()))
+        # get chrom to list of genes mapping
+        chrom_gene_map = defaultdict(list)
+        for gene in ordered_genes:chrom_gene_map[gene_chrom_map[gene]].append(gene)
+        ordered_genes = []
+        for chrom in sorted(chrom_gene_map.keys()):
+            ordered_genes += random.sample(chrom_gene_map[chrom],4)
+        print(ordered_genes)
     logging.info(f"{len(ordered_genes)} genes left.")
     lof_variants = list(chain(*new_dict.values()))
     logging.info(f"{len(lof_variants)} variants across all genes.")
     with open(os.path.join(out_path,'lof_gene_gp_dict.tsv'),'wt') as o:
         for gene in new_dict:
             o.write(gene + '\t' + ','.join(new_dict[gene]) + '\n')
-            
+
     return new_dict,ordered_genes,gene_chrom_map
 
 
@@ -71,7 +79,7 @@ def shared_variants(vcf,lof_map,out_path):
 #------------  VCF  ----------------#
 #####################################
 
-def merge_gene_chunks(lof_genes,lof_dict,vcf,out_path,test,force):
+def merge_gene_chunks(genes,lof_dict,vcf,out_path,force):
     """
     Creates the vcf from the gene chunks
     """
@@ -88,7 +96,6 @@ def merge_gene_chunks(lof_genes,lof_dict,vcf,out_path,test,force):
     # MULTIPROC APPROACH
     gene_matrix = os.path.join(out_path,'lof_genes.txt')
     if not os.path.isfile(gene_matrix) or args.force:
-        genes = lof_genes if not test else lof_genes[:cpus]
         print(f"{len(genes)} genes to parse.")
         print(f"{cpus} cpus being used.")
         pool = multiprocessing.Pool(cpus)
@@ -198,10 +205,10 @@ def build_vcf(gene_matrix,sample_header,gene_chrom_map,out_path):
 def main(args):
 
     pretty_print("PROCESSING VARIANTS")
-    lof_dict,ordered_genes,gene_chrom_map = shared_variants(args.vcf,args.lof_map,args.out_path)
+    lof_dict,ordered_genes,gene_chrom_map = shared_variants(args.vcf,args.lof_map,args.out_path,args.test)
 
     pretty_print("GENES")
-    gene_matrix,sample_header = merge_gene_chunks(ordered_genes,lof_dict,args.vcf,args.out_path,args.test,args.force)
+    gene_matrix,sample_header = merge_gene_chunks(ordered_genes,lof_dict,args.vcf,args.out_path,args.force)
 
     pretty_print("VCF")
     build_vcf(gene_matrix,sample_header,gene_chrom_map,args.out_path)
@@ -221,7 +228,7 @@ if __name__ == '__main__':
     #call_parser.add_argument("--gp0", action='store_true', help =  "Works with GP = 0")
     #MISC
     parser.add_argument( "-log",  "--log",  default="warning", choices = log_levels, help=(  "Provide logging level. " "Example --log debug', default='warning'"))
-    parser.add_argument('--test',action = 'store_true',help = 'Runs test version')
+    parser.add_argument('--test',action = 'store_true',help = 'Runs test version for which only one gene per chrom is kept.')
     parser.add_argument('--force',action = 'store_true',help = 'Runs regardless of cache.')
 
     args=parser.parse_args()
