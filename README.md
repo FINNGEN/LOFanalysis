@@ -8,3 +8,8 @@ We want to compare two different approaches to LOF:
 
 
 
+1 pheno   1 cpu 
+4 pheno   4 cpu 
+16 pheno  8 cpu
+16 pheno 16 cpu
+4 phenos  2 cpu 

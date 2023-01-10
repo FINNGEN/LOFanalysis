@@ -1,21 +1,20 @@
 {
-    "gp_lof.test": True, # test will have 2 genes per variant in the bgen and will randomly select 2 phenos per chunk
+    "gp_lof.test": False, # test will have 2 genes per variant in the bgen and will randomly select 2 phenos per chunk
     "gp_lof.null_map": "gs://r10-data/lof/inputs/null_map.txt",
     "gp_lof.lof_map": "gs://r10-data/lof/lof_variants.txt",
-    "gp_lof.lof_vcf": "gs://r10-data/lof/geno/test_lof.vcf.gz",
+    "gp_lof.lof_vcf": "gs://r10-data/lof/geno/lof.vcf.gz",
+    "gp_lof.regenie_cpus": 4,
+
     
     #DOCKERS
     "gp_lof.docker": "eu.gcr.io/finngen-refinery-dev/lof:r10.3",
     "gp_lof.regenie_gp_lof.regenie_docker": "eu.gcr.io/finngen-refinery-dev/regenie:3.2.3_r10_conditional.1",
-
     
     # MISC
     "gp_lof.build_gp_vcf.cpus": 64,
-    "gp_lof.create_chunks.chunks": 2,
+    "gp_lof.create_chunks.chunk_phenos": 2,
 
     # REGENIE
-    "gp_lof.regenie_gp_lof.cpus": 4,
-    "gp_lof.regenie_gp_lof.mem": 8,
     "gp_lof.regenie_gp_lof.prefix": "finngen_R10",
     "gp_lof.regenie_gp_lof.bargs": "--bt --bsize 400 --gz --firth --approx --pThresh 0.01 --firth-se --ref-first",
     "gp_lof.regenie_gp_lof.cov_file": "gs://r10-data/pheno/R10_COV_PHENO_V1.FID.txt.gz",   

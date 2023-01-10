@@ -8,14 +8,15 @@ workflow gp_lof{
     File lof_map
     File null_map
     Boolean test
+    Int regenie_cpus
   }
 
   call build_gp_vcf    { input : docker = docker, lof_map=lof_map,lof_vcf = lof_vcf,test=test}
   call bgen_conversion { input : docker = docker, lof_vcf = build_gp_vcf.gene_vcf}
-  call create_chunks   { input : docker = docker, null_map = null_map,test=test }
+  call create_chunks   { input : docker = docker, null_map = null_map,test=test,cpus=regenie_cpus}
 
-  scatter ( chunk in create_chunks.chunks) {
-    call regenie_gp_lof {  input : chunk = chunk, lof_bgen = bgen_conversion.lof_bgen}
+  scatter ( chunk in create_chunks.all_chunks) {
+    call regenie_gp_lof {  input : chunk = chunk, lof_bgen = bgen_conversion.lof_bgen,cpus=regenie_cpus}
   }
 }
 
@@ -30,11 +31,10 @@ task regenie_gp_lof {
     String bargs
     String prefix
     Int cpus
-    Int mem
   }
 
   Int disk_size = ceil(size(lof_bgen,"GB"))*2 + 10
-
+  
   File lof_index =  lof_bgen + ".bgi"
   File lof_sample = lof_bgen + ".sample"
   
@@ -42,12 +42,16 @@ task regenie_gp_lof {
   Map [String,File] pheno_map = read_map(chunk)
   # get list of phenos only
   Array[String] phenos = keys(pheno_map)
-    
+  Int mem = ceil(size(lof_bgen,"GB"))*4*cpus
   command <<<
-  regenie --step 2 --out ./~{prefix}_lof --threads ~{cpus} \
-  ~{bargs}  --bgen ~{lof_bgen} --sample ~{lof_sample} --pred ~{write_map(pheno_map)}  \
-  --phenoFile ~{cov_file} --covarFile ~{cov_file} --phenoColList ~{sep="," phenos} --covarColList ~{covariates}  
   
+  CPUS=$(grep -c ^processor /proc/cpuinfo)
+
+  cat ~{write_map(pheno_map)} > pred.txt
+  time regenie --step 2 --out ./~{prefix}_lof --threads $CPUS  ~{bargs}  --bgen ~{lof_bgen} --sample ~{lof_sample} --pred pred.txt    --phenoFile ~{cov_file} --covarFile ~{cov_file} --phenoColList ~{sep="," phenos} --covarColList ~{covariates}
+
+  echo ~{cpus} ~{mem} $CPUS
+  wc -l pred.txt 
   >>>
   runtime {
     docker: "~{regenie_docker}"
@@ -135,13 +139,15 @@ task create_chunks{
   input {
     String docker
     File null_map
-    Int chunks
+    Int chunk_phenos
+    Int cpus
     Boolean test
   }
 
+
   command <<<
-  cat ~{null_map} | shuf  ~{if test then " | head -n " + chunks*2 else ""} >  tmp.txt
-  split -den r/~{chunks} tmp.txt chunk --additional-suffix=.txt
+  cat ~{null_map} | shuf  ~{if test then " | head -n " + chunk_phenos*cpus else ""} >  tmp.txt
+  split -del ~{chunk_phenos} tmp.txt chunk --additional-suffix=.txt
   >>>
   
   runtime {
@@ -153,10 +159,8 @@ task create_chunks{
     preemptible : 1
   }
 
-  meta {volatile: true}
-
   output {
-    Array[File] chunks = glob("./chunk*")
+    Array[File] all_chunks = glob("./chunk*")
   }
 }
 
