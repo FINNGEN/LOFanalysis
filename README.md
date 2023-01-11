@@ -26,7 +26,10 @@ Once we have a list of LOF variants, the wdl proceeds to subet the input vcfs, c
 ## GP
 This is the explanation of the GP based LOF analysis.
 
-The [gp_lof wdl](./wdl/gp_lof.wdl) in this case does the heavy lifting and is based on the [lof_gp.py](./scripts/lof_gp.py) python script. The script takes as an input a variant to gene tsv file like the one produced by the `filter_lof.wdl`
+The [gp_lof wdl](./wdl/gp_lof.wdl) in this case does the heavy lifting and is based on the [lof_gp.py](./scripts/lof_gp.py) python script.
+
+### Python Script
+The script takes as an input a variant to gene tsv file like the one produced by the `filter_lof.wdl`
 ```
 chr10_1020846_AG_A	IDI2	frameshift_variant
 chr10_102733581_C_T	SFXN2	stop_gained
@@ -43,6 +46,14 @@ and for each gene in the set it takes all variants in the input vcf and merges t
 For sample $i$ and gene $g$ the custom dosage would be:\
 $$D_{g}^{i} = 1 - \prod_{v \in g} GP_{v}^{i}[maj]$$ where $GP[maj]$ depends on the AF of the variant. The data is then introduced in a custom dummy vcf where the dosage is inserted as the heterozygous GP and the remaining is given to the GP[0]. In this way the bgen conversion will assign a dosage to the variant equal to the one defined above.
 
+
+### WDL
 The wdl first creates the input vcf/bgens and then will scatter over all phenotypes regenie `--step 2 ` runs to produce associations. The only relevant parameter is
 ```"gp_lof.create_chunks.chunk_phenos": Int```,
 which controls how many phenotypes will be run in each machine.
+
+One can also change the important regenie params:
+```
+"gp_lof.regenie_gp_lof.bargs": "String",
+"gp_lof.regenie_gp_lof.covariates": "String",
+```

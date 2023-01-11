@@ -8,16 +8,53 @@ workflow gp_lof{
     File lof_map
     File null_map
     Boolean test
-    Int regenie_cpus
+    String prefix
   }
 
   call build_gp_vcf    { input : docker = docker, lof_map=lof_map,lof_vcf = lof_vcf,test=test}
   call bgen_conversion { input : docker = docker, lof_vcf = build_gp_vcf.gene_vcf}
-  call create_chunks   { input : docker = docker, null_map = null_map,test=test,cpus=regenie_cpus}
+  call create_chunks   { input : docker = docker, null_map = null_map,test=test}
 
   scatter ( chunk in create_chunks.all_chunks) {
-    call regenie_gp_lof {  input : chunk = chunk, lof_bgen = bgen_conversion.lof_bgen,cpus=regenie_cpus}
+    call regenie_gp_lof {  input : chunk = chunk, lof_bgen = bgen_conversion.lof_bgen, prefix=prefix }
   }
+  call merge_logs {input: docker = docker,logs = regenie_gp_lof.log,prefix=prefix}
+}
+
+
+task merge_logs {
+
+  input {
+    String docker
+    Array[File] logs
+    String prefix
+  }
+  String out_file = prefix + "_lof.log"
+  String checksum = prefix + "_check.log"
+
+  command <<<
+  
+  while read f
+  do paste <( grep -q  "Elapsed" $f && echo 1 || echo 0 ) <(grep "phenoColList"  $f |  awk '{print $2}') <(echo $f| sed 's/\/cromwell_root/gs:\//g')  >> ~{checksum} && cat $f >> ~{out_file}
+  done < ~{write_lines(logs)}
+  
+  >>>
+  
+  runtime {
+    docker: "~{docker}"
+    cpu: 1
+    disks:  "local-disk 10 HDD"
+    memory: "2 GB"
+    zones: "europe-west1-b europe-west1-c europe-west1-d"
+    preemptible : 1
+    }
+  
+
+  output {
+    File log = out_file
+    File check = checksum
+  }
+  
 }
 
 task regenie_gp_lof {
@@ -53,6 +90,7 @@ task regenie_gp_lof {
   echo ~{cpus} ~{mem} $CPUS
   wc -l pred.txt 
   >>>
+ 
   runtime {
     docker: "~{regenie_docker}"
     cpu: "~{cpus}"
@@ -64,7 +102,7 @@ task regenie_gp_lof {
   
   output {
     Array[File] results = glob("./*regenie.gz")
-    File logs = prefix + "_lof.log"
+    File log = prefix + "_lof.log"
   }
 }
 
@@ -140,13 +178,12 @@ task create_chunks{
     String docker
     File null_map
     Int chunk_phenos
-    Int cpus
     Boolean test
   }
 
 
   command <<<
-  cat ~{null_map} | shuf  ~{if test then " | head -n " + chunk_phenos*cpus else ""} >  tmp.txt
+  cat ~{null_map}  >  tmp.txt
   split -del ~{chunk_phenos} tmp.txt chunk --additional-suffix=.txt
   >>>
   
