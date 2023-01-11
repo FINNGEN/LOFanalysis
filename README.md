@@ -5,7 +5,7 @@ Regenie pipeline for LOF.
 # BASIC DATA MUNGING 
 
 
-The [filter_lof wdl][(../wdl/filter_lof.wdl) filters the input vcfs to only use LOF variants. The input variants are based on file annotations using VEP.
+The [filter_lof wdl](./wdl/filter_lof.wdl) filters the input vcfs to only use LOF variants. The input variants are based on file annotations using VEP.
 
 These are the parameters in the `json` file that are relevant to the the filtering.
 
