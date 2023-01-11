@@ -1,15 +1,23 @@
 # LOFanalysis
 
-We want to compare two different approaches to LOF:
+Regenie pipeline for LOF.
 
-1) our "in-house" method where we  generate VCFs based on a custom merging of LOF variants. In this case, the genotype will be the probabily of carrying at least one LOF variants, based in turn on GPs.
-
-2) the default genie "maps" that merge variants based on allele counts.
+# BASIC DATA MUNGING 
 
 
+The [filer_lof][(wdl/filter_lof.wdl) filters the input vcfs to only use LOF variants. The input variants are based on file annotations using VEP.
 
-1 pheno   1 cpu 
-4 pheno   4 cpu 
-16 pheno  8 cpu
-16 pheno 16 cpu
-4 phenos  2 cpu 
+These are the parameters in the `json` file that are relevant to the the filtering.
+
+```
+"filter_lof.extract_variants.lof_list":  ["frameshift_variant","splice_donor_variant","stop_gained","splice_acceptor_variant"],
+"filter_lof.extract_variants.info_filter": "0.95",
+"filter_lof.extract_variants.max_maf": "0.05",
+```
+
+`lof_list` determines which annotations are incluced for flagging variants as LOF.
+`info_filter` puts a minimimum threshold of info score across all batches.
+`max_max` filters out common variants above such threshold
+
+
+Once we have a list of LOF variants, the wdl proceeds to subet the input vcfs, creating a merged vcf as well as a merged bgen.
