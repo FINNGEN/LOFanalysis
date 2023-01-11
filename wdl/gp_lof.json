@@ -1,5 +1,5 @@
 {
-    "gp_lof.test": False, # test will have 2 genes per variant in the bgen and will randomly select 2 phenos per chunk
+    "gp_lof.test": False, # test will have 2 genes per variant in the bgen 
     "gp_lof.null_map": "gs://r10-data/lof/inputs/null_map.txt",
     "gp_lof.lof_map": "gs://r10-data/lof/lof_variants.txt",
     "gp_lof.lof_vcf": "gs://r10-data/lof/geno/lof.vcf.gz",

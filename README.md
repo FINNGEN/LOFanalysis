@@ -41,4 +41,8 @@ chr10_113597145_TG_T	NRAP	frameshift_variant
 ```
 and for each gene in the set it takes all variants in the input vcf and merges them to create a custom dosage value. The logic being is that the dosage of the gene represents the probability of carrying at least one LOF variants based on the genotype GP for each variant.
 For sample $i$ and gene $g$ the custom dosage would be:\
-$$D_{g}^{i} = 1 - \prod_{v \in g} GP_{v}^{i}[maj]$$ where $GP[maj]$ depends on the AF of the variant.
+$$D_{g}^{i} = 1 - \prod_{v \in g} GP_{v}^{i}[maj]$$ where $GP[maj]$ depends on the AF of the variant. The data is then introduced in a custom dummy vcf where the dosage is inserted as the heterozygous GP and the remaining is given to the GP[0]. In this way the bgen conversion will assign a dosage to the variant equal to the one defined above.
+
+The wdl first creates the input vcf/bgens and then will scatter over all phenotypes regenie `--step 2 ` runs to produce associations. The only relevant parameter is
+```"gp_lof.create_chunks.chunk_phenos": Int```,
+which controls how many phenotypes will be run in each machine.
