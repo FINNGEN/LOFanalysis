@@ -19,8 +19,43 @@ workflow gp_lof{
     call regenie_gp_lof {  input : chunk = chunk, lof_bgen = bgen_conversion.lof_bgen, prefix=prefix }
   }
   call merge_logs {input: docker = docker,logs = regenie_gp_lof.log,prefix=prefix}
+  call merge_sig_results {input: docker = docker,files = regenie_gp_lof.results,prefix=prefix}
+  
 }
 
+task merge_sig_results{
+
+  input {
+    String docker
+    Array[Array[File]] files
+    String prefix
+  }
+
+  String out_file = prefix + "_lof_sig_hits.txt"
+
+  command <<<
+  touch ~{out_file}
+  while read f
+  do pheno=$(basename $f .regenie.gz |sed 's/~{prefix}_lof_//g' )  && zcat  $f | sed -E 1d | awk '$13 > 6' | awk -v pheno="$pheno" '{print pheno" "$0}' >> ~{out_file}
+  done 	< ~{write_lines(flatten(files))}
+  
+  >>>
+   runtime {
+    docker: "~{docker}"
+    cpu: 1
+    disks:  "local-disk 10 HDD"
+    memory: "2 GB"
+    zones: "europe-west1-b europe-west1-c europe-west1-d"
+    preemptible : 1
+    }
+  
+
+  output {
+    File sig_hits = out_file
+  }
+  
+    
+}
 
 task merge_logs {
 

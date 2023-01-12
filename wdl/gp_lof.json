@@ -1,6 +1,6 @@
 {
     "gp_lof.test": False, # test will have 2 genes per variant in the bgen 
-    "gp_lof.null_map": "gs://r10-data/lof/inputs/null_map_test.txt",
+    "gp_lof.null_map": "gs://r10-data/lof/inputs/null_map.txt",
     "gp_lof.lof_map": "gs://r10-data/lof/lof_variants.txt",
     "gp_lof.lof_vcf": "gs://r10-data/lof/geno/lof.vcf.gz",
     "gp_lof.prefix": "finngen_R10",
@@ -11,7 +11,7 @@
     
     # MISC
     "gp_lof.build_gp_vcf.cpus": 64,
-    "gp_lof.create_chunks.chunk_phenos": 1,
+    "gp_lof.create_chunks.chunk_phenos": 2,
 
     #REGENIE
     "gp_lof.regenie_gp_lof.cpus": 2,
