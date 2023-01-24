@@ -34,9 +34,9 @@ task merge_sig_results{
   String out_file = prefix + "_lof_sig_hits.txt"
 
   command <<<
-  touch ~{out_file}
+  paste <(echo PHENO) <(zcat  ~{files[0][0]} | head -n1 | tr ' ' '\t')   > ~{out_file} # write header
   while read f
-  do pheno=$(basename $f .regenie.gz |sed 's/~{prefix}_lof_//g' )  && zcat  $f | sed -E 1d | awk '$13 > 6' | awk -v pheno="$pheno" '{print pheno" "$0}' >> ~{out_file}
+  do pheno=$(basename $f .regenie.gz |sed 's/~{prefix}_lof_//g' )  && zcat  $f | sed -E 1d | awk '$13 > 6' | awk -v pheno="$pheno" '{print pheno" "$0}' |  tr ' ' '\t'   >> ~{out_file}
   done 	< ~{write_lines(flatten(files))}
   
   >>>
