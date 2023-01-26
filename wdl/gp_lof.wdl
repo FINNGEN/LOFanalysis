@@ -215,8 +215,7 @@ task create_chunks{
     Int chunk_phenos
     Boolean test
   }
-
-
+ 
   command <<<
   cat ~{null_map}  >  tmp.txt
   split -del ~{chunk_phenos} tmp.txt chunk --additional-suffix=.txt
