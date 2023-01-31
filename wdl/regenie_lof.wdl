@@ -18,7 +18,80 @@ workflow regenie_lof {
   
   # merge lof chroms + build vcf/bgen
   call merge    { input: docker = docker, vcfs = convert_vcf.chrom_lof_vcf}
+
+  call create_chunks   { input : docker = docker}
+  call build_set_mask  { input : docker = docker, lof_variants=extract_variants.lof_variants}
+
+  scatter ( chunk in create_chunks.all_chunks) {
+    call regenie {
+      input :
+      chunk = chunk,
+      prefix=prefix,
+      lof_variants = extract_variants.lof_variants,
+      sets=build_set_mask.sets,
+      mask=build_set_mask.mask,
+      bins = max_maf,
+      lof_bgen = merge.lof_bgen
+    }
+  }
+   
 }
+
+
+task regenie{
+
+  input {
+    String docker
+    File lof_bgen
+    File cov_file
+    File chunk
+    File sets
+    File mask
+    File lof_variants
+    String covariates
+    String bargs
+    String prefix
+    Int cpus
+    String bins
+    String mask_type
+  }
+
+  Int disk_size = ceil(size(lof_bgen,"GB"))*2 + 10
+  File lof_index =  lof_bgen + ".bgi"
+  File lof_sample = lof_bgen + ".sample"
+  
+  # this localizes the files
+  Map [String,File] pheno_map = read_map(chunk)
+  # get list of phenos only
+  Array[String] phenos = keys(pheno_map)
+  Int mem = ceil(size(lof_bgen,"GB"))*4*cpus
+  command <<<
+  CPUS=$(grep -c ^processor /proc/cpuinfo)
+  cat ~{write_map(pheno_map)} > pred.txt
+
+  time regenie --step 2 --out ./~{prefix}_lof --threads $CPUS  ~{bargs}  --bgen ~{lof_bgen} --sample ~{lof_sample} --pred pred.txt    --phenoFile ~{cov_file} --covarFile ~{cov_file} --phenoColList ~{sep="," phenos} --covarColList ~{covariates} --aaf-bins ~{bins}  --build-mask ~{mask_type} --mask-def ~{mask} --set-list ~{sets} --anno-file ~{lof_variants}
+
+  echo ~{cpus} ~{mem} $CPUS
+  wc -l pred.txt 
+
+  >>>
+
+    runtime {
+    docker: "~{docker}"
+    cpu: "~{cpus}"
+    disks:  "local-disk ~{disk_size} HDD"
+    memory: "~{mem} GB"
+    zones: "europe-west1-b europe-west1-c europe-west1-d"
+    preemptible : 1
+  }
+  
+  output {
+    Array[File] results = glob("./*regenie.gz")
+    File log = prefix + "_lof.log"
+  }
+}
+
+
 
 task merge {
 
@@ -112,7 +185,6 @@ task convert_vcf {
     File chrom_lof_vcf_index  = out_file + ".tbi"
     File chrom_log = log_file
     } 
-
 }
 
 
@@ -155,4 +227,59 @@ task extract_variants {
     File lof_variants = "lof_variants.txt"
     }
 
+}
+
+
+task create_chunks{
+  input {
+    String docker
+    File null_map
+    Int chunk_phenos
+  }
+  command <<<
+  cat ~{null_map}  >  tmp.txt
+  split -del ~{chunk_phenos} tmp.txt chunk --additional-suffix=.txt
+  >>>
+  
+  runtime {
+    docker: "~{docker}"
+    cpu: 2
+    disks:  "local-disk 1 HDD"
+    memory: "2 GB"
+    zones: "europe-west1-b europe-west1-c europe-west1-d"
+    preemptible : 1
+  }
+
+  output { Array[File] all_chunks = glob("./chunk*") }
+}
+
+task build_set_mask {
+  
+  input {
+    String docker
+    File lof_variants
+  }
+  
+  command <<<
+  
+  while read GENE
+  do 	GENE_DATA=$( cat ~{lof_variants} | grep -E "(^|[[:space:]])$GENE(\$|[[:space:]])"  | cut -f1 | tr '\n' ',' ) && paste <(echo $GENE) <(echo $GENE_DATA| head -n1 | tr '_' '\t' | sed 's/chr//g' | cut -f -2) <(echo $GENE_DATA| sed 's/.$//' )  >> ./sets.tsv
+  done < <(cut -f2 ~{lof_variants} | sort  | uniq )
+  
+  paste <( echo "Mask1") <(cut -f 3 ~{lof_variants}  | sort | uniq | tr '\n' ',' | sed 's/.$//') > ./mask.txt
+  
+  >>> 
+ runtime {
+    docker: "~{docker}"
+    cpu: 2
+    disks:  "local-disk 1 HDD"
+    memory: "2 GB"
+    zones: "europe-west1-b europe-west1-c europe-west1-d"
+    preemptible : 1
+  }
+
+  output {
+    File mask = "./mask.txt"
+    File sets = "./sets.tsv"
+  }
 }
