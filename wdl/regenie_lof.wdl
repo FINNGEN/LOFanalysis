@@ -34,9 +34,53 @@ workflow regenie_lof {
       lof_bgen = merge.lof_bgen
     }
   }
-   
+
+  call merge_sig_results {input: docker = docker,files = regenie.results,prefix=prefix,logs = regenie.log}
+
 }
 
+task merge_sig_results{
+
+  input {
+    String docker
+    Array[Array[File]] files
+    Array[File] logs
+    String prefix
+  }
+
+  String out_file = prefix + "_lof_sig_hits.txt"
+  String log_file = prefix + "_lof.log"
+  String checksum = prefix + "_check.log"
+
+  command <<<
+
+  # filter results
+  paste <(echo PHENO) <(zcat  ~{files[0][0]} | head -n2 | tail -n1 | tr ' ' '\t')   > ~{out_file} # write header
+  while read f
+  do pheno=$(basename $f .regenie.gz |sed 's/~{prefix}_lof_//g' )  && zcat  $f | sed -E 1,2d | awk '$12 > 6' | awk -v pheno="$pheno" '{print pheno" "$0}' |  tr ' ' '\t'   >> ~{out_file}
+  done 	< ~{write_lines(flatten(files))}
+
+  # merge logs
+  while read f
+  do paste <( grep -q  "Elapsed" $f && echo 1 || echo 0 ) <(grep "phenoColList"  $f |  awk '{print $2}') <(echo $f| sed 's/\/cromwell_root/gs:\//g')  >> ~{checksum} && cat $f >> ~{log_file}
+  done < ~{write_lines(logs)}
+  >>>
+  
+  runtime {
+    docker: "~{docker}"
+    cpu: 1
+    disks:  "local-disk 10 HDD"
+    memory: "2 GB"
+    zones: "europe-west1-b europe-west1-c europe-west1-d"
+    preemptible : 1
+  }
+   
+  output {
+    File sig_hits = out_file
+    File log = log_file
+    File check = checksum
+  }  
+}
 
 task regenie{
 

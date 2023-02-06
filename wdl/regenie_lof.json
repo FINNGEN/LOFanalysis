@@ -3,17 +3,17 @@
     "regenie_lof.prefix": "finngen_R8",
     "regenie_lof.max_maf": 0.01,
     "regenie_lof.chrom_list":  ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22"],
+   
+    #RELEASE SPECIFIC FILES
+    "regenie_lof.regenie.cov_file": "gs://finngen-production-library-red/finngen_R8/analysis_covariates/R8_COV_PHENO_V4_1.FID.txt.gz",
+    "regenie_lof.extract_variants.annot_file":"gs://finngen-production-library-green/finngen_R8/finngen_R8_analysis_data/annotations/R8_sisuv4_annotated_variants_v1.gz",
+    "regenie_lof.convert_vcf.vcf_root": "gs://finngen-production-library-red/finngen_R8/genotype_1.0/data/finngen_R8_chrCHROM.vcf.gz",
+    "regenie_lof.create_chunks.null_map": "gs://r8_data/lof/inputs/r8_null_map.txt",
 
     #DOCKERS
     "regenie_lof.docker": "eu.gcr.io/finngen-refinery-dev/bioinformatics:0.8",
     "regenie_lof.regenie.docker": "eu.gcr.io/finngen-refinery-dev/regenie:3.2.3_r10_conditional.1",
     
-    #RELEASE SPECIFIC FILES
-    "regenie_lof.regenie.cov_file": "gs://finngen-production-library-red/finngen_R8/analysis_covariates/R8_COV_PHENO_V4_1.FID.txt.gz",
-    "regenie_lof.extract_variants.annot_file":"gs://finngen-production-library-green/finngen_R8/finngen_R8_analysis_data/annotations/R8_sisuv4_annotated_variants_v1.gz",
-    "regenie_lof.convert_vcf.vcf_root": "gs://finngen-production-library-red/finngen_R8/genotype_1.0/data/finngen_R8_chrCHROM.vcf.gz",
-    "regenie_lof.create_chunks.null_map": "gs://r8_data/lof/inputs/r8_null_map_test.txt",
-
     #EXTRACT
     "regenie_lof.extract_variants.info_filter": 0.95,
     "regenie_lof.extract_variants.lof_list": ["frameshift_variant","splice_donor_variant","stop_gained","splice_acceptor_variant"],
