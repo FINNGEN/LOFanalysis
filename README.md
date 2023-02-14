@@ -21,11 +21,8 @@ chr10_113597145_TG_T	NRAP	frameshift_variant
 ```
 
 The variants are then passed to `convert_vcf` and then to `merge` to build a single bgen with only lof varirants.
-In parallel, `build_set_mask` takes the lof variants produced above and builds all the accessory files needed by regenie.
 
-`create_chunks` separates the input phenos (taken from the map pheno --> nulls `regenie_lof.create_chunks.null_map`) to build chunks (size of each chunk defined by `regenie_lof.create_chunks.chunk_phenos`).
-
-From there a scatter takes each chunk and runs the `regenie` task, where the association takes place.
+From there a scatter takes each pheno and runs the `regenie` task, where the association takes place.
 
 ##
 

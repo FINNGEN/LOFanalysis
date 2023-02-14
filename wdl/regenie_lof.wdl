@@ -3,14 +3,18 @@ version development
 workflow regenie_lof {
 
   input {
+    File null_map
+    Float max_maf
+    Float info_filter
+    Array[String] lof_list
+    Array[String] chrom_list
     String docker
     String prefix
-    Float max_maf
-    Array[String] chrom_list
+    
   }
 
   # get lof variants
-  call extract_variants { input: docker = docker, max_maf = max_maf}
+  call extract_variants { input: docker = docker, max_maf = max_maf,info_filter=info_filter,lof_list=lof_list}
   # subset vcf to lof variants in each chrom
   scatter (chrom in chrom_list){
     call convert_vcf {input: docker = docker,chrom=chrom,lof_variants = extract_variants.lof_variants }
@@ -19,47 +23,136 @@ workflow regenie_lof {
   # merge lof chroms + build vcf/bgen
   call merge    { input: docker = docker, vcfs = convert_vcf.chrom_lof_vcf}
 
-  call create_chunks   { input : docker = docker}
-  call build_set_mask  { input : docker = docker, lof_variants=extract_variants.lof_variants}
 
-  scatter ( chunk in create_chunks.all_chunks) {
+
+  Array[Array[String]] pheno_data = read_tsv(null_map)
+  
+  scatter ( p_data in pheno_data) {
+    String pheno = p_data[0]
     call regenie {
       input :
-      chunk = chunk,
+      pheno = pheno,
+      null = p_data[1],
       prefix=prefix,
       lof_variants = extract_variants.lof_variants,
-      sets=build_set_mask.sets,
-      mask=build_set_mask.mask,
+      sets=extract_variants.sets,
+      mask=extract_variants.mask,
       bins = max_maf,
       lof_bgen = merge.lof_bgen
     }
+
+    call compare_hits {
+      input : docker = docker,prefix=prefix,pheno=pheno,regenie_results =regenie.results,lof_variants = extract_variants.lof_variants
+      }
   }
 
-  call merge_sig_results {input: docker = docker,files = regenie.results,prefix=prefix,logs = regenie.log}
+  call merge_results {input: docker = docker,files = regenie.results,prefix=prefix,logs = regenie.log}
 
 }
 
-task merge_sig_results{
+
+task compare_hits{
+  input {
+    String docker
+    String sumstats_root
+    String pheno
+    String prefix
+    File regenie_results
+    File lof_variants
+  }
+
+  File sumstats = sub(sumstats_root,"PHENO",pheno)
+  File tabix = sumstats + ".tbi"
+  String out_file = prefix + "_" + pheno + "_lof_sig_res.txt"
+  command <<<
+
+  PHENO=~{pheno}
+  echo $PHENO
+  
+  # KEEP ONLY GENES >1 VARIANT COUNT
+  echo "SIG GENES"
+  cut -f2 ~{lof_variants} | sort | uniq -c | awk '{$1=$1;print}' | awk '$1>1' | cut -d " " -f2 | sort -k1 | join -2 2 - <(cut -f 1,2 ~{lof_variants}| sort -k 2 ) | awk '{print $1"_GENESTRING\t"$2}'> tmp_genes.txt
+  wc -l tmp_genes.txt
+  
+  # KEEP ONLY RELEVANT HITS (LOW PVAL)
+  echo "HITS WITH MLGOP > 6"
+  TMP_HITS="tmp_hits.txt"
+  paste <(zcat ~{regenie_results} | awk '$12 >6' | cut -d " " -f 3 | cut -d . -f 1 | awk '{print $0"_GENESTRING"}') <(zcat ~{regenie_results} | awk '$12>6' | cut -d " " -f 1,9,12) > $TMP_HITS
+  wc -l $TMP_HITS
+  
+  # GET INTERSECTION OF SIG HITS AND RELEVANT GENES, TABIXING DATA FROM SUMSTATS
+  echo "RELEVANT GENES WITH SIG MLOGP"
+  TMP=tmp_variants.txt
+  rm -f $TMP && touch $TMP
+  while read -a line
+  do
+      CHROM=${line[0]}
+      POS=${line[1]}
+      ALT=${line[3]}
+      tabix ~{sumstats} $CHROM:$POS-$POS | grep -w $ALT | cut -f 8,9,11 >> $TMP
+  done < <(cat tmp_genes.txt | grep -wf <(cut -f1 $TMP_HITS ) | cut -f2 | sed 's/chr//g' | tr '_' '\t' )
+
+  # add gene and variant id to file above
+  TMP_VAR="tmp_sig_genes_variants.txt"
+  paste <(cat tmp_genes.txt | grep -wf <(cut -f1 $TMP_HITS) ) $TMP > $TMP_VAR
+  wc -l $TMP_VAR
+  
+  # HERE I BUILD THE ACTUAL LINE OF TEXT THAT NEEDS TO BE PASTED,MUNGING THE ABOVE FILE
+  TMP_GENE_VAR_HIT="tmp_sig_hits_gene.txt"
+  rm -f $TMP_GENE_VAR_HIT && touch $TMP_GENE_VAR_HIT
+  while read GENE
+  do
+      echo $GENE
+      TOP_MLOGP=$(sort -rk3 $TMP_VAR | grep -w $GENE |cut -f3 | head -n1 )
+      GENE_DATA=$(cat $TMP_VAR | grep -w $GENE | cut -f2- | tr '\t' ',' | tr '\n' ','| sed 's/.$//' )
+      echo -e $GENE'\t'$TOP_MLOGP'\t'$GENE_DATA >> $TMP_GENE_VAR_HIT
+  done < <(cut -f1 $TMP_VAR | sort | uniq)
+
+  # JOIN REGENIE RESULT WITH VARIANT DATA
+  PHENO_GENE_HITS="results.txt"
+  echo -e "PHENO\tGENE\tCHROM\tGENE_BETA\tGENE_MLOGP\tTOP_VAR_MLOGP\tVAR1,MLGOP1,BETA1,AF1,VAR2..." > $PHENO_GENE_HITS 
+
+  join <(sort -k1 $TMP_HITS) <(sort -k1 $TMP_GENE_VAR_HIT) | sed 's/_GENESTRING//g' | awk '{print "PNAME\t"$0}' | sed -e "s/PNAME/${PHENO}/g"  >> $PHENO_GENE_HITS
+
+  mv $PHENO_GENE_HITS ~{out_file}
+  >>>
+
+  
+  runtime {
+    docker: "~{docker}"
+    cpu: 1
+    disks:  "local-disk 1 HDD"
+    memory: "2 GB"
+    zones: "europe-west1-b europe-west1-c europe-west1-d"
+    preemptible : 1
+  }  
+ 
+  output {
+    File pheno_res = out_file
+  }
+}
+
+task merge_results{
 
   input {
     String docker
-    Array[Array[File]] files
+    Array[File] files
     Array[File] logs
     String prefix
   }
 
-  String out_file = prefix + "_lof_sig_hits.txt"
+  String out_file = prefix + "_lof.txt"
   String log_file = prefix + "_lof.log"
   String checksum = prefix + "_check.log"
 
   command <<<
-
   # filter results
-  paste <(echo PHENO) <(zcat  ~{files[0][0]} | head -n2 | tail -n1 | tr ' ' '\t')   > ~{out_file} # write header
+  paste <(echo PHENO) <(zcat  ~{files[0]} | head -n2 | tail -n1 | tr ' ' '\t')   > ~{out_file} # write header
   while read f
-  do pheno=$(basename $f .regenie.gz |sed 's/~{prefix}_lof_//g' )  && zcat  $f | sed -E 1,2d | awk '$12 > 6' | awk -v pheno="$pheno" '{print pheno" "$0}' |  tr ' ' '\t'   >> ~{out_file}
-  done 	< ~{write_lines(flatten(files))}
+  do pheno=$(basename $f .regenie.gz |sed 's/~{prefix}_lof_//g' )  && zcat  $f | sed -E 1,2d |  awk -v pheno="$pheno" '{print pheno" "$0}' |  tr ' ' '\t'   >> tmp.txt
+  done 	< ~{write_lines(files)}
 
+  sort -rk 12 tmp.txt >> ~{out_file}
   # merge logs
   while read f
   do paste <( grep -q  "Elapsed" $f && echo 1 || echo 0 ) <(grep "phenoColList"  $f |  awk '{print $2}') <(echo $f| sed 's/\/cromwell_root/gs:\//g')  >> ~{checksum} && cat $f >> ~{log_file}
@@ -88,7 +181,8 @@ task regenie{
     String docker
     File lof_bgen
     File cov_file
-    File chunk
+    String pheno
+    File null
     File sets
     File mask
     File lof_variants
@@ -103,17 +197,16 @@ task regenie{
   Int disk_size = ceil(size(lof_bgen,"GB"))*2 + 10
   File lof_index =  lof_bgen + ".bgi"
   File lof_sample = lof_bgen + ".sample"
-  
-  # this localizes the files
-  Map [String,File] pheno_map = read_map(chunk)
-  # get list of phenos only
-  Array[String] phenos = keys(pheno_map)
+  Map [String,File] pheno_map = {pheno:null}
+
   Int mem = ceil(size(lof_bgen,"GB"))*4*cpus
+  String out_file = prefix + "_lof_" + pheno + ".regenie.gz"
+
   command <<<
   CPUS=$(grep -c ^processor /proc/cpuinfo)
   cat ~{write_map(pheno_map)} > pred.txt
 
-  time regenie --step 2 --out ./~{prefix}_lof --threads $CPUS  ~{bargs}  --bgen ~{lof_bgen} --sample ~{lof_sample} --pred pred.txt    --phenoFile ~{cov_file} --covarFile ~{cov_file} --phenoColList ~{sep="," phenos} --covarColList ~{covariates} --aaf-bins ~{bins}  --build-mask ~{mask_type} --mask-def ~{mask} --set-list ~{sets} --anno-file ~{lof_variants}
+  time regenie --step 2 --out ./~{prefix}_lof --threads $CPUS  ~{bargs}  --bgen ~{lof_bgen} --sample ~{lof_sample} --pred pred.txt    --phenoFile ~{cov_file} --covarFile ~{cov_file} --phenoColList ~{pheno} --covarColList ~{covariates} --aaf-bins ~{bins}  --build-mask ~{mask_type} --mask-def ~{mask} --set-list ~{sets} --anno-file ~{lof_variants}
 
   echo ~{cpus} ~{mem} $CPUS
   wc -l pred.txt 
@@ -130,11 +223,10 @@ task regenie{
   }
   
   output {
-    Array[File] results = glob("./*regenie.gz")
+    File results = out_file
     File log = prefix + "_lof.log"
   }
 }
-
 
 
 task merge {
@@ -177,7 +269,6 @@ task merge {
     File lof_vcf_tbi= out_file + ".vcf.gz.tbi"
     
   }
-
 }
   
 task convert_vcf {
@@ -231,7 +322,6 @@ task convert_vcf {
     } 
 }
 
-
 task extract_variants {
 
   input {
@@ -256,6 +346,14 @@ task extract_variants {
   echo $GIND $MIND $IIND $AIND
 
   zcat ~{annot_file} | awk -v OFS='\t' -v c1=$AIND -v c2=$IIND -v c3=$GIND -v c4=$MIND '{print $1,$c1,$c2,$c3,$c4}' | awk '$2 < ~{max_maf} || $2 > ~{1-max_maf}' | awk '$3 > ~{info_filter}' |  grep -wf ~{write_lines(lof_list)} |  tr ':' '_' | awk '{print "chr"$0}' | cut -f 1,4,5 > lof_variants.txt
+
+  while read GENE
+  do 	GENE_DATA=$( cat lof_variants.txt | grep -E "(^|[[:space:]])$GENE(\$|[[:space:]])"  | cut -f1 | tr '\n' ',' ) && paste <(echo $GENE) <(echo $GENE_DATA| head -n1 | tr '_' '\t' | sed 's/chr//g' | cut -f -2) <(echo $GENE_DATA| sed 's/.$//' )  >> ./sets.tsv
+  done < <(cut -f2 lof_variants.txt | sort  | uniq )
+  
+  paste <( echo "Mask1") <(cut -f 3 lof_variants.txt  | sort | uniq | tr '\n' ',' | sed 's/.$//') > ./mask.txt
+  
+
   
   >>>
   runtime {
@@ -269,61 +367,11 @@ task extract_variants {
   
   output {
     File lof_variants = "lof_variants.txt"
-    }
-
-}
-
-
-task create_chunks{
-  input {
-    String docker
-    File null_map
-    Int chunk_phenos
-  }
-  command <<<
-  cat ~{null_map}  >  tmp.txt
-  split -del ~{chunk_phenos} tmp.txt chunk --additional-suffix=.txt
-  >>>
-  
-  runtime {
-    docker: "~{docker}"
-    cpu: 2
-    disks:  "local-disk 1 HDD"
-    memory: "2 GB"
-    zones: "europe-west1-b europe-west1-c europe-west1-d"
-    preemptible : 1
-  }
-
-  output { Array[File] all_chunks = glob("./chunk*") }
-}
-
-task build_set_mask {
-  
-  input {
-    String docker
-    File lof_variants
-  }
-  
-  command <<<
-  
-  while read GENE
-  do 	GENE_DATA=$( cat ~{lof_variants} | grep -E "(^|[[:space:]])$GENE(\$|[[:space:]])"  | cut -f1 | tr '\n' ',' ) && paste <(echo $GENE) <(echo $GENE_DATA| head -n1 | tr '_' '\t' | sed 's/chr//g' | cut -f -2) <(echo $GENE_DATA| sed 's/.$//' )  >> ./sets.tsv
-  done < <(cut -f2 ~{lof_variants} | sort  | uniq )
-  
-  paste <( echo "Mask1") <(cut -f 3 ~{lof_variants}  | sort | uniq | tr '\n' ',' | sed 's/.$//') > ./mask.txt
-  
-  >>> 
- runtime {
-    docker: "~{docker}"
-    cpu: 2
-    disks:  "local-disk 1 HDD"
-    memory: "2 GB"
-    zones: "europe-west1-b europe-west1-c europe-west1-d"
-    preemptible : 1
-  }
-
-  output {
     File mask = "./mask.txt"
     File sets = "./sets.tsv"
-  }
+
+    }
 }
+
+
+
