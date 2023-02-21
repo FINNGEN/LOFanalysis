@@ -1,8 +1,8 @@
 {
     # GLOBAL   
     "regenie_lof.prefix": "finngen_R10",
-    "regenie_lof.max_maf": 0.05,
-    "regenie_lof.info_filter": 0.95,
+    "regenie_lof.max_maf": 0.01,
+    "regenie_lof.info_filter": 0.8,
     "regenie_lof.lof_list": ["frameshift_variant","splice_donor_variant","stop_gained","splice_acceptor_variant"],
     "regenie_lof.chrom_list":  ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22"],
    
@@ -11,7 +11,7 @@
     "regenie_lof.regenie.cov_file": "gs://finngen-production-library-red/finngen_R10/analysis_covariates/R10_COV_PHENO_V1.FID.txt.gz",
     "regenie_lof.extract_variants.annot_file":"gs://finngen-production-library-green/finngen_R10/finngen_R10_analysis_data/annotations/R10_annotated_variants_v2.small.gz",
     "regenie_lof.convert_vcf.vcf_root": "gs://finngen-production-library-red/finngen_R10/genotype_1.0/data/finngen_R10_chrCHROM.vcf.gz",
-    "regenie_lof.compare_hits.sumstats_root": "gs://finngen-production-library-green/finngen_R10/finngen_R10_analysis_data/summary_stats/release/PHENO.gz",
+    "regenie_lof.regenie.sumstats_root": "gs://finngen-production-library-green/finngen_R10/finngen_R10_analysis_data/summary_stats/release/PHENO.gz",
 
     #DOCKERS
     "regenie_lof.docker": "eu.gcr.io/finngen-refinery-dev/bioinformatics:0.8",

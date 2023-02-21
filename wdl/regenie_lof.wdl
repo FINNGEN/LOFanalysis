@@ -40,35 +40,109 @@ workflow regenie_lof {
       bins = max_maf,
       lof_bgen = merge.lof_bgen
     }
-
-    call compare_hits {
-      input : docker = docker,prefix=prefix,pheno=pheno,regenie_results =regenie.results,lof_variants = extract_variants.lof_variants
-      }
   }
 
-  call merge_results {input: docker = docker,files = regenie.results,prefix=prefix,logs = regenie.log}
+  call merge_results {input: docker = docker,regenie_results = regenie.results,comp_files = regenie.sig_res,prefix=prefix,logs = regenie.log}
 
 }
 
 
-task compare_hits{
+task merge_results{
+
   input {
     String docker
-    String sumstats_root
-    String pheno
+    Array[File] regenie_results
+    Array[File] comp_files
+    Array[File] logs
     String prefix
-    File regenie_results
-    File lof_variants
   }
+
+  String res_file = prefix + "_lof.txt"
+  String sig_file = prefix + "_sig.txt"
+  String log_file = prefix + "_lof.log"
+  String checksum = prefix + "_check.log"
+
+  command <<<
+  # filter results
+  paste <(echo PHENO) <(zcat  ~{regenie_results[0]} | head -n2 | tail -n1 | tr ' ' '\t')   > ~{res_file} # write header
+  while read f
+  do pheno=$(basename $f .regenie.gz |sed 's/~{prefix}_lof_//g' )  && zcat  $f | sed -E 1,2d |  awk -v pheno="$pheno" '{print pheno" "$0}' |  tr ' ' '\t'   >> tmp.txt
+  done 	< ~{write_lines(regenie_results)}
+
+  sort -grk 13 tmp.txt >> ~{res_file}
+  # merge logs
+  while read f
+  do paste <( grep -q  "Elapsed" $f && echo 1 || echo 0 ) <(grep "phenoColList"  $f |  awk '{print $2}') <(echo $f| sed 's/\/cromwell_root/gs:\//g')  >> ~{checksum} && cat $f >> ~{log_file}
+  done < ~{write_lines(logs)}
+
+  head -n1 ~{comp_files[0]} > ~{sig_file}
+  while read f
+  do
+
+      cat $f | sed -E 1d | awk '{print $5-$6"\t"$0}' >> sig_tmp.txt
+  done <  ~{write_lines(comp_files)}
+  sort -rgk 1 sig_tmp.txt | cut -f2- >> ~{sig_file}
+  >>>
+  
+  runtime {
+    docker: "~{docker}"
+    cpu: 1
+    disks:  "local-disk 10 HDD"
+    memory: "2 GB"
+    zones: "europe-west1-b europe-west1-c europe-west1-d"
+    preemptible : 1
+  }
+   
+  output {
+    File all_hits = res_file
+    File sig_hits = sig_file
+    File log = log_file
+    File check = checksum
+  }  
+}
+
+task regenie{
+
+  input {
+    String docker
+    File lof_bgen
+    File cov_file
+    String pheno
+    File null
+    File sets
+    File mask
+    File lof_variants
+    String covariates
+    String bargs
+    String prefix
+    Int cpus
+    String bins
+    String mask_type
+    String sumstats_root
+  }
+
+  Int disk_size = ceil(size(lof_bgen,"GB"))*2 + 10
+  File lof_index =  lof_bgen + ".bgi"
+  File lof_sample = lof_bgen + ".sample"
+  Map [String,File] pheno_map = {pheno:null}
+
+  Int mem = ceil(size(lof_bgen,"GB"))*4*cpus
+  String regenie_results = prefix + "_lof_" + pheno + ".regenie.gz"
 
   File sumstats = sub(sumstats_root,"PHENO",pheno)
   File tabix = sumstats + ".tbi"
-  String out_file = prefix + "_" + pheno + "_lof_sig_res.txt"
-  command <<<
+  String pheno_comp = prefix + "_" + pheno + "_lof_sig_res.txt"
 
-  PHENO=~{pheno}
-  echo $PHENO
   
+  command <<<
+  CPUS=$(grep -c ^processor /proc/cpuinfo)
+  cat ~{write_map(pheno_map)} > pred.txt
+
+  time regenie --step 2 --out ./~{prefix}_lof --threads $CPUS  ~{bargs}  --bgen ~{lof_bgen} --sample ~{lof_sample} --pred pred.txt    --phenoFile ~{cov_file} --covarFile ~{cov_file} --phenoColList ~{pheno} --covarColList ~{covariates} --aaf-bins ~{bins}  --build-mask ~{mask_type} --mask-def ~{mask} --set-list ~{sets} --anno-file ~{lof_variants}
+
+  echo ~{cpus} ~{mem} $CPUS
+  wc -l pred.txt
+
   # KEEP ONLY GENES >1 VARIANT COUNT
   echo "SIG GENES"
   cut -f2 ~{lof_variants} | sort | uniq -c | awk '{$1=$1;print}' | awk '$1>1' | cut -d " " -f2 | sort -k1 | join -2 2 - <(cut -f 1,2 ~{lof_variants}| sort -k 2 ) | awk '{print $1"_GENESTRING\t"$2}'> tmp_genes.txt
@@ -112,104 +186,10 @@ task compare_hits{
   PHENO_GENE_HITS="results.txt"
   echo -e "PHENO\tGENE\tCHROM\tGENE_BETA\tGENE_MLOGP\tTOP_VAR_MLOGP\tVAR1,MLGOP1,BETA1,AF1,VAR2..." > $PHENO_GENE_HITS 
 
+  PHENO=~{pheno}
   join <(sort -k1 $TMP_HITS) <(sort -k1 $TMP_GENE_VAR_HIT) | sed 's/_GENESTRING//g' | awk '{print "PNAME\t"$0}' | sed -e "s/PNAME/${PHENO}/g"  >> $PHENO_GENE_HITS
 
-  mv $PHENO_GENE_HITS ~{out_file}
-  >>>
-
-  
-  runtime {
-    docker: "~{docker}"
-    cpu: 1
-    disks:  "local-disk 1 HDD"
-    memory: "2 GB"
-    zones: "europe-west1-b europe-west1-c europe-west1-d"
-    preemptible : 1
-  }  
- 
-  output {
-    File pheno_res = out_file
-  }
-}
-
-task merge_results{
-
-  input {
-    String docker
-    Array[File] files
-    Array[File] logs
-    String prefix
-  }
-
-  String out_file = prefix + "_lof.txt"
-  String log_file = prefix + "_lof.log"
-  String checksum = prefix + "_check.log"
-
-  command <<<
-  # filter results
-  paste <(echo PHENO) <(zcat  ~{files[0]} | head -n2 | tail -n1 | tr ' ' '\t')   > ~{out_file} # write header
-  while read f
-  do pheno=$(basename $f .regenie.gz |sed 's/~{prefix}_lof_//g' )  && zcat  $f | sed -E 1,2d |  awk -v pheno="$pheno" '{print pheno" "$0}' |  tr ' ' '\t'   >> tmp.txt
-  done 	< ~{write_lines(files)}
-
-  sort -rk 12 tmp.txt >> ~{out_file}
-  # merge logs
-  while read f
-  do paste <( grep -q  "Elapsed" $f && echo 1 || echo 0 ) <(grep "phenoColList"  $f |  awk '{print $2}') <(echo $f| sed 's/\/cromwell_root/gs:\//g')  >> ~{checksum} && cat $f >> ~{log_file}
-  done < ~{write_lines(logs)}
-  >>>
-  
-  runtime {
-    docker: "~{docker}"
-    cpu: 1
-    disks:  "local-disk 10 HDD"
-    memory: "2 GB"
-    zones: "europe-west1-b europe-west1-c europe-west1-d"
-    preemptible : 1
-  }
-   
-  output {
-    File sig_hits = out_file
-    File log = log_file
-    File check = checksum
-  }  
-}
-
-task regenie{
-
-  input {
-    String docker
-    File lof_bgen
-    File cov_file
-    String pheno
-    File null
-    File sets
-    File mask
-    File lof_variants
-    String covariates
-    String bargs
-    String prefix
-    Int cpus
-    String bins
-    String mask_type
-  }
-
-  Int disk_size = ceil(size(lof_bgen,"GB"))*2 + 10
-  File lof_index =  lof_bgen + ".bgi"
-  File lof_sample = lof_bgen + ".sample"
-  Map [String,File] pheno_map = {pheno:null}
-
-  Int mem = ceil(size(lof_bgen,"GB"))*4*cpus
-  String out_file = prefix + "_lof_" + pheno + ".regenie.gz"
-
-  command <<<
-  CPUS=$(grep -c ^processor /proc/cpuinfo)
-  cat ~{write_map(pheno_map)} > pred.txt
-
-  time regenie --step 2 --out ./~{prefix}_lof --threads $CPUS  ~{bargs}  --bgen ~{lof_bgen} --sample ~{lof_sample} --pred pred.txt    --phenoFile ~{cov_file} --covarFile ~{cov_file} --phenoColList ~{pheno} --covarColList ~{covariates} --aaf-bins ~{bins}  --build-mask ~{mask_type} --mask-def ~{mask} --set-list ~{sets} --anno-file ~{lof_variants}
-
-  echo ~{cpus} ~{mem} $CPUS
-  wc -l pred.txt 
+  mv $PHENO_GENE_HITS ~{pheno_comp}
 
   >>>
 
@@ -223,7 +203,8 @@ task regenie{
   }
   
   output {
-    File results = out_file
+    File results = regenie_results
+    File sig_res = pheno_comp
     File log = prefix + "_lof.log"
   }
 }
@@ -345,8 +326,11 @@ task extract_variants {
   
   echo $GIND $MIND $IIND $AIND
 
-  zcat ~{annot_file} | awk -v OFS='\t' -v c1=$AIND -v c2=$IIND -v c3=$GIND -v c4=$MIND '{print $1,$c1,$c2,$c3,$c4}' | awk '$2 < ~{max_maf} || $2 > ~{1-max_maf}' | awk '$3 > ~{info_filter}' |  grep -wf ~{write_lines(lof_list)} |  tr ':' '_' | awk '{print "chr"$0}' | cut -f 1,4,5 > lof_variants.txt
+  zcat ~{annot_file} | awk -v OFS='\t' -v c1=$AIND -v c2=$IIND -v c3=$GIND -v c4=$MIND '{print $1,$c1,$c2,$c3,$c4}' | awk '$2 < ~{max_maf} || $2 > ~{1-max_maf}' | awk '$3 > ~{info_filter}' |  grep -wf ~{write_lines(lof_list)} |  tr ':' '_' | awk '{print "chr"$0}' | cut -f 1,4,5 > tmp.txt
 
+  # keep only genes with >1 variants
+  cat tmp.txt| awk '{print $1"\t"$2"_GENESTRING\t"$3}' | grep -wf <(cut -f2 tmp.txt | sort | uniq -c | awk '{$1=$1;print}' | awk '$1>1' | cut -d " " -f2 | sort -k1 | awk '{print $1"_GENESTRING"}') | sed 's/_GENESTRING//g'  > lof_variants.txt
+  
   while read GENE
   do 	GENE_DATA=$( cat lof_variants.txt | grep -E "(^|[[:space:]])$GENE(\$|[[:space:]])"  | cut -f1 | tr '\n' ',' ) && paste <(echo $GENE) <(echo $GENE_DATA| head -n1 | tr '_' '\t' | sed 's/chr//g' | cut -f -2) <(echo $GENE_DATA| sed 's/.$//' )  >> ./sets.tsv
   done < <(cut -f2 lof_variants.txt | sort  | uniq )
