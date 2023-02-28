@@ -3,6 +3,7 @@
     "regenie_lof.prefix": "finngen_R10",
     "regenie_lof.max_maf": 0.01,
     "regenie_lof.info_filter": 0.8,
+    "regenie_lof.mlogp_filter": 6,
     "regenie_lof.lof_list": ["frameshift_variant","splice_donor_variant","stop_gained","splice_acceptor_variant"],
     "regenie_lof.chrom_list":  ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22"],
    
@@ -20,7 +21,8 @@
     #CONVERT
     "regenie_lof.merge.bargs": "-filetype vcf -bgen-bits 8 -bgen-compression zlib -vcf-genotype-field GP -bgen-permitted-input-rounding-error 0.005 -ofiletype bgen_v1.2 ",
     
-    # OTHER
+    #OTHER
+    "regenie_lof.merge_results.lof_template": "gs://finngen-production-library-green/lof/lof.README",
     "regenie_lof.regenie.mask_type": "max",
     "regenie_lof.regenie.cpus": 2,
     "regenie_lof.regenie.bargs": "--bt --bsize 400 --gz --firth --approx --pThresh 0.01 --firth-se --ref-first",

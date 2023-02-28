@@ -10,6 +10,7 @@ workflow regenie_lof {
     Array[String] chrom_list
     String docker
     String prefix
+    Int mlogp_filter
     
   }
 
@@ -38,11 +39,12 @@ workflow regenie_lof {
       sets=extract_variants.sets,
       mask=extract_variants.mask,
       bins = max_maf,
-      lof_bgen = merge.lof_bgen
+      lof_bgen = merge.lof_bgen,
+      mlogp_filter = mlogp_filter
     }
   }
 
-  call merge_results {input: docker = docker,regenie_results = regenie.results,comp_files = regenie.sig_res,prefix=prefix,logs = regenie.log}
+  call merge_results {input: docker = docker,regenie_results = regenie.results,comp_files = regenie.sig_res,prefix=prefix,logs = regenie.log,sets=extract_variants.sets,max_maf=max_maf,info=info_filter,lof_list=lof_list,mlogp_filter=mlogp_filter}
 
 }
 
@@ -54,13 +56,25 @@ task merge_results{
     Array[File] regenie_results
     Array[File] comp_files
     Array[File] logs
+    File sets
+    # README STUFF
     String prefix
+    File lof_template
+    String max_maf
+    Int mlogp_filter
+    Array[String] lof_list
+    String info
+
   }
 
   String res_file = prefix + "_lof.txt"
   String sig_file = prefix + "_sig.txt"
   String log_file = prefix + "_lof.log"
+  String sql_file = prefix + "_lof.txt.gz"
+  String readme   = prefix + "_lof_readme"
+  String var_file = prefix + "_lof_variants.txt"
   String checksum = prefix + "_check.log"
+  
 
   command <<<
   # filter results
@@ -76,12 +90,53 @@ task merge_results{
   done < ~{write_lines(logs)}
 
   head -n1 ~{comp_files[0]} > ~{sig_file}
+
+  cut -f1,4 ~{sets} > ~{var_file}
+  
   while read f
   do
 
       cat $f | sed -E 1d | awk '{print $5-$6"\t"$0}' >> sig_tmp.txt
   done <  ~{write_lines(comp_files)}
   sort -rgk 1 sig_tmp.txt | cut -f2- >> ~{sig_file}
+  
+  python3 <<EOF
+  import sys,os,gzip
+  import numpy as np
+  sets='~{sets}'
+  hits='~{res_file}'
+  
+  # read in gene dict
+  with open(sets) as i:
+    gene_dict = {}
+    for line in i:
+        gene,*_,variants = line.strip().split()
+        gene_dict[gene] = variants
+  
+  
+  out_file = '~{sql_file}'
+  with gzip.open(out_file,'wt') as o, open(hits) as i:
+    next(i)
+    o.write('\t'.join(['PHENO','GENE','variants','p.value','BETA','SE','N']) +'\n')
+    for line in i:
+        pheno,_,_,gene,_,_,_,n,_,beta,se,_,mlogp,_ = line.strip().split()
+        pval = str(np.power(10,-float(mlogp)))
+        gene = gene.split(".Mask")[0]
+        variants = gene_dict[gene]
+        out_line = '\t'.join([pheno,gene,variants,pval,beta,se,n]) + '\n'
+        o.write(out_line)
+    
+
+  lof_list = f"[{'~{sep="," lof_list}'}]"
+  tags = [("[PREFIX]",'~{prefix}'),("[N_GENES]",str(len(gene_dict))),("[MAF]",'~{max_maf}'),("[INFO]",'~{info}'),('[LOF_LIST]',lof_list),('[MLOGP]','~{mlogp_filter}')]
+  with open('~{lof_template}') as i,open('~{readme}','wt') as o:
+    for line in i:
+        for tag in tags:
+            line = line.replace(tag[0],tag[1])
+        o.write(line)
+
+  EOF  
+
   >>>
   
   runtime {
@@ -96,8 +151,11 @@ task merge_results{
   output {
     File all_hits = res_file
     File sig_hits = sig_file
-    File log = log_file
-    File check = checksum
+    File sql_hits = sql_file
+    File variants = var_file
+    File read     = readme 
+    File log      = log_file
+    File check    = checksum
   }  
 }
 
@@ -119,6 +177,7 @@ task regenie{
     String bins
     String mask_type
     String sumstats_root
+    Int mlogp_filter
   }
 
   Int disk_size = ceil(size(lof_bgen,"GB"))*2 + 10
@@ -151,7 +210,7 @@ task regenie{
   # KEEP ONLY RELEVANT HITS (LOW PVAL)
   echo "HITS WITH MLGOP > 6"
   TMP_HITS="tmp_hits.txt"
-  paste <(zcat ~{regenie_results} | awk '$12 >6' | cut -d " " -f 3 | cut -d . -f 1 | awk '{print $0"_GENESTRING"}') <(zcat ~{regenie_results} | awk '$12>6' | cut -d " " -f 1,9,12) > $TMP_HITS
+  paste <(zcat ~{regenie_results} | awk '$12 >6' | cut -d " " -f 3 | cut -d . -f 1 | awk '{print $0"_GENESTRING"}') <(zcat ~{regenie_results} | awk '$12>~{mlogp_filter}' | cut -d " " -f 1,9,12) > $TMP_HITS
   wc -l $TMP_HITS
   
   # GET INTERSECTION OF SIG HITS AND RELEVANT GENES, TABIXING DATA FROM SUMSTATS
