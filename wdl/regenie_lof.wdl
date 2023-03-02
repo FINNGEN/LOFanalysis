@@ -70,7 +70,7 @@ task merge_results{
   String res_file = prefix + "_lof.txt"
   String sig_file = prefix + "_sig.txt"
   String log_file = prefix + "_lof.log"
-  String sql_file = prefix + "_lof.txt.gz"
+  String sql_file = prefix + "_lof.sql.txt"
   String readme   = prefix + "_lof_readme"
   String var_file = prefix + "_lof_variants.txt"
   String checksum = prefix + "_check.log"
@@ -90,43 +90,36 @@ task merge_results{
   done < ~{write_lines(logs)}
 
   head -n1 ~{comp_files[0]} > ~{sig_file}
-
   cut -f1,4 ~{sets} > ~{var_file}
   
   while read f
   do
 
-      cat $f | sed -E 1d | awk '{print $5-$6"\t"$0}' >> sig_tmp.txt
+      cat $f | sed -E 1d | awk '{print $5-$6"\t"$0}'   >> sig_tmp.txt
   done <  ~{write_lines(comp_files)}
   sort -rgk 1 sig_tmp.txt | cut -f2- >> ~{sig_file}
   
   python3 <<EOF
-  import sys,os,gzip
+  import sys,os,gzip,re
   import numpy as np
-  sets='~{sets}'
-  hits='~{res_file}'
   
   # read in gene dict
-  with open(sets) as i:
+  with open('~{sets}') as i:
     gene_dict = {}
     for line in i:
         gene,*_,variants = line.strip().split()
         gene_dict[gene] = variants
-  
-  
-  out_file = '~{sql_file}'
-  with gzip.open(out_file,'wt') as o, open(hits) as i:
-    next(i)
-    o.write('\t'.join(['PHENO','GENE','variants','p.value','BETA','SE','N']) +'\n')
+    
+  with open('~{sql_file}','wt') as o, open('~{res_file}') as i:
+    next(i) # go past header
+    rel = re.findall(r'\d+','~{prefix}')[0] #get release number from prefix
     for line in i:
         pheno,_,_,gene,_,_,_,n,_,beta,se,_,mlogp,_ = line.strip().split()
-        pval = str(np.power(10,-float(mlogp)))
-        gene = gene.split(".Mask")[0]
-        variants = gene_dict[gene]
-        out_line = '\t'.join([pheno,gene,variants,pval,beta,se,n]) + '\n'
-        o.write(out_line)
-    
-
+        if float(mlogp) > float('~{mlogp_filter}'):
+            gene = gene.split(".Mask")[0]
+            data = map(str,[rel,pheno,gene,gene_dict[gene],np.power(10,-float(mlogp)),beta,se,n])
+            o.write('"' + '","'.join(data) + '"\n')  
+  
   lof_list = f"[{'~{sep="," lof_list}'}]"
   tags = [("[PREFIX]",'~{prefix}'),("[N_GENES]",str(len(gene_dict))),("[MAF]",'~{max_maf}'),("[INFO]",'~{info}'),('[LOF_LIST]',lof_list),('[MLOGP]','~{mlogp_filter}')]
   with open('~{lof_template}') as i,open('~{readme}','wt') as o:
@@ -196,55 +189,47 @@ task regenie{
   command <<<
   CPUS=$(grep -c ^processor /proc/cpuinfo)
   cat ~{write_map(pheno_map)} > pred.txt
-
   time regenie --step 2 --out ./~{prefix}_lof --threads $CPUS  ~{bargs}  --bgen ~{lof_bgen} --sample ~{lof_sample} --pred pred.txt    --phenoFile ~{cov_file} --covarFile ~{cov_file} --phenoColList ~{pheno} --covarColList ~{covariates} --aaf-bins ~{bins}  --build-mask ~{mask_type} --mask-def ~{mask} --set-list ~{sets} --anno-file ~{lof_variants}
 
   echo ~{cpus} ~{mem} $CPUS
   wc -l pred.txt
 
-  # KEEP ONLY GENES >1 VARIANT COUNT
-  echo "SIG GENES"
-  cut -f2 ~{lof_variants} | sort | uniq -c | awk '{$1=$1;print}' | awk '$1>1' | cut -d " " -f2 | sort -k1 | join -2 2 - <(cut -f 1,2 ~{lof_variants}| sort -k 2 ) | awk '{print $1"_GENESTRING\t"$2}'> tmp_genes.txt
-  wc -l tmp_genes.txt
-  
-  # KEEP ONLY RELEVANT HITS (LOW PVAL)
-  echo "HITS WITH MLGOP > 6"
+  # KEEP ONLY RELEVANT HITS (MLGOP > FILTER)
+  echo "HITS WITH MLOGP > THRESHOLD"
   TMP_HITS="tmp_hits.txt"
-  paste <(zcat ~{regenie_results} | awk '$12 >6' | cut -d " " -f 3 | cut -d . -f 1 | awk '{print $0"_GENESTRING"}') <(zcat ~{regenie_results} | awk '$12>~{mlogp_filter}' | cut -d " " -f 1,9,12) > $TMP_HITS
-  wc -l $TMP_HITS
-  
-  # GET INTERSECTION OF SIG HITS AND RELEVANT GENES, TABIXING DATA FROM SUMSTATS
-  echo "RELEVANT GENES WITH SIG MLOGP"
-  TMP=tmp_variants.txt
-  rm -f $TMP && touch $TMP
-  while read -a line
-  do
-      CHROM=${line[0]}
-      POS=${line[1]}
-      ALT=${line[3]}
-      tabix ~{sumstats} $CHROM:$POS-$POS | grep -w $ALT | cut -f 8,9,11 >> $TMP
-  done < <(cat tmp_genes.txt | grep -wf <(cut -f1 $TMP_HITS ) | cut -f2 | sed 's/chr//g' | tr '_' '\t' )
+  paste <(zcat ~{regenie_results} | awk '$12>~{mlogp_filter}'  | cut -d " " -f 3 | cut -d . -f 1 | awk '{print $0"_GENESTRING"}') <(zcat ~{regenie_results} | awk '$12>~{mlogp_filter}' | cut -d " " -f 1,9,12) | sed -e 's/ /\t/g' > $TMP_HITS
 
-  # add gene and variant id to file above
-  TMP_VAR="tmp_sig_genes_variants.txt"
-  paste <(cat tmp_genes.txt | grep -wf <(cut -f1 $TMP_HITS) ) $TMP > $TMP_VAR
-  wc -l $TMP_VAR
+  # GET GENE TO VAR MAPPING FOR ALL GENES WITH HTIS
+  cut -f 1,2 ~{lof_variants} | awk '{print $2"_GENESTRING\t"$1}' | sort -k1 | grep -wf <(cut -f1 $TMP_HITS ) > sig_genes.txt
+  wc -l sig_genes.txt $TMP_HITS
   
-  # HERE I BUILD THE ACTUAL LINE OF TEXT THAT NEEDS TO BE PASTED,MUNGING THE ABOVE FILE
+  # FOR SIG GENES GET DATA BY TABIXING FROM SUMSTATS
+  echo "RELEVANT GENES WITH SIG MLOGP"
+  TMP_VAR="tmp_sig_genes_variants.txt"
+  rm -f $TMP_VAR && touch $TMP_VAR
+  while read -a  line # for each gene that is a significant HIT tabix from sumstats data
+  do
+      GENE=${line[0]}
+      CHROM=${line[2]}
+      POS=${line[3]}
+      REF=${line[4]}
+      ALT=${line[5]}
+      paste <(echo -e $GENE"_GENESTRING\tchr"$CHROM"_"$POS"_"$REF"_"$ALT) <(tabix ~{sumstats} $CHROM:$POS-$POS | grep -w $REF | grep -w $ALT | cut -f 8,9,11) >> $TMP_VAR
+  done < <(cat  sig_genes.txt |  sed 's/chr//g' | tr '_' '\t' )
+
+  # THIS IS THE PART TO BE JOINED WITH THE REGENIE RESULT (I COLLAPSE ALL VARIANT DATA FOR EACH GENE INTO A SINGLE LINE)
   TMP_GENE_VAR_HIT="tmp_sig_hits_gene.txt"
   rm -f $TMP_GENE_VAR_HIT && touch $TMP_GENE_VAR_HIT
   while read GENE
   do
-      echo $GENE
-      TOP_MLOGP=$(sort -rk3 $TMP_VAR | grep -w $GENE |cut -f3 | head -n1 )
-      GENE_DATA=$(cat $TMP_VAR | grep -w $GENE | cut -f2- | tr '\t' ',' | tr '\n' ','| sed 's/.$//' )
+      TOP_MLOGP=$( grep -w $GENE $TMP_VAR|  cut -f3 | sort -gr  | head -n1 ) # grep gene and keep highest MLOGP
+      GENE_DATA=$(cat $TMP_VAR | grep -w $GENE | cut -f2- | tr '\t' ',' | tr '\n' ','| sed 's/.$//' ) # combine all lines into one
       echo -e $GENE'\t'$TOP_MLOGP'\t'$GENE_DATA >> $TMP_GENE_VAR_HIT
   done < <(cut -f1 $TMP_VAR | sort | uniq)
 
-  # JOIN REGENIE RESULT WITH VARIANT DATA
+  # JOIN REGENIE RESULT WITH GENE VARIANT DATA
   PHENO_GENE_HITS="results.txt"
   echo -e "PHENO\tGENE\tCHROM\tGENE_BETA\tGENE_MLOGP\tTOP_VAR_MLOGP\tVAR1,MLGOP1,BETA1,AF1,VAR2..." > $PHENO_GENE_HITS 
-
   PHENO=~{pheno}
   join <(sort -k1 $TMP_HITS) <(sort -k1 $TMP_GENE_VAR_HIT) | sed 's/_GENESTRING//g' | awk '{print "PNAME\t"$0}' | sed -e "s/PNAME/${PHENO}/g"  >> $PHENO_GENE_HITS
 
