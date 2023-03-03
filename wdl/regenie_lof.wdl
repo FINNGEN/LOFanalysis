@@ -97,7 +97,7 @@ task merge_results{
 
       cat $f | sed -E 1d | awk '{print $5-$6"\t"$0}'   >> sig_tmp.txt
   done <  ~{write_lines(comp_files)}
-  sort -rgk 1 sig_tmp.txt | cut -f2- >> ~{sig_file}
+  sort -rgk 1 sig_tmp.txt | cut -f2- | sed -e 's/ /\t/g' >> ~{sig_file}
   
   python3 <<EOF
   import sys,os,gzip,re
@@ -188,12 +188,15 @@ task regenie{
   
   command <<<
   CPUS=$(grep -c ^processor /proc/cpuinfo)
+
+  # REGENIE
   cat ~{write_map(pheno_map)} > pred.txt
   time regenie --step 2 --out ./~{prefix}_lof --threads $CPUS  ~{bargs}  --bgen ~{lof_bgen} --sample ~{lof_sample} --pred pred.txt    --phenoFile ~{cov_file} --covarFile ~{cov_file} --phenoColList ~{pheno} --covarColList ~{covariates} --aaf-bins ~{bins}  --build-mask ~{mask_type} --mask-def ~{mask} --set-list ~{sets} --anno-file ~{lof_variants}
-
   echo ~{cpus} ~{mem} $CPUS
   wc -l pred.txt
 
+  ####### SIG HITS FILTER
+  
   # KEEP ONLY RELEVANT HITS (MLGOP > FILTER)
   echo "HITS WITH MLOGP > THRESHOLD"
   TMP_HITS="tmp_hits.txt"
@@ -231,7 +234,7 @@ task regenie{
   PHENO_GENE_HITS="results.txt"
   echo -e "PHENO\tGENE\tCHROM\tGENE_BETA\tGENE_MLOGP\tTOP_VAR_MLOGP\tVAR1,MLGOP1,BETA1,AF1,VAR2..." > $PHENO_GENE_HITS 
   PHENO=~{pheno}
-  join <(sort -k1 $TMP_HITS) <(sort -k1 $TMP_GENE_VAR_HIT) | sed 's/_GENESTRING//g' | awk '{print "PNAME\t"$0}' | sed -e "s/PNAME/${PHENO}/g"  >> $PHENO_GENE_HITS
+  join -t $'\t' <(sort -k1 $TMP_HITS) <(sort -k1 $TMP_GENE_VAR_HIT) | sed 's/_GENESTRING//g' | awk '{print "PNAME\t"$0}' | sed -e "s/PNAME/${PHENO}/g"  >> $PHENO_GENE_HITS
 
   mv $PHENO_GENE_HITS ~{pheno_comp}
 
