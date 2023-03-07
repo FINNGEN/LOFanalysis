@@ -67,13 +67,13 @@ task merge_results{
 
   }
 
-  String res_file = prefix + "_lof.txt"
-  String sig_file = prefix + "_sig.txt"
-  String log_file = prefix + "_lof.log"
-  String sql_file = prefix + "_lof.sql.txt"
-  String readme   = prefix + "_lof_readme"
-  String var_file = prefix + "_lof_variants.txt"
-  String checksum = prefix + "_check.log"
+  String res_file = prefix + "_lof.txt" # file with all hits
+  String sig_file = prefix + "_sig.txt" # file with sig hits (and variant comparison)
+  String log_file = prefix + "_lof.log" # file with merged logs
+  String sql_file = prefix + "_lof.sql.txt" # file for sql import 
+  String readme   = prefix + "_lof_readme" # output readme 
+  String var_file = prefix + "_lof_variants.txt" # list of variants used
+  String checksum = prefix + "_check.log" # check that all ran or not
   
 
   command <<<
@@ -82,8 +82,9 @@ task merge_results{
   while read f
   do pheno=$(basename $f .regenie.gz |sed 's/~{prefix}_lof_//g' )  && zcat  $f | sed -E 1,2d |  awk -v pheno="$pheno" '{print pheno" "$0}' |  tr ' ' '\t'   >> tmp.txt
   done 	< ~{write_lines(regenie_results)}
-
-  sort -grk 13 tmp.txt >> ~{res_file}
+  
+  sort -grk 13 tmp.txt | grep -vw TEST_FAIL >> ~{res_file}
+  cat tmp.txt | grep -w TEST_FAIL > ~{log_file}
   # merge logs
   while read f
   do paste <( grep -q  "Elapsed" $f && echo 1 || echo 0 ) <(grep "phenoColList"  $f |  awk '{print $2}') <(echo $f| sed 's/\/cromwell_root/gs:\//g')  >> ~{checksum} && cat $f >> ~{log_file}
@@ -98,36 +99,41 @@ task merge_results{
       cat $f | sed -E 1d | awk '{print $5-$6"\t"$0}'   >> sig_tmp.txt
   done <  ~{write_lines(comp_files)}
   sort -rgk 1 sig_tmp.txt | cut -f2- | sed -e 's/ /\t/g' >> ~{sig_file}
-  
+
+  touch ~{sql_file}
   python3 <<EOF
   import sys,os,gzip,re
   import numpy as np
-  
+
   # read in gene dict
   with open('~{sets}') as i:
     gene_dict = {}
     for line in i:
         gene,*_,variants = line.strip().split()
         gene_dict[gene] = variants
-    
+        
   with open('~{sql_file}','wt') as o, open('~{res_file}') as i:
     next(i) # go past header
     rel = re.findall(r'\d+','~{prefix}')[0] #get release number from prefix
     for line in i:
         pheno,_,_,gene,_,_,_,n,_,beta,se,_,mlogp,_ = line.strip().split()
-        if float(mlogp) > float('~{mlogp_filter}'):
-            gene = gene.split(".Mask")[0]
-            data = map(str,[rel,pheno,gene,gene_dict[gene],np.power(10,-float(mlogp)),beta,se,n])
-            o.write('"' + '","'.join(data) + '"\n')  
+        try:
+            mlogp=float(mlogp)
+            if float(mlogp) > float('~{mlogp_filter}'):
+                gene = gene.split(".Mask")[0]
+                data = map(str,[rel,pheno,gene,gene_dict[gene],np.power(10,-float(mlogp)),beta,se,n])
+                o.write('"' + '","'.join(data) + '"\n')  
   
+        except:
+            print(pheno,gene,mlogp)
+            
   lof_list = f"[{'~{sep="," lof_list}'}]"
   tags = [("[PREFIX]",'~{prefix}'),("[N_GENES]",str(len(gene_dict))),("[MAF]",'~{max_maf}'),("[INFO]",'~{info}'),('[LOF_LIST]',lof_list),('[MLOGP]','~{mlogp_filter}')]
   with open('~{lof_template}') as i,open('~{readme}','wt') as o:
     for line in i:
         for tag in tags:
             line = line.replace(tag[0],tag[1])
-        o.write(line)
-
+        o.write(line)     
   EOF  
 
   >>>
