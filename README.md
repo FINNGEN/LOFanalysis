@@ -24,6 +24,13 @@ The variants are then passed to `convert_vcf` and then to `merge` to build a sin
 
 From there a scatter takes each pheno and runs the `regenie` task, where the association takes place.
 
+The task `merge_results` then produces all files needed for release:
+- a readme file
+- all hits sorted by logp
+- merged logs
+- a summary of the results only including sig hits and sorted by difference between mlgop and max(mlogp) of the variants in the gene
+- the file required for sql import
+
 ##
 
 Relevant inputs:
