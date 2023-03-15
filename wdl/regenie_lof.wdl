@@ -24,8 +24,6 @@ workflow regenie_lof {
   # merge lof chroms + build vcf/bgen
   call merge    { input: docker = docker, vcfs = convert_vcf.chrom_lof_vcf}
 
-
-
   Array[Array[String]] pheno_data = read_tsv(null_map)
   
   scatter ( p_data in pheno_data) {
