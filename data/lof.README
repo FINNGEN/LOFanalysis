@@ -1,0 +1,23 @@
+# FINNGEN LOF RESULTS
+
+## [PREFIX] lof data
+
+The pipeline takes as an input the vcf files and subets them to a list of lof variants generated with VEP (https://github.com/Ensembl/ensembl-vep). LOF variants are defined as having consequences in the list [LOF_LIST]. Also, a max_maf ([MAF])  and minimum info score ([INFO]) filters are applied. This leaves [N_GENES] genes that can be used for the association tests.
+
+Then a bgen file is formed by filtering chrom vcfs and merging them into a single file, allowing us to run the whole analysis with only one data set. Then the bgen is passed to step 2 of regenie in burden mode, which uses the nulls from the standard GWAS runs.
+
+
+## File structure
+
+### Data
+| File |  Description  |
+|---|---|
+|[PREFIX]_lof_txt.gz | Merged results, sorted by mglop. |
+|[PREFIX]_lof_variants.txt | A tsv file with variant/geno/lof data used in the run. |
+|[PREFIX]_lof_sig_hits.txt | A summary of the results only including hits for mlogp > [MLOGP] and sorted by difference between mlogp and max(mlogp) of its variants.|
+
+### Documentation
+
+| File |  Description  |
+|---|---|
+|[PREFIX]_lof.log| Merged logs of all runs.|

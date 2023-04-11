@@ -1,0 +1,5 @@
+##fileformat=VCFv4.2
+##filedate=[DATE]
+##FORMAT=<ID=GP,Number=G,Type=Float,Description="Estimated Genotype Probability">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	[SAMPLES]

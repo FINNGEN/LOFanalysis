@@ -8,7 +8,8 @@ import argparse
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Build Docker file for variant filtering")
-
+    parser.add_argument("--docker", type= str,
+                    help="name of image",default = 'Dockerfile')
     parser.add_argument("--image", type= str,
                         help="name of image",default = 'lof')
     parser.add_argument("--version", type= str,
@@ -18,11 +19,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     docker_path = "eu.gcr.io/finngen-refinery-dev/"
-    cmd = f"docker build -t {docker_path}{args.image}:{args.version} -f Dockerfile .. {args.args}"    
+    cmd = f"docker build -t {docker_path}{args.image}:{args.version} -f {args.docker} .. {args.args}"
     print(cmd)
     call(shlex.split(cmd))
 
     if args.push:
-        cmd = f"docker -- push {docker_path}{args.image}:{args.version}"       
+        cmd = f"docker -- push {docker_path}{args.image}:{args.version}"
         call(shlex.split(cmd))
-

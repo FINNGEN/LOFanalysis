@@ -1,55 +1,43 @@
 # LOFanalysis
 
-This script generates the lof variants and outputs the gene_to_sample matrix based on the info score of the batch
+Regenie pipeline for LOF.
+Burden mode for regenie is used. This pipeline does all the work from annotation/vcfs to results. 
 
-## lof.py
-Usage:
+# WDL
+The wdl(wdl/regenie_lof.wdl) runs the whole pipeline.
+The first step is the extraction of LOF variants. The task `extract_variants` does the job. It also filters out common variants (`regenie_lof.max_maf` input) and low quality imputed variants (`regenie_lof.extract_variants.info_filter`)
+
 ```
-usage: lof.py [-h]
-                   (--annotation ANNOTATION | --lof_variants LOF_VARIANTS) -o
-                   OUT_PATH -c CHROM --vcf VCF --lof {hc_lof,most_severe}
-                   [--info_score INFO_SCORE] [-s SAMPLE_FILE] [--cpus CPUS]
-                   [--force] [--test]
+chr10_1020846_AG_A	IDI2	frameshift_variant
+chr10_102733581_C_T	SFXN2	stop_gained
+chr10_103090970_C_CCAGA	NT5C2	frameshift_variant
+chr10_103246174_C_T	RPEL1	stop_gained
+chr10_103419670_C_T	PDCD11	stop_gained
+chr10_103449599_CAG_C	CALHM2	frameshift_variant
+chr10_103455672_G_A	CALHM1	stop_gained
+chr10_103473333_C_T	CALHM3	stop_gained
+chr10_113595655_G_A	NRAP	stop_gained
+chr10_113597145_TG_T	NRAP	frameshift_variant
 ```
-### Inputs:
-One between:\
-`--annotation ` tsv.gz file with columns named gene and `$LOF`. It's used for mapping a variant to gene and LOF\
-`--lof_variants` tsv file where the first column is the variant and the second is the gene. It's the output of the previous flag.\
-One between:\
-`--hard-call HARD_CALL ` Float at which to convert the GP to boolean \
-`--gp0 ` Works with GP = 0
 
-Required:\
-`--lof` : type of LOF. At the moment it accepts `most_severe` and `hc_lof`\
-`-o` : out path\
-`--vcf` : path to vcf file \
-`-c` : chromsome number 
+The variants are then passed to `convert_vcf` and then to `merge` to build a single bgen with only lof varirants.
 
+From there a scatter takes each pheno and runs the `regenie` task, where the association takes place.
 
-Optional:\
-`--samples ` : File with list of samples to use.\
-`--cpus `: Number of parallel processes to run, by default the number of cpus of the machine\
-`--test`  : accepts an integer which is the number of genes to run per cpu. By deafult 0, which runs all genes \
-`--info-score` : float value for which to filter the INFO SCORE of variants
+The task `merge_results` then produces all files needed for release:
+- a readme file
+- all hits sorted by logp
+- merged logs
+- a summary of the results only including sig hits and sorted by difference between mlgop and max(mlogp) of the variants in the gene
+- the file required for sql import
 
-### How it works
+##
 
-The script first reads through the annotated file and saves the LOF carry variants, according to the type of LOF requested. It also builds a variant_to_gene dict.\
-Then the variants are split into chunks for speedup purposes. For each variant chunk a `bcftools` command filter the vcf for those positions and returns the probability of GP=0 for the variant in a variant to sample matrix.\
-Finally, the variant chunks are merged and transposed so a final sample to variant to matrix is built.\
-Now variants are merged into genes with the sample to gene value being 1 minus the product of the GP=0 for each variant to obtain the final gene to sample variant. Alternatively one can force a cutoff to convert the probabilities into boolean values.
+Relevant inputs:
 
-## Docker
-
-The `./Docker` folder contains the script `build_docker.py` which builds the docker. `sudo python3 build_docker.py --version $VERSION` is the command to run it. 
-Once the docker is tested, it's enough to rerun `build_docker.py` with the `--push` flag and it will be pushed to gcloud.
-
-## wdl
-
-
-The wdl runs the following steps:
-1) it generates the LOF matrix for each chromosomes 
-2) it merges the matrix into one single files 
-3) it extracts the phenotype names from the null data 
-4) it runs SAIGE for each pheno 
-5) it merges the results and sorts them by pval
+`extract_variants.annot_file`: File with lof, AF and info score data. All information is extracted automatically from header names.'\
+`merge.bargs`: the vcf--> bgen conversion params \
+`extract_variants.lof_list`: the list of lof keywords to include \
+`regenie.cov_file`: self explanatory, where the covariate and pheno data is located \
+`regenie.masks_type`: the bgen parameter that determines the merging logic for variants into genes \
+`regenie.bargs` : all other regenie args.

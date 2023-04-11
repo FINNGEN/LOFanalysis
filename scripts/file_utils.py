@@ -1,13 +1,28 @@
-import os.path
+import os.path,logging
 import time,sys,os,mmap,gzip,subprocess
 import numpy as np
 from functools import partial
-import multiprocessing,csv 
+import multiprocessing,csv
+from halo import Halo
+from itertools import cycle
+
+
 cpus = multiprocessing.cpu_count()
 
 mem_bytes = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')  # e.g. 4015976448
 mem_mib = mem_bytes/(1024.**2) 
 proc_mem = mem_mib / (cpus +1)
+
+
+
+log_levels = {
+    'critical': logging.CRITICAL,
+    'error': logging.ERROR,
+    'warn': logging.WARNING,
+    'warning': logging.WARNING,
+    'info': logging.INFO,
+    'debug': logging.DEBUG
+}
 
 def get_progress_test(args):
     
@@ -76,10 +91,8 @@ def progressBar(value, endvalue, bar_length=20):
     percent = float(value) / endvalue
     arrow = '-' * int(round(percent * bar_length)-1) + '>'
     spaces = ' ' * (bar_length - len(arrow))
-
-    sys.stdout.write("\rPercent: [{0}] {1}%".format(arrow + spaces, int(round(percent * 100))))
+    sys.stdout.write("\rPercent: [{0}] {1}%".format(arrow + spaces, int(round(percent * 100))) + f" [{value}/{endvalue}]")
     sys.stdout.flush()
-
 
 
 def identify_separator(f):
@@ -247,11 +260,32 @@ def tmp_bash(cmd,check = False):
     os.chmod(scriptFile.name,0o777)
     scriptFile.file.close()
 
+    
     if check:
         subprocess.check_call(scriptFile.name)
     else:
         subprocess.call(scriptFile.name,stderr = subprocess.DEVNULL)
+    
 
+@Halo(text='Running', spinner='dots')
+def spin_bash(cmd,check = False):
+    from tempfile import NamedTemporaryFile
+
+    scriptFile = NamedTemporaryFile(delete=True)
+    with open(scriptFile.name, 'w') as f:
+        f.write("#!/bin/bash\n")
+        f.write(cmd + "\n")
+
+    os.chmod(scriptFile.name,0o777)
+    scriptFile.file.close()
+
+    
+    if check:
+        subprocess.check_call(scriptFile.name)
+    else:
+        subprocess.call(scriptFile.name,stderr = subprocess.DEVNULL)
+    print('\ndone.')
+    
 def natural_sort(l):
     import re
     convert = lambda text: int(text) if text.isdigit() else text.lower() 
@@ -259,11 +293,7 @@ def natural_sort(l):
     return sorted(l, key = alphanum_key)
 
 
-def pad(s):
-    '''
-    Prepend/append an empty space to the input.
-    '''
-    return ' ' + str(s) + ' '
+
 
 def return_header(f):
     open_func = return_open_func(f)
@@ -310,3 +340,7 @@ class StoreDictKeyPair(argparse.Action):
          setattr(namespace, self.dest, my_dict)
 
 
+def int_or_float(x):
+    if int(x)==float(x):
+        return int(x)
+    return float(x)
