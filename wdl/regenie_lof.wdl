@@ -3,7 +3,7 @@ version development
 workflow regenie_lof {
 
   input {
-    File null_map
+    File pheno_list
     Float max_maf
     Float info_filter
     Array[String] lof_list
@@ -24,14 +24,13 @@ workflow regenie_lof {
   # merge lof chroms + build vcf/bgen
   call merge    { input: docker = docker, vcfs = convert_vcf.chrom_lof_vcf}
 
-  Array[Array[String]] pheno_data = read_tsv(null_map)
+  #Array[Array[String]] pheno_data = read_tsv(null_map)
+  Array[String] phenos = read_lines(pheno_list)
   
-  scatter ( p_data in pheno_data) {
-    String pheno = p_data[0]
+  scatter ( pheno in phenos) {
     call regenie {
       input :
       pheno = pheno,
-      null = p_data[1],
       prefix=prefix,
       lof_variants = extract_variants.lof_variants,
       sets=extract_variants.sets,
@@ -163,7 +162,7 @@ task regenie{
     File lof_bgen
     File cov_file
     String pheno
-    File null
+    String null_root
     File sets
     File mask
     File lof_variants
@@ -177,6 +176,7 @@ task regenie{
     Int mlogp_filter
   }
 
+  File null = sub(null_root,"PHENO",pheno)
   Int disk_size = ceil(size(lof_bgen,"GB"))*2 + 10
   File lof_index =  lof_bgen + ".bgi"
   File lof_sample = lof_bgen + ".sample"
