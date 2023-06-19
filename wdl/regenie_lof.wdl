@@ -11,11 +11,11 @@ workflow regenie_lof {
     String docker
     String prefix
     Int mlogp_filter
-    
+    Int gene_variants_min_count
   }
 
   # get lof variants
-  call extract_variants { input: docker = docker, max_maf = max_maf,info_filter=info_filter,lof_list=lof_list}
+  call extract_variants { input: docker = docker, max_maf = max_maf,info_filter=info_filter,lof_list=lof_list,gene_variants_min_count=gene_variants_min_count}
   # subset vcf to lof variants in each chrom
   scatter (chrom in chrom_list){
     call convert_vcf {input: docker = docker,chrom=chrom,lof_variants = extract_variants.lof_variants }
@@ -362,6 +362,7 @@ task extract_variants {
     Array[String] lof_list
     Float max_maf
     Float info_filter
+    Int gene_variants_min_count
   }
 
   Int disk_size = ceil(size(annot_file,'GB'))*2 + 10
@@ -380,7 +381,7 @@ task extract_variants {
   zcat ~{annot_file} | awk -v OFS='\t' -v c1=$AIND -v c2=$IIND -v c3=$GIND -v c4=$MIND '{print $1,$c1,$c2,$c3,$c4}' | awk '$2 < ~{max_maf} || $2 > ~{1-max_maf}' | awk '$3 > ~{info_filter}' |  grep -wf ~{write_lines(lof_list)} |  tr ':' '_' | awk '{print "chr"$0}' | cut -f 1,4,5 > tmp.txt
 
   # keep only genes with >1 variants
-  cat tmp.txt| awk '{print $1"\t"$2"_GENESTRING\t"$3}' | grep -wf <(cut -f2 tmp.txt | sort | uniq -c | awk '{$1=$1;print}' | awk '$1>1' | cut -d " " -f2 | sort -k1 | awk '{print $1"_GENESTRING"}') | sed 's/_GENESTRING//g'  > lof_variants.txt
+  cat tmp.txt| awk '{print $1"\t"$2"_GENESTRING\t"$3}' | grep -wf <(cut -f2 tmp.txt | sort | uniq -c | awk '{$1=$1;print}' | awk '$1>=~{gene_variants_min_count}' | cut -d " " -f2 | sort -k1 | awk '{print $1"_GENESTRING"}') | sed 's/_GENESTRING//g'  > lof_variants.txt
   
   while read GENE
   do 	GENE_DATA=$( cat lof_variants.txt | grep -E "(^|[[:space:]])$GENE(\$|[[:space:]])"  | cut -f1 | tr '\n' ',' ) && paste <(echo $GENE) <(echo $GENE_DATA| head -n1 | tr '_' '\t' | sed 's/chr//g' | cut -f -2) <(echo $GENE_DATA| sed 's/.$//' )  >> ./sets.tsv
