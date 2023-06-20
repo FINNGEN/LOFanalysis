@@ -13,7 +13,7 @@
     "regenie_lof.regenie.null_root": "gs://r11-data/regenie/release/loco/R11_GRM_V0_LD_0.2.PHENO.loco.gz",
     "regenie_lof.regenie.cov_file": "gs://finngen-production-library-red/finngen_R11/analysis_covariates/R11_COV_PHENO_V0.FID.txt.gz",
     "regenie_lof.extract_variants.annot_file":"gs://finngen-production-library-green/finngen_R11/finngen_R11_analysis_data/annotations/R11_annotated_variants_v1.small.gz",
-    "regenie_lof.convert_vcf.vcf_root": "gs://finngen-production-library-red/finngen_R11/genotype_1.0/data/finngen_R11_chr9.vcf.gz",
+    "regenie_lof.convert_vcf.vcf_root": "gs://finngen-production-library-red/finngen_R11/genotype_1.0/data/finngen_R11_chrCHROM.vcf.gz",
     "regenie_lof.regenie.sumstats_root": "gs://r11-data/regenie/release/summary_stats/PHENO.gz",
 
     #DOCKERS
