@@ -30,6 +30,7 @@ Array[String] chrom_list =  ["1","2","3","4","5","6","7","8","9","10","11","12",
     call regenie {
       input :
       docker = regenie_docker,
+      cov_file = cov_file,
       pheno = pheno,
       null = p_data[1],
       prefix=prefix,
@@ -118,6 +119,7 @@ task regenie{
   input {
     String docker
     File lof_bgen
+    File cov_file
     String pheno
     File null
     File sets
@@ -128,7 +130,6 @@ task regenie{
   }
 
 
-  File cov_file = "gs://finngen-production-library-red/finngen_R12/analysis_covariates/R12_COV_PHENO_V2.FID.txt.gz"
   String covariates = "SEX_IMPUTED,AGE_AT_DEATH_OR_END_OF_FOLLOWUP,PC{1:10},IS_FINNGEN2_CHIP,BATCH_DS1_BOTNIA_Dgi_norm,BATCH_DS10_FINRISK_Palotie_norm,BATCH_DS11_FINRISK_PredictCVD_COROGENE_Tarto_norm,BATCH_DS12_FINRISK_Summit_norm,BATCH_DS13_FINRISK_Bf_norm,BATCH_DS14_GENERISK_norm,BATCH_DS15_H2000_Broad_norm,BATCH_DS16_H2000_Fimm_norm,BATCH_DS17_H2000_Genmets_norm_relift,BATCH_DS18_MIGRAINE_1_norm_relift,BATCH_DS19_MIGRAINE_2_norm,BATCH_DS2_BOTNIA_T2dgo_norm,BATCH_DS20_SUPER_1_norm_relift,BATCH_DS21_SUPER_2_norm_relift,BATCH_DS22_TWINS_1_norm,BATCH_DS23_TWINS_2_norm_nosymmetric,BATCH_DS24_SUPER_3_norm,BATCH_DS25_BOTNIA_Regeneron_norm,BATCH_DS3_COROGENE_Sanger_norm,BATCH_DS4_FINRISK_Corogene_norm,BATCH_DS5_FINRISK_Engage_norm,BATCH_DS6_FINRISK_FR02_Broad_norm_relift,BATCH_DS7_FINRISK_FR12_norm,BATCH_DS8_FINRISK_Finpcga_norm,BATCH_DS9_FINRISK_Mrpred_norm"
 
   String mask_type = "max"
