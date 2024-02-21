@@ -1,0 +1,11 @@
+{
+    "regenie_lof.null_map": "gs://finngen-production-library-green/lof/demo_map.txt",
+    "regenie_lof.prefix": "finngen_SB",
+    "regenie_lof.cov_file": "gs://finngen-production-library-red/finngen_R12/analysis_covariates/R12_COV_PHENO_V2.FID.txt.gz",
+    "regenie_lof.lof_list": ["frameshift_variant","splice_donor_variant","stop_gained","splice_acceptor_variant"],
+    "regenie_lof.max_maf": 0.01,
+
+    "regenie_lof.extract_variants.info_filter": 0.8,
+    "regenie_lof.extract_variants.gene_variants_min_count": 1,
+
+}
