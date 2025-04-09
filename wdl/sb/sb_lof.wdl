@@ -6,39 +6,47 @@ workflow regenie_lof {
     File null_map
     Array[String] lof_list
     String prefix
+    File pheno_file
     File cov_file
+
+    String covariates
     Float max_maf
+    Boolean is_binary
   }
 
   String bio_docker = "eu.gcr.io/finngen-refinery-dev/bioinformatics:0.8"
   String regenie_docker = "eu.gcr.io/finngen-refinery-dev/regenie:3.3_r12_cond"
 
-  call validate_inputs {input :null_map = null_map,cov_file = cov_file,prefix = prefix,lof_list = lof_list, docker = bio_docker}
+  # read in phenotypes
+  Array[String] phenos = transpose(read_tsv(null_map))[0]
+    call validate_inputs{input: phenolist=phenos, covariates = covariates, cov = cov_file,pheno = pheno_file, is_binary=is_binary,docker=bio_docker}
 
   call extract_variants { input: docker = bio_docker, max_maf = max_maf,lof_list=lof_list}
 
   # subset vcf to lof variants in each chrom
-Array[String] chrom_list =  ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22"]
+  Array[String] chrom_list =  ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22"]
   scatter (chrom in chrom_list){
     call convert_vcf {input: docker = bio_docker,chrom=chrom,lof_variants = extract_variants.lof_variants }
   }
 
   call merge  { input: docker = bio_docker, vcfs = convert_vcf.chrom_lof_vcf}
 
-  scatter ( p_data in read_tsv(null_map)) {
-    String pheno = p_data[0]
+  Map[String,File] pheno_null_map =read_map(null_map)
+  scatter ( pheno in validate_inputs.validated_phenotypes) {
     call regenie {
       input :
-      docker = regenie_docker,
-      cov_file = cov_file,
       pheno = pheno,
-      null = p_data[1],
+      docker = regenie_docker,
+      cov_file = validate_inputs.validated_cov_pheno_file,
+      covariates = validate_inputs.validated_covariates,
+      null = pheno_null_map[pheno],
       prefix=prefix,
       lof_variants = extract_variants.lof_variants,
       sets=extract_variants.sets,
       mask=extract_variants.mask,
       bins = max_maf,
       lof_bgen = merge.lof_bgen,
+      is_binary = is_binary
     }
   }
 
@@ -121,19 +129,19 @@ task regenie{
     File lof_bgen
     File cov_file
     String pheno
+    String covariates
     File null
     File sets
     File mask
     File lof_variants
     String prefix
     String bins
+    Boolean is_binary
   }
 
 
-  String covariates = "SEX_IMPUTED,AGE_AT_DEATH_OR_END_OF_FOLLOWUP,PC{1:10},IS_FINNGEN2_CHIP,BATCH_DS1_BOTNIA_Dgi_norm,BATCH_DS10_FINRISK_Palotie_norm,BATCH_DS11_FINRISK_PredictCVD_COROGENE_Tarto_norm,BATCH_DS12_FINRISK_Summit_norm,BATCH_DS13_FINRISK_Bf_norm,BATCH_DS14_GENERISK_norm,BATCH_DS15_H2000_Broad_norm,BATCH_DS16_H2000_Fimm_norm,BATCH_DS17_H2000_Genmets_norm_relift,BATCH_DS18_MIGRAINE_1_norm_relift,BATCH_DS19_MIGRAINE_2_norm,BATCH_DS2_BOTNIA_T2dgo_norm,BATCH_DS20_SUPER_1_norm_relift,BATCH_DS21_SUPER_2_norm_relift,BATCH_DS22_TWINS_1_norm,BATCH_DS23_TWINS_2_norm_nosymmetric,BATCH_DS24_SUPER_3_norm,BATCH_DS25_BOTNIA_Regeneron_norm,BATCH_DS3_COROGENE_Sanger_norm,BATCH_DS4_FINRISK_Corogene_norm,BATCH_DS5_FINRISK_Engage_norm,BATCH_DS6_FINRISK_FR02_Broad_norm_relift,BATCH_DS7_FINRISK_FR12_norm,BATCH_DS8_FINRISK_Finpcga_norm,BATCH_DS9_FINRISK_Mrpred_norm"
-
   String mask_type = "max"
-  String bargs = "--bt --bsize 400 --gz --firth --approx --pThresh 0.01 --firth-se --ref-first"
+  String bargs = "--bsize 400 --gz --firth --approx --pThresh 0.01 --firth-se --ref-first"
   
   Int disk_size = ceil(size(lof_bgen,"GB"))*2 + 10
   File lof_index =  lof_bgen + ".bgi"
@@ -143,7 +151,7 @@ task regenie{
   Int cpus = 2
   Int mem = ceil(size(lof_bgen,"GB"))*4*cpus
   String regenie_results = prefix + "_lof_" + pheno + ".regenie.gz"
-
+  String bin_qt = if is_binary == true then "--bt" else "--qt"
 
   
   command <<<
@@ -151,7 +159,7 @@ task regenie{
 
   # REGENIE
   cat ~{write_map(pheno_map)} > pred.txt
-  time regenie --step 2 --out ./~{prefix}_lof --threads $CPUS  ~{bargs}  --bgen ~{lof_bgen} --sample ~{lof_sample} --pred pred.txt    --phenoFile ~{cov_file} --covarFile ~{cov_file} --phenoColList ~{pheno} --covarColList ~{covariates} --aaf-bins ~{bins}  --build-mask ~{mask_type} --mask-def ~{mask} --set-list ~{sets} --anno-file ~{lof_variants}
+  time regenie --step 2 ~{bin_qt} --out ./~{prefix}_lof --threads $CPUS  ~{bargs}  --bgen ~{lof_bgen} --sample ~{lof_sample} --pred pred.txt    --phenoFile ~{cov_file} --covarFile ~{cov_file} --phenoColList ~{pheno} --covarColList ~{covariates} --aaf-bins ~{bins}  --build-mask ~{mask_type} --mask-def ~{mask} --set-list ~{sets} --anno-file ~{lof_variants}
   echo ~{cpus} ~{mem} $CPUS
   wc -l pred.txt
   >>>
@@ -325,76 +333,159 @@ task extract_variants {
 
 
 task validate_inputs {
-
   input {
-    File null_map
-    Array[String] lof_list
-    String prefix
-    File cov_file
+    Array[String] phenolist
+    String covariates
+    File cov
+    File pheno
+    Boolean is_binary
+    Int minimum_samples_in_group = 5
     String docker
   }
 
-  Int disk = ceil(size(cov_file,'GB'))*2
-  Int mem = disk + 10
 
-
+  output {
+    Array[String] validated_phenotypes = read_lines("validated_phenotypes")
+    File validated_cov_pheno_file = "validated_cov_pheno.tsv.gz"
+    String validated_covariates = read_string("validated_covariates")
+  }
   command <<<
 
-  # GREP ALL STRINGS INTO A SINGLE FILE AND THEN CHECK FOR ERROR THERE
-  grep -vP '^[a-zA-Z0-9_.-]*$' <( cut -f1 ~{null_map}) >> tmp.txt
-  grep -vP '^[a-zA-Z0-9_.-]*$' ~{write_lines(lof_list)} >> tmp.txt
-  grep -vP '^[a-zA-Z0-9_.-]*$' <( echo ~{prefix}) >> tmp.txt
-  grep -vP '^[a-zA-Z0-9_.-]*$' <(zcat -f ~{cov_file} | head -n1 | tr "\t" "\n") >> tmp.txt
+    set -eux
+    # check phenolist. It should contain only endpoints.
+    cat << "__EOF__" > validate.py
+    ##
+    # This script does for the following:
+    # - Check that all covariates are in covariate file
+    # - check that all endpoints are in endpoint file
+    # - Check that each endpoint has at least minimum_samples_in_group samples, and at least 5 samples, even after joining with covariates.
+    #   - Missing values in endpoints OR covariates are filtered out. Missing values are coded as NA.
+    # - Take phenotype column indices, for later joining with covariate file. 
+    # 
+    ##
+    import sys
+    import re
+    import gzip
+    from collections import defaultdict as dd
+    from contextlib import contextmanager
 
-  set -o pipefail
-  if grep -q . tmp.txt; then
-      echo "Irregular pattern found " >&2
-      cat tmp.txt >&2
-      exit 1
-  else
-      :
-  fi
+    @contextmanager
+    def uopen(fname,oper_type):
+        """
+        Universal opener
+        Open both gzipped and plaintext files with no fuzz
+        """
+        gz_magicnumber=b"\x1f\x8b"
+        type="normal"
+        with open(fname,"rb") as f:
+            if f.read()[0:2] == gz_magicnumber:
+                type="gz"
+        if type=="normal":
+            with open(fname,oper_type) as f:
+                yield f
+        elif type == "gz":
+            with gzip.open(fname,oper_type) as f:
+                yield f
+        else:
+            raise Exception("invalid file format")
+    ## input values
+    cov_file = sys.argv[1]
+    pheno_file = sys.argv[2]
+    is_binary = sys.argv[3] == "true"
+    phenos = sys.argv[4].split(",")
+    covariates = sys.argv[5].split(",")
+    minimum_samples_in_group = max(int(sys.argv[6]),5)
+    ## filter out expandable covariates (e.g. "PC{1:10}"), to be expanded later
+    filtered_covars = [a for a in covariates if "{" not in a]
+    ## create expanded covariates, and add them to list of variants
+    expand_covars = [a for a in covariates if "{" in a]
+    for v in expand_covars:
+        v_base = v.split("{")[0]
+        v_r_start,v_r_end = v.split("{")[1].split("}")[0].split(":")[0:2]
+        start = int(v_r_start)
+        end = int(v_r_end)
+        for i in range(start,end+1):
+            filtered_covars.append(f"{v_base}{i}")
+    ## check that all phenotypes are alphanumeric+"-_"
+    phenomatch = lambda x:bool(re.fullmatch("[a-zA-Z0-9_-]*",x))
+    if not all([phenomatch(a) for a in phenos]):
+        raise Exception(f"Not all endpoints were alphanumeric! Here are the invalid phenotypes:{[a for a in phenos if not phenomatch(a)]}")
+    ## Check that each phenotype has at least minimum_samples_in_group samples, in both cases and controls or in total if quantitative endpoints
+    ## Also take in phenotype column numbers now for easier join later
+    pheno_colnumbers = []
+    with uopen(pheno_file,"rt") as pheno_f, uopen(cov_file,"rt") as cov_f:
+        pheno_h = pheno_f.readline().strip().split("\t")
+        phdi = {a:i for i,a in enumerate(pheno_h)}
+        pheno_colnumbers = [phdi[a]+1 for a in phenos]
+        cov_h = cov_f.readline().strip().split("\t")
+        # check that each covariate is in cov file
+        if not all([a in cov_h for a in filtered_covars]):
+            raise Exception(f"covariates {[a for a in filtered_covars if a not in cov_h]} not in covariate file!")
+        chdi = {a:i for i,a in enumerate(cov_h)}
+        pheno_samples = dd(lambda : dd(set))
+        if is_binary:
+            for line in pheno_f:
+                cols = line.strip().split("\t")
+                sample = cols[phdi["IID"]]
+                for p in phenos:
+                    val = cols[phdi[p]]
+                    pheno_samples[p][val].add(sample)
+        else:
+            for line in pheno_f:
+                cols = line.strip().split("\t")
+                sample = cols[phdi["IID"]]
+                for p in phenos:
+                    if cols[phdi[p]] !="NA":
+                        pheno_samples[p]["quant"].add(sample)
+        #read all samples in covariate file
+        #Check that covariates are not NA. Regenie reads "NA" as a missing value, even though it is not being said in the documentation.
+        cov_samples = set()
+        for line in cov_f:
+            add=True
+            cols = line.strip().split("\t")
+            for c in filtered_covars:
+                if cols[chdi[c]] == "NA":
+                    add=False
+            if add:
+                cov_samples.add(cols[chdi["IID"]])
+        # for each pheno, check that there are enough samples per endpoint
+        bin_groups = {"0":"controls","1":"cases"}
+        for p in phenos:
+            if is_binary:
+                for group in ["0","1"]:
+                    n_samples = len(pheno_samples[p][group].intersection(cov_samples))
+                    if n_samples < minimum_samples_in_group:
+                        raise Exception(f"There are not enough samples with with covariate data for phenotype {p} and group '{bin_groups[group]}'! There are {len(cov_samples)} samples with covariate data, {len(pheno_samples[p][group])} samples for {p} {bin_groups[group]}, but their intersection is only {n_samples} samples, less than minimum allowed {minimum_samples_in_group}")
+            else:
+                n_pheno_samples = len(pheno_samples[p]["quant"])
+                n_samples = len(pheno_samples[p]["quant"].intersection(cov_samples))
+                if n_samples < minimum_samples_in_group:
+                    raise Exception(f"There are not enough samples with covariate data for quantitative phenotype {p}! There are {len(cov_samples)} samples with covaria tedata, {n_pheno_samples} samples for phenotype {p}, but their intersection is only {n_samples} samples, less than minimum allowed {minimum_samples_in_group}")
+    with open("validated_phenotypes","w") as f:
+        for p in phenos:
+            f.write(f"{p}\n")
+    with open("validated_covariates","w") as f:
+        f.write(",".join(covariates))
+    with open("pheno_columns_to_take","w") as f:
+        f.write(",".join(map(str,[1]+pheno_colnumbers)))
+    __EOF__
+    # validate the shape and types of the phenotype file
+    python3 validate.py ~{cov} ~{pheno} ~{is_binary} "~{sep=","  phenolist}" "~{covariates}" ~{minimum_samples_in_group}
 
-  # write all columns to file
-  cut -f1 ~{null_map} > phenos.txt
-  # python code that checks if columns are valid in terms of case count
-  python3 <<CODE
-  import sys
-  import pandas as pd
-  import numpy as np
+    # join files
+    PHENOCOLS=$(cat pheno_columns_to_take)
+    join --header -1 1 -2 1 -t $'\t' \
+        <(cat <(zcat -f ~{cov}|head -n1) <(zcat -f ~{cov}|tail -n+2|sort -k1)) \
+        <(cat <(zcat -f ~{pheno}|head -n1) <(zcat -f ~{pheno}|tail -n+2|sort -k1)|cut -f "$PHENOCOLS") \
+gzip > validated_cov_pheno.tsv.gz 
 
-  pheno_file='~{cov_file}'
-  with open("phenos.txt") as i:cols=[elem.strip() for elem in i.readlines()]
-  print(f"{len(cols)} columns left to analyze")
-
-  # read first 10k lines to filter out most problematic phenos and float
-  df = pd.read_csv(pheno_file,engine='python',usecols=cols,sep=None,index_col=None,nrows = 1000).select_dtypes(include='number').astype(bool)
-
-  # cols that do not pass the test
-  check_cols = list(df.columns[np.where(df.sum(axis=0).lt(5))])
-  print(f"{len(check_cols)} columns left to analyze")
-  if not check_cols:sys.exit(0) #exit without error if all good
-  
-  df = pd.read_csv(pheno_file,sep="\t",index_col=None,usecols=check_cols,dtype=float).astype(bool)
-  cols = list(df.columns[np.where(df.sum(axis=0).lt(5))])
-  if cols:print(f"{cols} do not have at least 5 cases")
-
-  #invert logically DF and check for controls
-  or_cols = list(df.columns[np.where((~df).sum(axis=0).lt(5))])
-  if or_cols:print(f"{or_cols} do not have at least 5 controls")
-
-  print(len(cols),len(or_cols))
-  if cols+or_cols:sys.exit("Error")
-
-  CODE
+    
   >>>
-
-    runtime {
-    docker: "~{docker}"
+  runtime {
+    preemptible: 2
+    disks: "local-disk 20 HDD"
+    docker: "${docker}"
     cpu: 1
-    disks:  "local-disk ~{disk} HDD"
-    memory: "~{mem} GB"
     zones: "europe-west1-b europe-west1-c europe-west1-d"
-    preemptible : 1
+    memory: "4 GB"
   }
-}
