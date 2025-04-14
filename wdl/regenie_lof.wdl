@@ -366,31 +366,42 @@ task extract_variants {
   }
 
   Int disk_size = ceil(size(annot_file,'GB'))*2 + 10
-  Float upper_maf = 1- max_maf
   
   command <<<
 
-  # GET COL NAMES AND NUMBERS
-  GIND=$(zcat ~{annot_file} | head -n1 |   tr '\t' '\n' | nl -nln |  grep -w "gene_most_severe" | cut -f1)
-  MIND=$(zcat ~{annot_file} | head -n1 |   tr '\t' '\n' | nl -nln |  grep -w "most_severe" | cut -f1)
-  IIND=$(zcat ~{annot_file} | head -n1 |   tr '\t' '\n' | nl -nln |  grep -w "INFO" | cut -f1)
-  AIND=$(zcat ~{annot_file} | head -n1 |   tr '\t' '\n' | nl -nln |  grep -w "AF" | cut -f1)
+  # Extract variables
+  annot_file=~{annot_file}	       
+  max_maf=~{max_maf}
+  info_filter=~{info_filter}
+  lof_list=~{write_lines(lof_list)}
+  gene_variants_min_count=~{gene_variants_min_count}
   
-  echo $GIND $MIND $IIND $AIND
+  # Get column indices
+  # Get column indices
+  GIND=$(zcat -f "${annot_file}" | head -1 | awk -F'\t' '{for(i=1; i<=NF; i++) if($i == "gene_most_severe") {print i; exit;}}')
+  MIND=$(zcat -f "${annot_file}" | head -1 | awk -F'\t' '{for(i=1; i<=NF; i++) if($i == "most_severe") {print i; exit;}}')
+  AIND=$(zcat -f "${annot_file}" | head -1 | awk -F'\t' '{for(i=1; i<=NF; i++) if($i == "AF") {print i; exit;}}')
+  IIND=$(zcat -f "${annot_file}" | head -1 | awk -F'\t' '{for(i=1; i<=NF; i++) if($i == "INFO") {print i; exit;}}')
 
-  zcat ~{annot_file} | awk -v OFS='\t' -v c1=$AIND -v c2=$IIND -v c3=$GIND -v c4=$MIND '{print $1,$c1,$c2,$c3,$c4}' | awk '$2 < ~{max_maf} || $2 > ~{1-max_maf}' | awk '$3 > ~{info_filter}' |  grep -wf ~{write_lines(lof_list)} |  tr ':' '_' | awk '{print "chr"$0}' | cut -f 1,4,5 > tmp.txt
+  echo "$GIND $MIND $IIND $AIND"
+  #SUBSET ONLY TO VARIANTS WITH MAX MAF < THRESHOLD, INFO_FILTER > THRESHOLD AND WITH LOF VARIANTS
+  zcat "${annot_file}" | 
+      awk -v OFS='\t' -v c1="$AIND" -v c2="$IIND" -v c3="$GIND" -v c4="$MIND" '{print $1,$c1,$c2,$c3,$c4}' |
+      awk -v max_maf="${max_maf}" '$2 < max_maf || $2 > 1-max_maf' |
+      awk -v info_filter="${info_filter}" '$3 > info_filter' |
+      grep -wf ${lof_list} |
+      tr ':' '_' |
+      awk '{print "chr"$0}' | 
+      cut -f 1,4,5 | sort > tmp.txt
+  
 
-  # keep only genes with >1 variants
-  cat tmp.txt| awk '{print $1"\t"$2"_GENESTRING\t"$3}' | grep -wf <(cut -f2 tmp.txt | sort | uniq -c | awk '{$1=$1;print}' | awk '$1>=~{gene_variants_min_count}' | cut -d " " -f2 | sort -k1 | awk '{print $1"_GENESTRING"}') | sed 's/_GENESTRING//g'  > lof_variants.txt
-  
-  while read GENE
-  do 	GENE_DATA=$( cat lof_variants.txt | grep -E "(^|[[:space:]])$GENE(\$|[[:space:]])"  | cut -f1 | tr '\n' ',' ) && paste <(echo $GENE) <(echo $GENE_DATA| head -n1 | tr '_' '\t' | sed 's/chr//g' | cut -f -2) <(echo $GENE_DATA| sed 's/.$//' )  >> ./sets.tsv
-  done < <(cut -f2 lof_variants.txt | sort  | uniq )
-  
-  paste <( echo "Mask1") <(cut -f 3 lof_variants.txt  | sort | uniq | tr '\n' ',' | sed 's/.$//') > ./mask.txt
-  
+  # keep only genes with >= COUNT variants
+  awk -F'\t' '{gene=$2; variant=$1; if(!(gene in variants)){variants[gene]=variant; count[gene]=1} else {variants[gene]=variants[gene] "," variant; count[gene]++}} END {for(gene in variants){print gene "\t" count[gene] "\t" variants[gene]}}' tmp.txt | sort | awk -v min_count="${gene_variants_min_count}" '$2>=min_count' > sets.tsv
 
-  
+  # NOW I NEED TO SUBSET THE VARIANTS AND GENERATE THE MASK
+  cat sets.tsv  | cut -f3 | tr ',' '\n' | sort > lof_variants.txt
+  paste <( echo "Mask1") <(join -t $'\t'  lof_variants.txt  tmp.txt | cut -f 3 | sort | uniq | tr '\n' ',') > ./mask.txt
+
   >>>
   runtime {
     docker: "~{docker}"
