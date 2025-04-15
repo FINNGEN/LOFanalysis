@@ -19,7 +19,7 @@ workflow regenie_lof {
 
   # read in phenotypes
   Array[String] phenos = transpose(read_tsv(null_map))[0]
-    call validate_inputs{input: phenolist=phenos, covariates = covariates, cov = cov_file,pheno = pheno_file, is_binary=is_binary,docker=bio_docker}
+  call validate_inputs{input: phenolist=phenos, covariates = covariates, cov = cov_file,pheno = pheno_file, is_binary=is_binary,docker=bio_docker}
 
   call extract_variants { input: docker = bio_docker, max_maf = max_maf,lof_list=lof_list}
 
