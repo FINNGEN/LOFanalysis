@@ -10,6 +10,8 @@ workflow regenie_lof_exome_custom {
     File? custom_variants
     File? custom_sets
     File? custom_mask
+    String? bins_aaf
+    String max_maf 
     # REGENIE PARAMS
     File pheno_file
     File cov_file
@@ -25,15 +27,15 @@ workflow regenie_lof_exome_custom {
   Array[File?] custom_inputs = [custom_variants,custom_sets,custom_mask]
   # if even just one is not defined, we resort back to default
   if (length(select_all(custom_inputs)) != 3) {
-    call extract_variants { input: docker = bio_docker}
-  
+    call extract_variants { input: docker = bio_docker,max_maf = max_maf}
   }
+
+  
   File lof_variants = select_first([extract_variants.lof_variants,custom_variants])
   File sets = select_first([extract_variants.sets,custom_sets])
   File mask = select_first([extract_variants.mask,custom_mask])
-  
-  # Array[String] chrom_list =  ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22"]
-  Array[String] chrom_list =  ["22"]
+
+  Array[String] chrom_list =  ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22"]
   scatter (chrom in chrom_list){
     call convert_vcf {input:docker = bio_docker,chrom=chrom,lof_variants = lof_variants }
   }
@@ -51,11 +53,7 @@ workflow regenie_lof_exome_custom {
     docker=bio_docker
   }
   
-  call subset_grm {
-    input :
-    docker = bio_docker,
-    exome_fam = subset_cov_pheno.exome_fam
-  }
+  call subset_grm { input : docker = bio_docker,exome_fam = subset_cov_pheno.exome_fam}
 
   #STEP1
   scatter (pheno in validate_inputs.validated_phenotypes) {
@@ -68,8 +66,83 @@ workflow regenie_lof_exome_custom {
       covariates=validate_inputs.validated_covariates,
       docker=regenie_docker
     }
+    call regenie {
+      input :
+      pheno = pheno,
+      docker = regenie_docker,
+      cov_file = validate_inputs.validated_cov_pheno_file,
+      covariates = validate_inputs.validated_covariates,
+      loco = step1.loco[0],
+      prefix=prefix,
+      lof_variants = lof_variants,
+      sets= sets,
+      mask= mask,
+      bins = select_first([bins_aaf,max_maf]),
+      lof_bgen = merge.lof_bgen,
+      is_binary = is_binary
+    }
   }
   #STEP2
+}
+
+
+task regenie{
+  input {
+    String docker
+    File lof_bgen
+    File cov_file
+    String pheno
+    String covariates
+    String mask_type 
+    File loco
+    File sets
+    File mask
+    File lof_variants
+    String prefix
+    String bins
+    Boolean is_binary
+    String regenie_args
+    
+  }
+
+  String final_params  = if is_binary then "--bt --firth --firth-se --approx " + regenie_args else "--qt" + regenie_args
+    
+  Int disk_size = ceil(size(lof_bgen,"GB"))*2 + 10
+  File lof_index =  lof_bgen + ".bgi"
+  File lof_sample = lof_bgen + ".sample"
+
+  Int cpus = 2
+  Int mem = ceil(size(lof_bgen,"GB"))*4*cpus
+  String regenie_results = prefix + "_lof_" + pheno + ".regenie.gz"
+
+  
+  command <<<
+  CPUS=$(grep -c ^processor /proc/cpuinfo)
+
+  # REGENIE
+  echo -e  ~{pheno}"\t"~{loco} > pred.txt
+  time regenie --step 2  --out ./~{prefix}_lof \
+       --threads $CPUS  ~{final_params}  --bgen ~{lof_bgen} --sample ~{lof_sample} \
+       --pred pred.txt    --phenoFile ~{cov_file} --covarFile ~{cov_file} \
+       --phenoColList ~{pheno} --covarColList ~{covariates} \
+       --aaf-bins ~{bins}  --build-mask ~{mask_type} --mask-def ~{mask} --set-list ~{sets} --anno-file ~{lof_variants}
+
+  wc -l pred.txt
+  >>>
+
+    runtime {
+    docker: "~{docker}"
+    cpu: "~{cpus}"
+    disks:  "local-disk ~{disk_size} HDD"
+    memory: "~{mem} GB"
+    zones: "europe-west1-b europe-west1-c europe-west1-d"
+    preemptible : 1
+  }
+  
+  output {
+    File results = regenie_results
+    File log = prefix + "_lof.log"
+  }
 }
 
 task step1 {
@@ -313,7 +386,7 @@ task extract_variants {
   input {
     String docker
     File annot_file
-    Array[String] lof_list
+    String lof_list
     Float max_maf
     Int gene_variants_min_count
     
@@ -323,9 +396,9 @@ task extract_variants {
   # Extract variables
   annot_file=~{annot_file}	       
   max_maf=~{max_maf}
-  lof_list=~{write_lines(lof_list)}
   gene_variants_min_count=~{gene_variants_min_count}
-    
+  echo ~{lof_list} | tr ',' '\n' > lof_list.txt
+
   # Get column indices
   GIND=$(zcat -f "~{annot_file}" | head -1 | awk -F'\t' '{for(i=1; i<=NF; i++) if($i == "gene_most_severe") {print i; exit;}}')
   MIND=$(zcat -f "~{annot_file}" | head -1 | awk -F'\t' '{for(i=1; i<=NF; i++) if($i == "most_severe") {print i; exit;}}')
@@ -333,14 +406,13 @@ task extract_variants {
   
   echo "$GIND $MIND  $AIND"
   #SUBSET ONLY TO VARIANTS WITH MAX MAF < THRESHOLD AND WITH LOF VARIANTS
-  zcat -f "~{annot_file}" | awk -v OFS='\t' -v c1="$AIND"  -v c2="$GIND" -v c3="$MIND" '{print $1,$c1,$c2,$c3}' |   awk -v max_maf="~{max_maf}" '$2 > 0 && $2 < max_maf || $2 > 1-max_maf && $2 < 1'|  grep -wf ~{lof_list} |  cut -f 1,3,4 |  sort > tmp.txt
-
+  zcat -f "~{annot_file}" | awk -v OFS='\t' -v c1="$AIND"  -v c2="$GIND" -v c3="$MIND" '{print $1,$c1,$c2,$c3}' |   awk -v max_maf="~{max_maf}" '$2 > 0 && $2 < max_maf || $2 > 1-max_maf && $2 < 1'|  grep -wf lof_list.txt |  cut -f 1,3,4 |  sort > tmp.txt
 
   # keep only genes with >1 variants
-  awk -F'\t' '{gene=$2; variant=$1; if(!(gene in variants)){variants[gene]=variant; count[gene]=1} else {variants[gene]=variants[gene] "," variant; count[gene]++}} END {for(gene in variants){print gene "\t" count[gene] "\t" variants[gene]}}' tmp.txt | sort | awk -v min_count="~{gene_variants_min_count}" '$2>=min_count' > sets.tsv
+  awk -F'\t' '{gene=$2; variant=$1; if(!(gene in variants)){variants[gene]=variant; count[gene]=1} else {variants[gene]=variants[gene] "," variant; count[gene]++}} END {for(gene in variants){print gene "\t" count[gene] "\t" variants[gene]}}' tmp.txt | sort | awk -v min_count="~{gene_variants_min_count}" '$2>=min_count' | awk -F'\t' '{ split($3, variants, ","); split(variants[1], parts, "_"); chrom = parts[1]; print $1 "\t" chrom "\t" parts[2] "\t" $3}'> sets.tsv
 
   # NOW I NEED TO SUBSET THE VARIANTS AND GENERATE THE MASK
-  cat sets.tsv  | cut -f3 | tr ',' '\n' | sort > lof_variants.txt
+  cat tmp.txt | grep -wf <(cat sets.tsv  | cut -f4 | tr ',' '\n') | sort > lof_variants.txt
   paste <( echo "Mask1") <(join -t $'\t'  lof_variants.txt  tmp.txt | cut -f 3 | sort | uniq | tr '\n' ',' |  sed 's/,$/\n/') > ./mask.txt
   
   >>>
@@ -418,7 +490,7 @@ task merge {
     String docker
   }
 
-  String bargs =  "-filetype vcf -bgen-bits 8 -bgen-compression zlib -vcf-genotype-field GP -bgen-permitted-input-rounding-error 0.005 -ofiletype bgen_v1.2 "
+  String bargs =  "-filetype vcf -bgen-bits 8 -bgen-compression zlib  -bgen-permitted-input-rounding-error 0.005 -ofiletype bgen_v1.2 "
   Int disk_size = ceil(size(vcfs,'GB'))*2 + 20
   String out_file = "lof"
   
