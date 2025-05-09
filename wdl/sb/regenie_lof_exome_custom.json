@@ -1,7 +1,7 @@
 {
     
     "regenie_lof_exome_custom.prefix": "test",
-    "regenie_lof_exome_custom.pheno_list": "gs://fg-3/exome/inputs/demo_phenos.txt",
+    "regenie_lof_exome_custom.pheno_list": "gs://fg-3/exome/inputs/lof/demo_phenos.txt",
     "regenie_lof_exome_custom.convert_vcf.vcf_root" : "gs://finngen-production-library-red/wes_gnomad_v4_min_QC/data/finngen_wes_gnomad_v4_renamed_CHROM.vcf.gz",
     "regenie_lof_exome_custom.subset_grm.grm_bed": "gs://finngen-production-library-red/finngen_R13/grm_1.0/data/R13_GRM_V0_LD_0.2.bed",
 
@@ -28,7 +28,7 @@
     "regenie_lof_exome_custom.extract_variants.gene_variants_min_count": "1",
     "regenie_lof_exome_custom.max_maf": "0.01",
     
-    "regenie_lof_exome_custom.extract_variants.annot_file" :"gs://r13-data/lof/inputs/exome_annotation.txt.gz"
+    "regenie_lof_exome_custom.extract_variants.annot_file" :"gs://r13-data/lof/exome/inputs/exome_annotation.txt.gz"
     
     
 }

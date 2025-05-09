@@ -5,7 +5,6 @@ workflow regenie_lof_exome_custom {
   input {
     String prefix
     File pheno_list
-
     # OPTIONAL PARAMETERS for building MASK
     File? custom_variants
     File? custom_sets
@@ -20,8 +19,10 @@ workflow regenie_lof_exome_custom {
     
   }
 
-  String bio_docker = "eu.gcr.io/finngen-refinery-dev/bioinformatics:0.8"
-  String regenie_docker = "eu.gcr.io/finngen-refinery-dev/regenie:3.3_r12_cond"
+  #String bio_docker = "eu.gcr.io/finngen-refinery-dev/bioinformatics:0.8"
+  #String regenie_docker = "eu.gcr.io/finngen-refinery-dev/regenie:3.3_r12_cond"
+  String bio_docker = "eu.gcr.io/finngen-sandbox-v3-containers/bioinformatics:0.7"
+  String regenie_docker = "eu.gcr.io/finngen-sandbox-v3-containers/regenie:3.3_cond_region"
 
   # all custom inputs into one
   Array[File?] custom_inputs = [custom_variants,custom_sets,custom_mask]
@@ -30,13 +31,12 @@ workflow regenie_lof_exome_custom {
     call extract_variants { input: docker = bio_docker,max_maf = max_maf}
   }
 
-  
   File lof_variants = select_first([extract_variants.lof_variants,custom_variants])
   File sets = select_first([extract_variants.sets,custom_sets])
   File mask = select_first([extract_variants.mask,custom_mask])
 
-  Array[String] chrom_list =  ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22"]
-  scatter (chrom in chrom_list){
+  call get_chrom_list{input:docker=bio_docker,sets=sets}
+  scatter (chrom in get_chrom_list.chrom_list){
     call convert_vcf {input:docker = bio_docker,chrom=chrom,lof_variants = lof_variants }
   }
   call merge  { input: docker = bio_docker, vcfs = convert_vcf.chrom_lof_vcf}
@@ -414,7 +414,7 @@ task extract_variants {
   # NOW I NEED TO SUBSET THE VARIANTS AND GENERATE THE MASK
   cat tmp.txt | grep -wf <(cat sets.tsv  | cut -f4 | tr ',' '\n') | sort > lof_variants.txt
   paste <( echo "Mask1") <(join -t $'\t'  lof_variants.txt  tmp.txt | cut -f 3 | sort | uniq | tr '\n' ',' |  sed 's/,$/\n/') > ./mask.txt
-  
+  cut -f2 sets.tsv  | sed 's/chr//g' | sort | uniq | sort -V > chrom_list.txt
   >>>
   runtime {
     docker: "~{docker}"
@@ -429,8 +429,7 @@ task extract_variants {
     File lof_variants = "lof_variants.txt"
     File mask = "./mask.txt"
     File sets = "./sets.tsv"
-
-    }
+  }
 }
 
 task convert_vcf {
@@ -676,5 +675,24 @@ task validate_inputs {
     cpu: 1
     zones: "europe-west1-b europe-west1-c europe-west1-d"
     memory: "4 GB"
+  }
+}
+
+task get_chrom_list {
+  input {
+    String docker
+    File sets
+  }
+  command <<<
+  cut -f2 ~{sets}  | sed 's/chr//g' | sort | uniq | sort -V > chrom_list.txt
+  >>>
+  runtime {
+    docker: "~{docker}"
+    disks:   "local-disk 2 HDD"
+    zones: "europe-west1-b europe-west1-c europe-west1-d"
+    preemptible: 2
+  }
+  output {
+    Array[String] chrom_list = read_lines("chrom_list.txt")
   }
 }

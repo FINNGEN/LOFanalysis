@@ -22,10 +22,8 @@ workflow regenie_lof {
   call validate_inputs{input: phenolist=phenos, covariates = covariates, cov = cov_file,pheno = pheno_file, is_binary=is_binary,docker=bio_docker}
 
   call extract_variants { input: docker = bio_docker, max_maf = max_maf,lof_list=lof_list}
-
   # subset vcf to lof variants in each chrom
-  Array[String] chrom_list =  ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22"]
-  scatter (chrom in chrom_list){
+  scatter (chrom in extract_variants.chrom_list){
     call convert_vcf {input: docker = bio_docker,chrom=chrom,lof_variants = extract_variants.lof_variants }
   }
 
@@ -311,7 +309,7 @@ task extract_variants {
   
   paste <( echo "Mask1") <(cut -f 3 lof_variants.txt  | sort | uniq | tr '\n' ',' | sed 's/.$//') > ./mask.txt
   
-
+  cut -f2 sets.tsv  | sed 's/chr//g' | sort | uniq | sort -V > chrom_list.txt
   
   >>>
   runtime {
@@ -327,6 +325,7 @@ task extract_variants {
     File lof_variants = "lof_variants.txt"
     File mask = "./mask.txt"
     File sets = "./sets.tsv"
+    Array[String] chrom_list = read_lines("chrom_list.txt")
 
     }
 }
