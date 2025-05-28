@@ -1,26 +1,19 @@
-version 1.0
-
 workflow regenie_lof_exome_custom {
 
-  input {
-    String prefix
-    File pheno_list
-    # OPTIONAL PARAMETERS for building MASK
-    File? custom_variants
-    File? custom_sets
-    File? custom_mask
-    String? bins_aaf
-    String max_maf 
-    # REGENIE PARAMS
-    File pheno_file
-    File cov_file
-    String covariates
-    Boolean is_binary
-    
-  }
-
-  #String bio_docker = "eu.gcr.io/finngen-refinery-dev/bioinformatics:0.8"
-  #String regenie_docker = "eu.gcr.io/finngen-refinery-dev/regenie:3.3_r12_cond"
+  String prefix
+  File pheno_list
+  # OPTIONAL PARAMETERS for building MASK
+  File? custom_variants
+  File? custom_sets
+  File? custom_mask
+  String? bins_aaf
+  String max_maf 
+  # REGENIE PARAMS
+  File pheno_file
+  File cov_file
+  String covariates
+  Boolean is_binary
+  
   String bio_docker = "eu.gcr.io/finngen-sandbox-v3-containers/bioinformatics:0.7"
   String regenie_docker = "eu.gcr.io/finngen-sandbox-v3-containers/regenie:3.3_cond_region"
 
@@ -82,28 +75,25 @@ workflow regenie_lof_exome_custom {
       is_binary = is_binary
     }
   }
-  #STEP2
 }
 
 
 task regenie{
-  input {
-    String docker
-    File lof_bgen
-    File cov_file
-    String pheno
-    String covariates
-    String mask_type 
-    File loco
-    File sets
-    File mask
-    File lof_variants
-    String prefix
-    String bins
-    Boolean is_binary
-    String regenie_args
-    
-  }
+
+  String docker
+  File lof_bgen
+  File cov_file
+  String pheno
+  String covariates
+  String mask_type 
+  File loco
+  File sets
+  File mask
+  File lof_variants
+  String prefix
+  String bins
+  Boolean is_binary
+  String regenie_args
 
   String final_params  = if is_binary then "--bt --firth --firth-se --approx " + regenie_args else "--qt" + regenie_args
     
@@ -120,21 +110,21 @@ task regenie{
   CPUS=$(grep -c ^processor /proc/cpuinfo)
 
   # REGENIE
-  echo -e  ~{pheno}"\t"~{loco} > pred.txt
-  time regenie --step 2  --out ./~{prefix}_lof \
-       --threads $CPUS  ~{final_params}  --bgen ~{lof_bgen} --sample ~{lof_sample} \
-       --pred pred.txt    --phenoFile ~{cov_file} --covarFile ~{cov_file} \
-       --phenoColList ~{pheno} --covarColList ~{covariates} \
-       --aaf-bins ~{bins}  --build-mask ~{mask_type} --mask-def ~{mask} --set-list ~{sets} --anno-file ~{lof_variants}
+  echo -e  ${pheno}"\t"${loco} > pred.txt
+  time regenie --step 2  --out ./${prefix}_lof \
+       --threads $CPUS  ${final_params}  --bgen ${lof_bgen} --sample ${lof_sample} \
+       --pred pred.txt    --phenoFile ${cov_file} --covarFile ${cov_file} \
+       --phenoColList ${pheno} --covarColList ${covariates} \
+       --aaf-bins ${bins}  --build-mask ${mask_type} --mask-def ${mask} --set-list ${sets} --anno-file ${lof_variants}
 
   wc -l pred.txt
   >>>
 
     runtime {
-    docker: "~{docker}"
-    cpu: "~{cpus}"
-    disks:  "local-disk ~{disk_size} HDD"
-    memory: "~{mem} GB"
+    docker: "${docker}"
+    cpu: "${cpus}"
+    disks:  "local-disk ${disk_size} HDD"
+    memory: "${mem} GB"
     zones: "europe-west1-b europe-west1-c europe-west1-d"
     preemptible : 1
   }
@@ -147,21 +137,19 @@ task regenie{
 
 task step1 {
 
-  input {
-    
-    Array[String] phenolist
-    Boolean is_binary
-    File grm_bed
-    File cov_pheno
-    String covariates
-    Int bsize
 
-    String docker
-    Boolean auto_remove_sex_covar
-    String sex_col_name
+  Array[String] phenolist
+  Boolean is_binary
+  File grm_bed
+  File cov_pheno
+  String covariates
+  Int bsize
 
-    Int covariate_inclusion_threshold = 10
-  }
+  String docker
+  Boolean auto_remove_sex_covar
+  String sex_col_name
+
+  Int covariate_inclusion_threshold = 10
 
   File grm_bim = sub(grm_bed, ".bed", ".bim")
   File grm_fam = sub(grm_bed, ".bed", ".fam")
@@ -171,7 +159,7 @@ task step1 {
 
   set -eux
   n_cpu=`grep -c ^processor /proc/cpuinfo`
-  is_single_sex=$(zcat ~{cov_pheno} | awk -v sexcol=~{sex_col_name} -v phenocols=~{sep="," phenolist} 'BEGIN{is_single=1} NR==1{for(i=1;i<=NF;i++){h[$i]=i;}; split(phenocols,ps,","); prev=""; for(pi in ps){if(!(ps[pi] in h)){print "Given phenotype " ps[pi] " does not exist in phenofile" > "/dev/stderr"; exit 1;}} if(!(sexcol in h)){print "Given sexcolumn:"sexcol" does not exist in phenofile" > "/dev/stderr"; exit 1;}} NR>1{for(pi in ps){if ($h[ps[pi]]!="NA"){if(prev!=""&&prev!=$h[sexcol]){is_single=0; exit;}; prev=$h[sexcol];}}} END{print "is single ", is_single > "/dev/stderr"; printf is_single }')
+  is_single_sex=$(zcat ${cov_pheno} | awk -v sexcol=${sex_col_name} -v phenocols=${sep="," phenolist} 'BEGIN{is_single=1} NR==1{for(i=1;i<=NF;i++){h[$i]=i;}; split(phenocols,ps,","); prev=""; for(pi in ps){if(!(ps[pi] in h)){print "Given phenotype " ps[pi] " does not exist in phenofile" > "/dev/stderr"; exit 1;}} if(!(sexcol in h)){print "Given sexcolumn:"sexcol" does not exist in phenofile" > "/dev/stderr"; exit 1;}} NR>1{for(pi in ps){if ($h[ps[pi]]!="NA"){if(prev!=""&&prev!=$h[sexcol]){is_single=0; exit;}; prev=$h[sexcol];}}} END{print "is single ", is_single > "/dev/stderr"; printf is_single }')
   if [[ $is_single_sex -eq 1 ]]
   then
       echo "true" > is_single_sex
@@ -179,18 +167,18 @@ task step1 {
       echo "false" > is_single_sex
   fi
   
-  if [[ "~{auto_remove_sex_covar}" == "true" && "$is_single_sex" == "1" ]];
+  if [[ "${auto_remove_sex_covar}" == "true" && "$is_single_sex" == "1" ]];
   then
-      covars=$(echo ~{covariates} | sed -e 's/~{sex_col_name}//' | sed 's/^,//' | sed -e 's/,$//' | sed 's/,,/,/g')
+      covars=$(echo ${covariates} | sed -e 's/${sex_col_name}//' | sed 's/^,//' | sed -e 's/,$//' | sed 's/,,/,/g')
   else
-      covars=~{covariates}
+      covars=${covariates}
   fi
   
   
   #filter out covariates with too few observations
-  COVARFILE=~{cov_pheno}
-  PHENO="~{sep=',' phenolist}"
-  THRESHOLD=~{covariate_inclusion_threshold}
+  COVARFILE=${cov_pheno}
+  PHENO="${sep=',' phenolist}"
+  THRESHOLD=${covariate_inclusion_threshold}
   # Filter binary covariates that don't have enough covariate values in them
   # Inputs: covariate file, comma-separated phenolist, comma-separated covariate list, threshold for excluding a covariate
   # If a covariate is quantitative (=having values different from 0,1,NA), it is masked and will be passed through.
@@ -250,50 +238,50 @@ task step1 {
   
   NEWCOVARS=$(cat new_covars)
   # fid needs to be the same as iid in fam
-  awk '{$1=$2} 1' ~{grm_fam} > tempfam && mv tempfam ~{grm_fam}
+  awk '{$1=$2} 1' ${grm_fam} > tempfam && mv tempfam ${grm_fam}
 
   regenie \
       --step 1 \
-      ~{if is_binary then "--bt" else ""} \
-      --bed ~{sub(grm_bed, ".bed", "")} \
-      --covarFile ~{cov_pheno} \
+      ${if is_binary then "--bt" else ""} \
+      --bed ${sub(grm_bed, ".bed", "")} \
+      --covarFile ${cov_pheno} \
       --covarColList $NEWCOVARS \
-      --phenoFile ~{cov_pheno} \
-      --phenoColList ~{sep="," phenolist} \
-      --bsize ~{bsize} \
+      --phenoFile ${cov_pheno} \
+      --phenoColList ${sep="," phenolist} \
       --lowmem \
+      --bsize ${bsize} \
       --lowmem-prefix tmp_rg \
       --gz \
       --threads $n_cpu \
-      --out ~{prefix} \
-      ~{if is_binary then "--write-null-firth" else ""}
+      --out ${prefix} \
+      ${if is_binary then "--write-null-firth" else ""}
   
   # rename loco files with phenotype names and update pred.list accordingly giving it a unique name
-  awk '{orig=$2; sub(/_[0-9]+.loco.gz/, "."$1".loco.gz", $2); print "mv "orig" "$2} ' ~{prefix}_pred.list | bash
-  phenohash=`echo ~{sep="," phenolist} | md5sum | awk '{print $1}'`
-  awk '{sub(/_[0-9]+.loco.gz/, "."$1".loco.gz", $2)} 1' ~{prefix}_pred.list > ~{prefix}.$phenohash.pred.list
-  loco_n=$(wc -l ~{prefix}.$phenohash.pred.list|cut -d " " -f 1)
+  awk '{orig=$2; sub(/_[0-9]+.loco.gz/, "."$1".loco.gz", $2); print "mv "orig" "$2} ' ${prefix}_pred.list | bash
+  phenohash=`echo ${sep="," phenolist} | md5sum | awk '{print $1}'`
+  awk '{sub(/_[0-9]+.loco.gz/, "."$1".loco.gz", $2)} 1' ${prefix}_pred.list > ${prefix}.$phenohash.pred.list
+  loco_n=$(wc -l ${prefix}.$phenohash.pred.list|cut -d " " -f 1)
   
   #check that loco predictions were created for every pheno
-  if [[ $loco_n -ne ~{length(phenolist)} ]]; then
+  if [[ $loco_n -ne ${length(phenolist)} ]]; then
       echo "The model did not converge. This job will abort."
       exit 1
   fi
   
-  if [[ "~{is_binary}" == "true" ]]
+  if [[ "${is_binary}" == "true" ]]
   then
       # rename firth files with phenotype names and update firth.list accordingly giving it a unique name
-      awk '{orig=$2; sub(/_[0-9]+.firth.gz/, "."$1".firth.gz", $2); print "mv "orig" "$2} ' ~{prefix}_firth.list | bash
-      awk '{sub(/_[0-9]+.firth.gz/, "."$1".firth.gz", $2)} 1' ~{prefix}_firth.list > ~{prefix}.$phenohash.firth.list
+      awk '{orig=$2; sub(/_[0-9]+.firth.gz/, "."$1".firth.gz", $2); print "mv "orig" "$2} ' ${prefix}_firth.list | bash
+      awk '{sub(/_[0-9]+.firth.gz/, "."$1".firth.gz", $2)} 1' ${prefix}_firth.list > ${prefix}.$phenohash.firth.list
       
       #check if there is a firth approx per every null
-      firth_n=$(wc -l ~{prefix}.$phenohash.firth.list|cut -d " " -f 1)
+      firth_n=$(wc -l ${prefix}.$phenohash.firth.list|cut -d " " -f 1)
             if [[ $loco_n -ne $firth_n ]]; then
                 echo "fitting firth null approximations FAILED. This job will abort."
                 exit 1
             fi
   else # touch files to have quant phenos not fail output globbing
-      touch ~{prefix}.$phenohash.firth.list
+      touch ${prefix}.$phenohash.firth.list
       touch get_globbed.firth.gz
   fi
   >>>
@@ -311,7 +299,7 @@ task step1 {
 
   runtime {
     
-    docker: "~{docker}"
+    docker: "${docker}"
     cpu: if length(phenolist) == 1 then 1 else if length(phenolist) <=10 then 2 else 4
     memory: if length(phenolist) == 1 then "12 GB" else "16 GB"
     disks: "local-disk 200 HDD"
@@ -322,24 +310,24 @@ task step1 {
 }
 
 task subset_cov_pheno {
-  input {
-    String docker
-    File pheno_file
-    File cov_file
-    File exome_samples
-  }
+
+  String docker
+  File pheno_file
+  File cov_file
+  File exome_samples
+  
 
   command <<<
   #BUILD FAM FILE
-  sed 1,2d  ~{exome_samples} | awk '{print $1"\t"$2}' > grm.fam
+  sed 1,2d  ${exome_samples} | awk '{print $1"\t"$2}' > grm.fam
   #SUBET COV AND PHENO
-  zcat ~{cov_file}   | (sed -u 1q;  grep -Ff  <(cut -f1 grm.fam)) | bgzip -c > exome_cov.txt.gz
-  zcat ~{pheno_file} | (sed -u 1q;  grep -Ff  <(cut -f1 grm.fam)) | bgzip -c > exome_pheno.txt.gz
+  zcat ${cov_file}   | (sed -u 1q;  grep -Ff  <(cut -f1 grm.fam)) | bgzip -c > exome_cov.txt.gz
+  zcat ${pheno_file} | (sed -u 1q;  grep -Ff  <(cut -f1 grm.fam)) | bgzip -c > exome_pheno.txt.gz
   >>>
  runtime {
-    docker: "~{docker}"
+    docker: "${docker}"
     cpu: "1"
-    disks:   "local-disk ~{ceil(size(pheno_file,'GB'))*2 + 10} HDD"
+    disks:   "local-disk ${ceil(size(pheno_file,'GB'))*2 + 10} HDD"
     memory: "2 GB"
     zones: "europe-west1-b europe-west1-c europe-west1-d"
   }
@@ -352,64 +340,64 @@ task subset_cov_pheno {
 }
 
 task subset_grm {
-  input {
-    String docker
-    File grm_bed
-    File exome_fam
-  }
+
+  String docker
+  File grm_bed
+  File exome_fam
+
   String prefix = "exome_GRM"
   File grm_bim = sub(grm_bed, ".bed", ".bim")
   File grm_fam = sub(grm_bed, ".bed", ".fam")
 
   command <<<
-  plink2 --bfile ~{sub(grm_bed, ".bed", "")} --keep ~{exome_fam} --make-bed --out ~{prefix}
+  plink2 --bfile ${sub(grm_bed, ".bed", "")} --keep ${exome_fam} --make-bed --out ${prefix}
   >>>
   
   runtime {
-    docker: "~{docker}"
+    docker: "${docker}"
     cpu: "4"
-    disks:   "local-disk ~{ceil(size(grm_bed,'GB'))*2} HDD"
+    disks:   "local-disk ${ceil(size(grm_bed,'GB'))*2} HDD"
     memory: "8 GB"
     zones: "europe-west1-b europe-west1-c europe-west1-d"
     preemptible: 2
   }
   
   output {
-    File exome_GRM_bed = "~{prefix}.bed"
-    File exome_GRM_bim = "~{prefix}.bim"
-    File exome_GRM_fam = "~{prefix}.fam"
+    File exome_GRM_bed = "${prefix}.bed"
+    File exome_GRM_bim = "${prefix}.bim"
+    File exome_GRM_fam = "${prefix}.fam"
   }
 }
 
 task extract_variants {
 
-  input {
-    String docker
-    File annot_file
-    String lof_list
-    Float max_maf
-    Int gene_variants_min_count
-    
-  }
+
+  String docker
+  File annot_file
+  String lof_list
+  Float max_maf
+  Int gene_variants_min_count
+  
+  
     
   command <<<
   # Extract variables
-  annot_file=~{annot_file}	       
-  max_maf=~{max_maf}
-  gene_variants_min_count=~{gene_variants_min_count}
-  echo ~{lof_list} | tr ',' '\n' > lof_list.txt
+  annot_file=${annot_file}	       
+  max_maf=${max_maf}
+  gene_variants_min_count=${gene_variants_min_count}
+  echo ${lof_list} | tr ',' '\n' > lof_list.txt
 
   # Get column indices
-  GIND=$(zcat -f "~{annot_file}" | head -1 | awk -F'\t' '{for(i=1; i<=NF; i++) if($i == "gene_most_severe") {print i; exit;}}')
-  MIND=$(zcat -f "~{annot_file}" | head -1 | awk -F'\t' '{for(i=1; i<=NF; i++) if($i == "most_severe") {print i; exit;}}')
-  AIND=$(zcat -f "~{annot_file}" | head -1 | awk -F'\t' '{for(i=1; i<=NF; i++) if($i == "AF") {print i; exit;}}')
+  GIND=$(zcat -f "${annot_file}" | head -1 | awk -F'\t' '{for(i=1; i<=NF; i++) if($i == "gene_most_severe") {print i; exit;}}')
+  MIND=$(zcat -f "${annot_file}" | head -1 | awk -F'\t' '{for(i=1; i<=NF; i++) if($i == "most_severe") {print i; exit;}}')
+  AIND=$(zcat -f "${annot_file}" | head -1 | awk -F'\t' '{for(i=1; i<=NF; i++) if($i == "AF") {print i; exit;}}')
   
   echo "$GIND $MIND  $AIND"
   #SUBSET ONLY TO VARIANTS WITH MAX MAF < THRESHOLD AND WITH LOF VARIANTS
-  zcat -f "~{annot_file}" | awk -v OFS='\t' -v c1="$AIND"  -v c2="$GIND" -v c3="$MIND" '{print $1,$c1,$c2,$c3}' |   awk -v max_maf="~{max_maf}" '$2 > 0 && $2 < max_maf || $2 > 1-max_maf && $2 < 1'|  grep -wf lof_list.txt |  cut -f 1,3,4 |  sort > tmp.txt
+  zcat -f "${annot_file}" | awk -v OFS='\t' -v c1="$AIND"  -v c2="$GIND" -v c3="$MIND" '{print $1,$c1,$c2,$c3}' |   awk -v max_maf="${max_maf}" '$2 > 0 && $2 < max_maf || $2 > 1-max_maf && $2 < 1'|  grep -wf lof_list.txt |  cut -f 1,3,4 |  sort > tmp.txt
 
   # keep only genes with >1 variants
-  awk -F'\t' '{gene=$2; variant=$1; if(!(gene in variants)){variants[gene]=variant; count[gene]=1} else {variants[gene]=variants[gene] "," variant; count[gene]++}} END {for(gene in variants){print gene "\t" count[gene] "\t" variants[gene]}}' tmp.txt | sort | awk -v min_count="~{gene_variants_min_count}" '$2>=min_count' | awk -F'\t' '{ split($3, variants, ","); split(variants[1], parts, "_"); chrom = parts[1]; print $1 "\t" chrom "\t" parts[2] "\t" $3}'> sets.tsv
+  awk -F'\t' '{gene=$2; variant=$1; if(!(gene in variants)){variants[gene]=variant; count[gene]=1} else {variants[gene]=variants[gene] "," variant; count[gene]++}} END {for(gene in variants){print gene "\t" count[gene] "\t" variants[gene]}}' tmp.txt | sort | awk -v min_count="${gene_variants_min_count}" '$2>=min_count' | awk -F'\t' '{ split($3, variants, ","); split(variants[1], parts, "_"); chrom = parts[1]; print $1 "\t" chrom "\t" parts[2] "\t" $3}'> sets.tsv
 
   # NOW I NEED TO SUBSET THE VARIANTS AND GENERATE THE MASK
   cat tmp.txt | grep -wf <(cat sets.tsv  | cut -f4 | tr ',' '\n') | sort > lof_variants.txt
@@ -417,9 +405,9 @@ task extract_variants {
   cut -f2 sets.tsv  | sed 's/chr//g' | sort | uniq | sort -V > chrom_list.txt
   >>>
   runtime {
-    docker: "~{docker}"
+    docker: "${docker}"
     cpu: "1"
-    disks:   "local-disk ~{ceil(size(annot_file,'GB'))*2 + 10} HDD"
+    disks:   "local-disk ${ceil(size(annot_file,'GB'))*2 + 10} HDD"
     memory: "2 GB"
     zones: "europe-west1-b europe-west1-c europe-west1-d"
     preemptible: 2
@@ -434,13 +422,12 @@ task extract_variants {
 
 task convert_vcf {
 
-  input {
-    File lof_variants
-    String chrom
-    String docker
-    String vcf_root
-  }
 
+  File lof_variants
+  String chrom
+  String docker
+  String vcf_root
+  
   File vcf = sub(vcf_root,"CHROM",chrom)
   File index = vcf + ".tbi"
   Int disk_size = ceil(size(vcf,"GB"))*2
@@ -450,26 +437,26 @@ task convert_vcf {
   
   command <<<
   # create list of positions and list of variants fixing chrom 23/X issues. Variants are labelled X but chrom file is under 23
-  cut -f1 ~{lof_variants} | sed 's/chrX/chr23/g' | grep chr~{chrom}  |  sed 's/chr23/chrX/g' > chrom_lof_variants.txt
+  cut -f1 ${lof_variants} | sed 's/chrX/chr23/g' | grep chr${chrom}  |  sed 's/chr23/chrX/g' > chrom_lof_variants.txt
   head chrom_lof_variants.txt
   cat chrom_lof_variants.txt | awk -F "_" '{print $1"\t"$2"\t"$2}' > chrom_lof_positions.txt
   head chrom_lof_positions.txt
   
   # create new vcf
   echo "building vcf ..."
-  bcftools view ~{vcf} -R chrom_lof_positions.txt --i ID=@chrom_lof_variants.txt  -Oz -o ~{out_file}
+  bcftools view ${vcf} -R chrom_lof_positions.txt --i ID=@chrom_lof_variants.txt  -Oz -o ${out_file}
 
   # build index
   echo "building index ..."
-  tabix ~{out_file}
+  tabix ${out_file}
   # sanity check that all variants are there
-  paste <(wc -l < chrom_lof_variants.txt) <(bcftools index -s ~{out_file} | cut -f 3) > ~{log_file}
+  paste <(wc -l < chrom_lof_variants.txt) <(bcftools index -s ${out_file} | cut -f 3) > ${log_file}
   >>>
   
   runtime {
-    docker: "~{docker}"
+    docker: "${docker}"
     cpu: "4"
-    disks:   "local-disk ~{disk_size} HDD"
+    disks:   "local-disk ${disk_size} HDD"
     memory: "16 GB"
     zones: "europe-west1-b europe-west1-c europe-west1-d"
     preemptible: 2
@@ -484,30 +471,29 @@ task convert_vcf {
 
 task merge {
 
-  input {
-    Array[File] vcfs
-    String docker
-  }
+  Array[File] vcfs
+  String docker
+  
 
   String bargs =  "-filetype vcf -bgen-bits 8 -bgen-compression zlib  -bgen-permitted-input-rounding-error 0.005 -ofiletype bgen_v1.2 "
-  Int disk_size = ceil(size(vcfs,'GB'))*2 + 20
+  Int disk_size = ceil(size(vcfs[0],'GB'))*length(vcfs)*2 + 20 # draft-2
   String out_file = "lof"
   
   command <<<
   # VCF CONCATENATION
-  cat ~{write_lines(vcfs)} | sort -g  > vcf_list.txt 
-  bcftools concat -f vcf_list.txt -Oz -o ~{out_file}.vcf.gz
-  tabix ~{out_file}.vcf.gz
-  bcftools index -n ~{out_file}.vcf.gz
+  cat ${write_lines(vcfs)} | sort -g  > vcf_list.txt 
+  bcftools concat -f vcf_list.txt -Oz -o ${out_file}.vcf.gz
+  tabix ${out_file}.vcf.gz
+  bcftools index -n ${out_file}.vcf.gz
   # BGEN CONVERSION
-  qctool -g ~{out_file}.vcf.gz -og ~{out_file}.bgen  -os ~{out_file}.bgen.sample  ~{bargs}
-  bgenix -g ~{out_file}.bgen -clobber -index
+  qctool -g ${out_file}.vcf.gz -og ${out_file}.bgen  -os ${out_file}.bgen.sample  ${bargs}
+  bgenix -g ${out_file}.bgen -clobber -index
   >>>
 
   runtime {
-    docker: "~{docker}"
+    docker: "${docker}"
     cpu: "4"
-    disks:   "local-disk ~{disk_size} HDD"
+    disks:   "local-disk ${disk_size} HDD"
     memory: "16 GB"
     zones: "europe-west1-b europe-west1-c europe-west1-d"
     preemptible: 2
@@ -526,14 +512,14 @@ task merge {
 
 task validate_inputs {
 
-  input {
-    Array[String] phenolist
-    String covariates
-    File cov
-    File pheno
-    Boolean is_binary
-    String docker
-  }
+
+  Array[String] phenolist
+  String covariates
+  File cov
+  File pheno
+  Boolean is_binary
+  String docker
+  
   output {
     Array[String] validated_phenotypes = read_lines("validated_phenotypes")
     File validated_cov_pheno_file = "validated_cov_pheno.tsv.gz"
@@ -661,17 +647,17 @@ task validate_inputs {
       f.write(",".join(map(str,[1]+pheno_colnumbers)))
   __EOF__
   # validate the shape and types of the phenotype file
-  python3 validate.py ~{cov} ~{pheno} ~{is_binary} "~{sep=","  phenolist}" "~{covariates}" 5
+  python3 validate.py ${cov} ${pheno} ${is_binary} "${sep=","  phenolist}" "${covariates}" 5
 
   # join files
   PHENOCOLS=$(cat pheno_columns_to_take)
-  join --header -1 1 -2 1 -t $'\t' <(cat <(zcat -f ~{cov}|head -n1) <(zcat -f ~{cov}|tail -n+2|sort -k1))  <(cat <(zcat -f ~{pheno}|head -n1) <(zcat -f ~{pheno}|tail -n+2|sort -k1)|cut -f "$PHENOCOLS") | gzip > validated_cov_pheno.tsv.gz 
+  join --header -1 1 -2 1 -t $'\t' <(cat <(zcat -f ${cov}|head -n1) <(zcat -f ${cov}|tail -n+2|sort -k1))  <(cat <(zcat -f ${pheno}|head -n1) <(zcat -f ${pheno}|tail -n+2|sort -k1)|cut -f "$PHENOCOLS") | gzip > validated_cov_pheno.tsv.gz 
       
   >>>
   runtime {
     preemptible: 2
     disks: "local-disk 20 HDD"
-    docker: "~{docker}"
+    docker: "${docker}"
     cpu: 1
     zones: "europe-west1-b europe-west1-c europe-west1-d"
     memory: "4 GB"
@@ -679,15 +665,16 @@ task validate_inputs {
 }
 
 task get_chrom_list {
-  input {
-    String docker
-    File sets
-  }
+
+  String docker
+  File sets
+  
   command <<<
-  cut -f2 ~{sets}  | sed 's/chr//g' | sort | uniq | sort -V > chrom_list.txt
+  for i in {1..22}; do echo $i >> tmp.txt; done
+  join <(sort tmp.txt) <(cut -f2 ${sets}  | sed 's/chr//g' | sort | uniq)  | sort -V > chrom_list.txt
   >>>
   runtime {
-    docker: "~{docker}"
+    docker: "${docker}"
     disks:   "local-disk 2 HDD"
     zones: "europe-west1-b europe-west1-c europe-west1-d"
     preemptible: 2
