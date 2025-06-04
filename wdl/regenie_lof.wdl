@@ -81,7 +81,7 @@ task merge_results{
   do pheno=$(basename $f .regenie.gz |sed 's/~{prefix}_lof_//g' )  && zcat  $f | sed -E 1,2d |  awk -v pheno="$pheno" '{print pheno" "$0}' |  tr ' ' '\t'   >> tmp.txt
   done 	< ~{write_lines(regenie_results)}
   
-  sort -grk 13 tmp.txt | grep -vw TEST_FAIL >> ~{res_file}
+  sort -grk 13 tmp.txt | grep -vw TEST_FAIL  >> ~{res_file}
   cat tmp.txt | grep -w TEST_FAIL > ~{log_file}
   # merge logs
   while read f
@@ -99,6 +99,10 @@ task merge_results{
   sort -rgk 1 sig_tmp.txt | cut -f2- | sed -e 's/ /\t/g' >> ~{sig_file}
 
   touch ~{sql_file}
+  #GZIP FILES
+  bgzip ~{log_file} -c > ~{log_file}.gz
+  bgzip ~{res_file} -c > ~{res_file}.gz
+  
   python3 <<EOF
   import sys,os,gzip,re
   import numpy as np
@@ -146,12 +150,12 @@ task merge_results{
   }
    
   output {
-    File all_hits = res_file
+    File all_hits = res_file +'.gz'
     File sig_hits = sig_file
     File sql_hits = sql_file
     File variants = var_file
     File read     = readme 
-    File log      = log_file
+    File log      = log_file + '.gz'
     File check    = checksum
   }  
 }
