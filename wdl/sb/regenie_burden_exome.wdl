@@ -1,4 +1,4 @@
-workflow regenie_lof_exome_custom {
+workflow regenie_burden_exome_custom {
 
   String prefix
   File pheno_list
@@ -24,18 +24,18 @@ workflow regenie_lof_exome_custom {
     call extract_variants { input: docker = bio_docker,max_maf = max_maf}
   }
 
-  File lof_variants = select_first([extract_variants.lof_variants,custom_variants])
+  File burden_variants = select_first([extract_variants.burden_variants,custom_variants])
   File sets = select_first([extract_variants.sets,custom_sets])
   File mask = select_first([extract_variants.mask,custom_mask])
 
   call get_chrom_list{input:docker=bio_docker,sets=sets}
   scatter (chrom in get_chrom_list.chrom_list){
-    call convert_vcf {input:docker = bio_docker,chrom=chrom,lof_variants = lof_variants }
+    call convert_vcf {input:docker = bio_docker,chrom=chrom,burden_variants = burden_variants }
   }
-  call merge  { input: docker = bio_docker, vcfs = convert_vcf.chrom_lof_vcf}
+  call merge  { input: docker = bio_docker, vcfs = convert_vcf.chrom_burden_vcf}
 
   #SUBSET GRM AND PHENO
-  call subset_cov_pheno {input:docker = bio_docker,cov_file = cov_file,pheno_file = pheno_file,exome_samples = merge.lof_samples}
+  call subset_cov_pheno {input:docker = bio_docker,cov_file = cov_file,pheno_file = pheno_file,exome_samples = merge.burden_samples}
   call validate_inputs{
     input:
     phenolist= read_lines(pheno_list),
@@ -67,11 +67,11 @@ workflow regenie_lof_exome_custom {
       covariates = validate_inputs.validated_covariates,
       loco = step1.loco[0],
       prefix=prefix,
-      lof_variants = lof_variants,
+      burden_variants = burden_variants,
       sets= sets,
       mask= mask,
       bins = select_first([bins_aaf,max_maf]),
-      lof_bgen = merge.lof_bgen,
+      burden_bgen = merge.burden_bgen,
       is_binary = is_binary
     }
   }
@@ -81,7 +81,7 @@ workflow regenie_lof_exome_custom {
 task regenie{
 
   String docker
-  File lof_bgen
+  File burden_bgen
   File cov_file
   String pheno
   String covariates
@@ -89,7 +89,7 @@ task regenie{
   File loco
   File sets
   File mask
-  File lof_variants
+  File burden_variants
   String prefix
   String bins
   Boolean is_binary
@@ -97,13 +97,13 @@ task regenie{
 
   String final_params  = if is_binary then "--bt --firth --firth-se --approx " + regenie_args else "--qt" + regenie_args
     
-  Int disk_size = ceil(size(lof_bgen,"GB"))*2 + 10
-  File lof_index =  lof_bgen + ".bgi"
-  File lof_sample = lof_bgen + ".sample"
+  Int disk_size = ceil(size(burden_bgen,"GB"))*2 + 10
+  File burden_index =  burden_bgen + ".bgi"
+  File burden_sample = burden_bgen + ".sample"
 
   Int cpus = 2
-  Int mem = ceil(size(lof_bgen,"GB"))*4*cpus
-  String regenie_results = prefix + "_lof_" + pheno + ".regenie.gz"
+  Int mem = ceil(size(burden_bgen,"GB"))*4*cpus
+  String regenie_results = prefix + "_burden_" + pheno + ".regenie.gz"
 
   
   command <<<
@@ -111,11 +111,11 @@ task regenie{
 
   # REGENIE
   echo -e  ${pheno}"\t"${loco} > pred.txt
-  time regenie --step 2  --out ./${prefix}_lof \
-       --threads $CPUS  ${final_params}  --bgen ${lof_bgen} --sample ${lof_sample} \
+  time regenie --step 2  --out ./${prefix}_burden \
+       --threads $CPUS  ${final_params}  --bgen ${burden_bgen} --sample ${burden_sample} \
        --pred pred.txt    --phenoFile ${cov_file} --covarFile ${cov_file} \
        --phenoColList ${pheno} --covarColList ${covariates} \
-       --aaf-bins ${bins}  --build-mask ${mask_type} --mask-def ${mask} --set-list ${sets} --anno-file ${lof_variants}
+       --aaf-bins ${bins}  --build-mask ${mask_type} --mask-def ${mask} --set-list ${sets} --anno-file ${burden_variants}
 
   wc -l pred.txt
   >>>
@@ -131,7 +131,7 @@ task regenie{
   
   output {
     File results = regenie_results
-    File log = prefix + "_lof.log"
+    File log = prefix + "_burden.log"
   }
 }
 
@@ -374,7 +374,7 @@ task extract_variants {
 
   String docker
   File annot_file
-  String lof_list
+  String burden_list
   Float max_maf
   Int gene_variants_min_count
   
@@ -385,7 +385,7 @@ task extract_variants {
   annot_file=${annot_file}	       
   max_maf=${max_maf}
   gene_variants_min_count=${gene_variants_min_count}
-  echo ${lof_list} | tr ',' '\n' > lof_list.txt
+  echo ${burden_list} | tr ',' '\n' > burden_list.txt
 
   # Get column indices
   GIND=$(zcat -f "${annot_file}" | head -1 | awk -F'\t' '{for(i=1; i<=NF; i++) if($i == "gene_most_severe") {print i; exit;}}')
@@ -393,15 +393,15 @@ task extract_variants {
   AIND=$(zcat -f "${annot_file}" | head -1 | awk -F'\t' '{for(i=1; i<=NF; i++) if($i == "AF") {print i; exit;}}')
   
   echo "$GIND $MIND  $AIND"
-  #SUBSET ONLY TO VARIANTS WITH MAX MAF < THRESHOLD AND WITH LOF VARIANTS
-  zcat -f "${annot_file}" | awk -v OFS='\t' -v c1="$AIND"  -v c2="$GIND" -v c3="$MIND" '{print $1,$c1,$c2,$c3}' |   awk -v max_maf="${max_maf}" '$2 > 0 && $2 < max_maf || $2 > 1-max_maf && $2 < 1'|  grep -wf lof_list.txt |  cut -f 1,3,4 |  sort > tmp.txt
+  #SUBSET ONLY TO VARIANTS WITH MAX MAF < THRESHOLD AND WITH BURDEN VARIANTS
+  zcat -f "${annot_file}" | awk -v OFS='\t' -v c1="$AIND"  -v c2="$GIND" -v c3="$MIND" '{print $1,$c1,$c2,$c3}' |   awk -v max_maf="${max_maf}" '$2 > 0 && $2 < max_maf || $2 > 1-max_maf && $2 < 1'|  grep -wf burden_list.txt |  cut -f 1,3,4 |  sort > tmp.txt
 
   # keep only genes with >1 variants
   awk -F'\t' '{gene=$2; variant=$1; if(!(gene in variants)){variants[gene]=variant; count[gene]=1} else {variants[gene]=variants[gene] "," variant; count[gene]++}} END {for(gene in variants){print gene "\t" count[gene] "\t" variants[gene]}}' tmp.txt | sort | awk -v min_count="${gene_variants_min_count}" '$2>=min_count' | awk -F'\t' '{ split($3, variants, ","); split(variants[1], parts, "_"); chrom = parts[1]; print $1 "\t" chrom "\t" parts[2] "\t" $3}'> sets.tsv
 
   # NOW I NEED TO SUBSET THE VARIANTS AND GENERATE THE MASK
-  cat tmp.txt | grep -wf <(cat sets.tsv  | cut -f4 | tr ',' '\n') | sort > lof_variants.txt
-  paste <( echo "Mask1") <(join -t $'\t'  lof_variants.txt  tmp.txt | cut -f 3 | sort | uniq | tr '\n' ',' |  sed 's/,$/\n/') > ./mask.txt
+  cat tmp.txt | grep -wf <(cat sets.tsv  | cut -f4 | tr ',' '\n') | sort > burden_variants.txt
+  paste <( echo "Mask1") <(join -t $'\t'  burden_variants.txt  tmp.txt | cut -f 3 | sort | uniq | tr '\n' ',' |  sed 's/,$/\n/') > ./mask.txt
   cut -f2 sets.tsv  | sed 's/chr//g' | sort | uniq | sort -V > chrom_list.txt
   >>>
   runtime {
@@ -414,7 +414,7 @@ task extract_variants {
   }
   
   output {
-    File lof_variants = "lof_variants.txt"
+    File burden_variants = "burden_variants.txt"
     File mask = "./mask.txt"
     File sets = "./sets.tsv"
   }
@@ -423,7 +423,7 @@ task extract_variants {
 task convert_vcf {
 
 
-  File lof_variants
+  File burden_variants
   String chrom
   String docker
   String vcf_root
@@ -432,25 +432,25 @@ task convert_vcf {
   File index = vcf + ".tbi"
   Int disk_size = ceil(size(vcf,"GB"))*2
   
-  String out_file = chrom + "_lof.vcf.gz"
-  String log_file = chrom + "_lof.log"
+  String out_file = chrom + "_burden.vcf.gz"
+  String log_file = chrom + "_burden.log"
   
   command <<<
   # create list of positions and list of variants fixing chrom 23/X issues. Variants are labelled X but chrom file is under 23
-  cut -f1 ${lof_variants} | sed 's/chrX/chr23/g' | grep chr${chrom}  |  sed 's/chr23/chrX/g' > chrom_lof_variants.txt
-  head chrom_lof_variants.txt
-  cat chrom_lof_variants.txt | awk -F "_" '{print $1"\t"$2"\t"$2}' > chrom_lof_positions.txt
-  head chrom_lof_positions.txt
+  cut -f1 ${burden_variants} | sed 's/chrX/chr23/g' | grep chr${chrom}  |  sed 's/chr23/chrX/g' > chrom_burden_variants.txt
+  head chrom_burden_variants.txt
+  cat chrom_burden_variants.txt | awk -F "_" '{print $1"\t"$2"\t"$2}' > chrom_burden_positions.txt
+  head chrom_burden_positions.txt
   
   # create new vcf
   echo "building vcf ..."
-  bcftools view ${vcf} -R chrom_lof_positions.txt --i ID=@chrom_lof_variants.txt  -Oz -o ${out_file}
+  bcftools view ${vcf} -R chrom_burden_positions.txt --i ID=@chrom_burden_variants.txt  -Oz -o ${out_file}
 
   # build index
   echo "building index ..."
   tabix ${out_file}
   # sanity check that all variants are there
-  paste <(wc -l < chrom_lof_variants.txt) <(bcftools index -s ${out_file} | cut -f 3) > ${log_file}
+  paste <(wc -l < chrom_burden_variants.txt) <(bcftools index -s ${out_file} | cut -f 3) > ${log_file}
   >>>
   
   runtime {
@@ -463,8 +463,8 @@ task convert_vcf {
   }
   
   output {
-    File chrom_lof_vcf = out_file
-    File chrom_lof_vcf_index  = out_file + ".tbi"
+    File chrom_burden_vcf = out_file
+    File chrom_burden_vcf_index  = out_file + ".tbi"
     File chrom_log = log_file
     } 
 }
@@ -477,7 +477,7 @@ task merge {
 
   String bargs =  "-filetype vcf -bgen-bits 8 -bgen-compression zlib  -bgen-permitted-input-rounding-error 0.005 -ofiletype bgen_v1.2 "
   Int disk_size = ceil(size(vcfs[0],'GB'))*length(vcfs)*2 + 20 # draft-2
-  String out_file = "lof"
+  String out_file = "burden"
   
   command <<<
   # VCF CONCATENATION
@@ -501,11 +501,11 @@ task merge {
   }
     
   output{
-    File lof_bgen   = out_file + ".bgen"
-    File lof_samples = out_file + ".bgen.sample"
-    File lof_index  = out_file + ".bgen.bgi"
-    File lof_vcf    = out_file + ".vcf.gz"
-    File lof_vcf_tbi= out_file + ".vcf.gz.tbi"
+    File burden_bgen   = out_file + ".bgen"
+    File burden_samples = out_file + ".bgen.sample"
+    File burden_index  = out_file + ".bgen.bgi"
+    File burden_vcf    = out_file + ".vcf.gz"
+    File burden_vcf_tbi= out_file + ".vcf.gz.tbi"
     
   }
 }
