@@ -10,14 +10,14 @@
     
     #RELEASE SPECIFIC FILES
     "regenie_lof.null_map": "gs://r13-data/lof/inputs/r13_binary_map.txt",
-    "regenie_lof.regenie.cov_file": "gs://finngen-production-library-red/finngen_R13/analysis_covariates/data/R13_COV_PHENO_V0.FID.txt.gz",
+    "regenie_lof.regenie.sumstats_root": "gs://r13-data/regenie/release/summary_stats/PHENO.gz",
+    "regenie_lof.regenie.cov_file": "gs://r13-data/pheno/R13_COV_PHENO_V1.FID.txt.gz",
     "regenie_lof.extract_variants.annot_file":"gs://finngen-production-library-green/finngen_R13/finngen_R13_analysis_data/annotations/R13_annotated_variants_v0.small.gz",
     "regenie_lof.convert_vcf.vcf_root": "gs://finngen-production-library-red/finngen_R13/genotype_1.0/data/finngen_R13_chrCHROM.vcf.gz",
-    "regenie_lof.regenie.sumstats_root": "gs://finngen-production-library-green/finngen_R13/finngen_R13_analysis_data/summary_stats/release/PHENO.gz",
 
     #DOCKERS
-    "regenie_lof.docker": "eu.gcr.io/finngen-refinery-dev/bioinformatics:0.8",
-    "regenie_lof.regenie.docker": "eu.gcr.io/finngen-refinery-dev/regenie:3.2.3_r10_conditional.1",
+    "regenie_lof.docker": "europe-docker.pkg.dev/finngen-refinery-dev/eu.gcr.io/bioinformatics:0.8.2-squashed",
+    "regenie_lof.regenie.docker": "europe-docker.pkg.dev/finngen-refinery-dev/eu.gcr.io/regenie:2.2.4_FG_0.1.3-squashed",
     
     #CONVERT
     "regenie_lof.merge.bargs": "-filetype vcf -bgen-bits 8 -bgen-compression zlib -vcf-genotype-field GP -bgen-permitted-input-rounding-error 0.005 -ofiletype bgen_v1.2 ",
