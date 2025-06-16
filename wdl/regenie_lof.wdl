@@ -25,7 +25,6 @@ workflow regenie_lof {
   call merge    { input: docker = docker, vcfs = convert_vcf.chrom_lof_vcf}
 
   Array[Array[String]] pheno_data = read_tsv(null_map)
- 
   scatter ( p_data in pheno_data) {
     String pheno = p_data[0]
     call regenie {
