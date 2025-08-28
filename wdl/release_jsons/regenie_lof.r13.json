@@ -9,7 +9,7 @@
     "regenie_lof.chrom_list":  ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22"],
     
     #RELEASE SPECIFIC FILES
-    "regenie_lof.null_map": "gs://r13-data/lof/inputs/r13_binary_map.txt",
+    "regenie_lof.null_map": "gs://r13-data/lof/inputs/r13_binary_map_EXCLUDE_PD_DEMENTIA.txt",
     "regenie_lof.regenie.sumstats_root": "gs://r13-data/regenie/release/summary_stats/PHENO.gz",
     "regenie_lof.regenie.cov_file": "gs://r13-data/pheno/R13_COV_PHENO_V1.FID.txt.gz",
     "regenie_lof.extract_variants.annot_file":"gs://finngen-production-library-green/finngen_R13/finngen_R13_analysis_data/annotations/R13_annotated_variants_v0.small.gz",
