@@ -15,38 +15,68 @@ workflow regenie_lof {
   }
 
   # get lof variants
-  call extract_variants { input: docker = docker, max_maf = max_maf,info_filter=info_filter,lof_list=lof_list,gene_variants_min_count=gene_variants_min_count}
+  call extract_variants {
+    input:
+    docker = docker,
+    max_maf = max_maf,
+    info_filter = info_filter,
+    lof_list = lof_list,
+    gene_variants_min_count = gene_variants_min_count
+  }
+  
   # subset vcf to lof variants in each chrom
-  scatter (chrom in chrom_list){
-    call convert_vcf {input: docker = docker,chrom=chrom,lof_variants = extract_variants.lof_variants }
+  scatter (chrom in chrom_list) {
+    call convert_vcf {
+      input:
+        docker = docker,
+        chrom = chrom,
+        lof_variants = extract_variants.lof_variants
+    }
   }
   
   # merge lof chroms + build vcf/bgen
-  call merge    { input: docker = docker, vcfs = convert_vcf.chrom_lof_vcf}
+  call merge {
+    input:
+      docker = docker,
+      vcfs = convert_vcf.chrom_lof_vcf
+  }
 
   Array[Array[String]] pheno_data = read_tsv(null_map)
-  scatter ( p_data in pheno_data) {
+
+  scatter(p_data in pheno_data) {
     String pheno = p_data[0]
     call regenie {
       input :
-      pheno = pheno,
-      null = p_data[1],
-      prefix=prefix,
-      lof_variants = extract_variants.lof_variants,
-      sets=extract_variants.sets,
-      mask=extract_variants.mask,
-      bins = max_maf,
-      lof_bgen = merge.lof_bgen,
-      mlogp_filter = mlogp_filter
+        pheno = pheno,
+        null = p_data[1],
+        prefix = prefix,
+        lof_variants = extract_variants.lof_variants,
+        sets = extract_variants.sets,
+        mask = extract_variants.mask,
+        bins = max_maf,
+        lof_bgen = merge.lof_bgen,
+        mlogp_filter = mlogp_filter
     }
   }
 
-  call merge_results {input: docker = docker,regenie_results = regenie.results,comp_files = regenie.sig_res,prefix=prefix,logs = regenie.log,sets=extract_variants.sets,max_maf=max_maf,info=info_filter,lof_list=lof_list,mlogp_filter=mlogp_filter}
+  call merge_results {
+    input:
+      docker = docker,
+      regenie_results = regenie.results,
+      comp_files = regenie.sig_res,
+      prefix = prefix,
+      logs = regenie.log,
+      sets = extract_variants.sets,
+      max_maf = max_maf,
+      info = info_filter,
+      lof_list = lof_list,
+      mlogp_filter = mlogp_filter
+  }
 
 }
 
 
-task merge_results{
+task merge_results {
 
   input {
     String docker
@@ -61,7 +91,6 @@ task merge_results{
     Int mlogp_filter
     Array[String] lof_list
     String info
-
   }
 
   String res_file = prefix + "_lof.txt" # file with all hits
@@ -145,7 +174,8 @@ task merge_results{
     disks:  "local-disk 10 HDD"
     memory: "2 GB"
     zones: "europe-west1-b europe-west1-c europe-west1-d"
-    preemptible : 1
+    preemptible: 1
+    maxRetries: 2
   }
    
   output {
@@ -204,7 +234,7 @@ task regenie{
 
   ####### SIG HITS FILTER
   
-  # KEEP ONLY RELEVANT HITS (MLGOP > FILTER)
+  # KEEP ONLY RELEVANT HITS (MLOGP > FILTER)
   echo "HITS WITH MLOGP > THRESHOLD"
   TMP_HITS="tmp_hits.txt"
   paste <(zcat ~{regenie_results} | awk '$12>~{mlogp_filter}'  | cut -d " " -f 3 | cut -d . -f 1 | awk '{print $0"_GENESTRING"}') <(zcat ~{regenie_results} | awk '$12>~{mlogp_filter}' | cut -d " " -f 1,9,12) | sed -e 's/ /\t/g' > $TMP_HITS
@@ -239,7 +269,7 @@ task regenie{
 
   # JOIN REGENIE RESULT WITH GENE VARIANT DATA
   PHENO_GENE_HITS="results.txt"
-  echo -e "PHENO\tGENE\tCHROM\tGENE_BETA\tGENE_MLOGP\tTOP_VAR_MLOGP\tVAR1,MLGOP1,BETA1,AF1,VAR2..." > $PHENO_GENE_HITS 
+  echo -e "PHENO\tGENE\tCHROM\tGENE_BETA\tGENE_MLOGP\tTOP_VAR_MLOGP\tVAR1,MLOGP1,BETA1,AF1,VAR2..." > $PHENO_GENE_HITS 
   PHENO=~{pheno}
   join -t $'\t' <(sort -k1 $TMP_HITS) <(sort -k1 $TMP_GENE_VAR_HIT) | sed 's/_GENESTRING//g' | awk '{print "PNAME\t"$0}' | sed -e "s/PNAME/${PHENO}/g"  >> $PHENO_GENE_HITS
 
@@ -253,7 +283,8 @@ task regenie{
     disks:  "local-disk ~{disk_size} HDD"
     memory: "~{mem} GB"
     zones: "europe-west1-b europe-west1-c europe-west1-d"
-    preemptible : 1
+    preemptible: 1
+    maxRetries: 2
   }
   
   output {
@@ -293,7 +324,7 @@ task merge {
     memory: "16 GB"
     zones: "europe-west1-b europe-west1-c europe-west1-d"
     preemptible: 2
-    
+    maxRetries: 2
   }
     
   output{
@@ -323,21 +354,21 @@ task convert_vcf {
   String log_file = chrom + "_lof.log"
   
   command <<<
-  # create list of positions and list of variants fixing chrom 23/X issues. Variants are labelled X but chrom file is under 23
-  cut -f1 ~{lof_variants} | sed 's/chrX/chr23/g' | grep chr~{chrom}  |  sed 's/chr23/chrX/g' > chrom_lof_variants.txt
-  head chrom_lof_variants.txt
-  cat chrom_lof_variants.txt |  awk -F "_" '{print $1"\t"$2"\t"$2}' > chrom_lof_positions.txt
+  # Input FinnGen imputed VCF uses chrX, so convert chr23→chrX for querying
+  cut -f1 ~{lof_variants} | sed 's/chrX/chr23/g' | grep chr~{chrom} | sed 's/chr23/chrX/g' > chrom_lof_variants_vcf.txt
+  head chrom_lof_variants_vcf.txt
+  cat chrom_lof_variants_vcf.txt |  awk -F "_" '{print $1"\t"$2"\t"$2}' > chrom_lof_positions.txt
   head chrom_lof_positions.txt
   
-  # create new vcf
+  # query input vcf (which uses chrX)
   echo "building vcf ..."
-  bcftools view ~{vcf} -R chrom_lof_positions.txt --i ID=@chrom_lof_variants.txt  -Oz -o ~{out_file}
-
+  bcftools view ~{vcf} -R chrom_lof_positions.txt --i ID=@chrom_lof_variants_vcf.txt -Ov | sed 's/chrX/chr23/g' | bgzip > ~{out_file}
+  
   # build index
   echo "building index ..."
-  tabix ~{out_file}
+  tabix -p vcf ~{out_file}
   # sanity check that all variants are there
-  paste <(wc -l < chrom_lof_variants.txt) <(bcftools index -s ~{out_file} | cut -f 3) > ~{log_file}
+  paste <(wc -l < chrom_lof_variants_vcf.txt) <(bcftools index -s ~{out_file} | cut -f 3) > ~{log_file}
 
   >>>
   
@@ -348,6 +379,7 @@ task convert_vcf {
     memory: "16 GB"
     zones: "europe-west1-b europe-west1-c europe-west1-d"
     preemptible: 2
+    maxRetries: 2
   }
   
   output {
@@ -387,7 +419,7 @@ task extract_variants {
 
   echo "$GIND $MIND  $AIND $IIND"
   #SUBSET ONLY TO VARIANTS WITH MAX MAF < THRESHOLD AND WITH LOF VARIANTS
-  zcat -f "${annot_file}" |   tr ':' '_' | awk '{print "chr"$0}' |
+  zcat -f "${annot_file}" |   tr ':' '_' | awk '{print "chr"$0}' | sed 's/chrX/chr23/g' |
       awk -v OFS='\t' -v c1="$AIND"  -v c2="$GIND" -v c3="$MIND" -v c4="$IIND"  '{print $1,$c1,$c2,$c3,$c4}' |
       awk -v max_maf="${max_maf}" -v info_filter="${info_filter}" '$2 > 0 && $2 < max_maf || $2 > 1-max_maf && $2 < 1 && $5> info_filter'|
       grep -wf lof_list.txt |
@@ -409,6 +441,7 @@ task extract_variants {
     memory: "2 GB"
     zones: "europe-west1-b europe-west1-c europe-west1-d"
     preemptible: 2
+    maxRetries: 2
   }
   
   output {
