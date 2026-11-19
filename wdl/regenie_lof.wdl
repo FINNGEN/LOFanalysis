@@ -7,7 +7,11 @@ workflow regenie_lof {
     Float max_maf
     Float info_filter
     Array[String] lof_list
-    Array[String] chrom_list
+    File chunk_manifest  # release bgen chunks: path, chrom, first pos, last pos (regenie-pipelines scripts/return_bgen_chunks_limits.sh)
+    Int n_batches = 40   # max number of shards subsetting the chunks
+    File cov_file        # phenotypes + covariates (FID IID ...)
+    String bargs_binary  # regenie step 2 options for binary phenos (0/1/NA only)
+    String bargs_quant   # regenie step 2 options for quantitative phenos
     String docker
     String prefix
     Int mlogp_filter
@@ -23,38 +27,69 @@ workflow regenie_lof {
     lof_list = lof_list,
     gene_variants_min_count = gene_variants_min_count
   }
-  
-  # subset vcf to lof variants in each chrom
-  scatter (chrom in chrom_list) {
-    call convert_vcf {
-      input:
-        docker = docker,
-        chrom = chrom,
-        lof_variants = extract_variants.lof_variants
-    }
-  }
-  
-  # merge lof chroms + build vcf/bgen
-  call merge {
+
+  # bgen chunks holding lof variants, split into at most n_batches batches
+  call select_chunks {
     input:
       docker = docker,
-      vcfs = convert_vcf.chrom_lof_vcf
+      lof_variants = extract_variants.lof_variants,
+      chunk_manifest = chunk_manifest,
+      n_batches = n_batches
   }
 
+  # subset each batch of chunks to its lof variants
+  # batches.tsv columns: batch id, comma-separated chunk bgens, comma-separated chunk .bgi indexes.
+  # The comma -> newline + write_lines/read_lines round trip turns a column into an Array[File]
+  # (same trick as regenie-pipelines conditional-analysis).
+  scatter (batch in read_tsv(select_chunks.batches)) {
+    Array[File] batch_bgens = read_lines(write_lines([sub(batch[1], ",", "\n")]))
+    Array[File] batch_bgis = read_lines(write_lines([sub(batch[2], ",", "\n")]))
+    call subset_chunks {
+      input:
+        docker = docker,
+        batch = batch[0],
+        bgens = batch_bgens,
+        bgis = batch_bgis,
+        chunk_variants = select_chunks.chunk_variants
+    }
+  }
+
+  # concatenate the batches (in order) into the lof bgen
+  call merge_bgen {
+    input:
+      docker = docker,
+      bgens = subset_chunks.batch_bgen,
+      sample = select_chunks.sample,
+      chunk_variants = select_chunks.chunk_variants
+  }
+
+  # null_map: pheno <tab> step 1 LOCO predictions (binary and quantitative phenos)
   Array[Array[String]] pheno_data = read_tsv(null_map)
+
+  # binary (only 0/1/NA) or quantitative, one pass over the cov file for all phenos
+  call check_is_binary {
+    input:
+      docker = docker,
+      pheno_file = cov_file,
+      pheno_list = write_lines(transpose(pheno_data)[0])
+  }
+  Map[String,String] is_binary_map = read_map(check_is_binary.is_binary_tsv)
 
   scatter(p_data in pheno_data) {
     String pheno = p_data[0]
+    Boolean is_binary = is_binary_map[pheno] == "1"
     call regenie {
       input :
         pheno = pheno,
         null = p_data[1],
+        cov_file = cov_file,
+        bargs = if is_binary then bargs_binary else bargs_quant,
         prefix = prefix,
         lof_variants = extract_variants.lof_variants,
         sets = extract_variants.sets,
         mask = extract_variants.mask,
         bins = max_maf,
-        lof_bgen = merge.lof_bgen,
+        lof_bgen = merge_bgen.lof_bgen,
         mlogp_filter = mlogp_filter
     }
   }
@@ -251,10 +286,11 @@ task regenie{
   do
       GENE=${line[0]}
       CHROM=${line[2]}
+      SUMSTATS_CHROM=${CHROM/X/23}  # sumstats use 23 for X
       POS=${line[3]}
       REF=${line[4]}
       ALT=${line[5]}
-      paste <(echo -e $GENE"_GENESTRING\tchr"$CHROM"_"$POS"_"$REF"_"$ALT) <(tabix ~{sumstats} $CHROM:$POS-$POS | grep -w $REF | grep -w $ALT | cut -f 8,9,11) >> $TMP_VAR
+      paste <(echo -e $GENE"_GENESTRING\tchr"$CHROM"_"$POS"_"$REF"_"$ALT) <(tabix ~{sumstats} $SUMSTATS_CHROM:$POS-$POS | grep -w $REF | grep -w $ALT | cut -f 8,9,11) >> $TMP_VAR
   done < <(cat  sig_genes.txt |  sed 's/chr//g' | tr '_' '\t' )
 
   # THIS IS THE PART TO BE JOINED WITH THE REGENIE RESULT (I COLLAPSE ALL VARIANT DATA FOR EACH GENE INTO A SINGLE LINE)
@@ -295,101 +331,265 @@ task regenie{
 }
 
 
-task merge {
+task check_is_binary {
+  # From regenie-pipelines wdl/conditional-analysis/regenie_conditional_analysis.wdl (command unchanged):
+  # a pheno is binary (1) if its column only holds 0/1/NA, quantitative (0) otherwise.
 
   input {
-    Array[File] vcfs
     String docker
-    String bargs
+    File pheno_file
+    File pheno_list
   }
-  
-  Int disk_size = ceil(size(vcfs,'GB'))*2 + 20
-  String out_file = "lof"
-  
+
+  Int disk_size = ceil(size(pheno_file,'GB')) + 2 * 2
+  String outfile = "is_binary.tsv"
+
   command <<<
-  # VCF CONCATENATION
-  cat ~{write_lines(vcfs)} | sort -g  > vcf_list.txt 
-  bcftools concat -f vcf_list.txt -Oz -o ~{out_file}.vcf.gz
-  tabix ~{out_file}.vcf.gz
-  bcftools index -n ~{out_file}.vcf.gz
-  # BGEN CONVERSION
-  qctool -g ~{out_file}.vcf.gz -og ~{out_file}.bgen  -os ~{out_file}.bgen.sample  ~{bargs}
-  bgenix -g ~{out_file}.bgen -clobber -index
+    set -eu
+    PHENOLIST=$(tr -s ' \t' '\n' < ~{pheno_list} | awk 'NF && !seen[$0]++' | paste -sd,)
+
+    # no pipefail: awk exits early once every pheno is resolved, which SIGPIPEs the still-writing zcat -- harmless, and
+    # the sanity check below catches any case where a pheno didn't actually get classified.
+    zcat -f ~{pheno_file} | awk -F'\t' -v phenolist="$PHENOLIST" '
+      BEGIN { n=split(phenolist,names,","); remaining=n }
+      NR==1 {
+        for (i=1;i<=NF;i++) idx[$i]=i
+        for (j=1;j<=n;j++) if (!(names[j] in idx)) { missing[names[j]]=1; remaining-- }
+        if (remaining==0) exit
+        next
+      }
+      {
+        for (j=1;j<=n;j++) {
+          p=names[j]
+          if (p in missing || p in bad) continue
+          v=$(idx[p])
+          if (v=="" || v=="NA") continue
+          if (v!=0 && v!=1) { bad[p]=1; remaining-- }
+        }
+        if (remaining==0) exit
+      }
+      END {
+        for (j=1;j<=n;j++) {
+          p=names[j]
+          print p"\t"(p in missing ? "NA" : (p in bad ? 0 : 1))
+        }
+      }
+    ' > ~{outfile}
+
+    # every requested pheno must resolve to a real 0/1 classification
+    while IFS=$'\t' read -r p v; do
+      if [[ "$v" != "0" && "$v" != "1" ]]; then
+        echo "ERROR: could not classify phenotype '$p' as binary/quantitative (got '$v')" >&2
+        exit 1
+      fi
+    done < ~{outfile}
+
+    cut -f2 ~{outfile} | sort | uniq -c | sort -nr >&2
   >>>
+
+  output {
+    File is_binary_tsv = outfile
+  }
 
   runtime {
     docker: "~{docker}"
-    cpu: "4"
-    disks:   "local-disk ~{disk_size} HDD"
-    memory: "16 GB"
+    cpu: "1"
+    disks: "local-disk ~{disk_size} HDD"
+    memory: "2 GB"
     zones: "europe-west1-b europe-west1-c europe-west1-d"
     preemptible: 2
     maxRetries: 2
-  }
-    
-  output{
-    File lof_bgen   = out_file + ".bgen"
-    File lof_sample = out_file + ".bgen.sample"
-    File lof_index  = out_file + ".bgen.bgi"
-    File lof_vcf    = out_file + ".vcf.gz"
-    File lof_vcf_tbi= out_file + ".vcf.gz.tbi"
-    
   }
 }
-  
-task convert_vcf {
+
+task select_chunks {
+  # Assigns each lof variant to the release bgen chunk whose [first pos, last pos] contains it and splits
+  # the needed chunks into at most n_batches contiguous batches. Batches follow manifest order
+  # (chr1..chr22, chrX, by position), so concatenating them in order keeps the bgen sorted.
 
   input {
-    String vcf_root
-    File lof_variants
-    String chrom
     String docker
+    File lof_variants
+    File chunk_manifest
+    Int n_batches
   }
 
-  File vcf = sub(vcf_root,"CHROM",chrom)
-  File index = vcf + ".tbi"
-  Int disk_size = ceil(size(vcf,"GB"))*2
-  
-  String out_file = chrom + "_lof.vcf.gz"
-  String log_file = chrom + "_lof.log"
-  
   command <<<
-  # Input FinnGen imputed VCF uses chrX, so convert chr23→chrX for querying
-  cut -f1 ~{lof_variants} | sed 's/chrX/chr23/g' | grep chr~{chrom} | sed 's/chr23/chrX/g' > chrom_lof_variants_vcf.txt
-  head chrom_lof_variants_vcf.txt
-  cat chrom_lof_variants_vcf.txt |  awk -F "_" '{print $1"\t"$2"\t"$2}' > chrom_lof_positions.txt
-  head chrom_lof_positions.txt
-  
-  # query input vcf (which uses chrX)
-  echo "building vcf ..."
-  bcftools view ~{vcf} -R chrom_lof_positions.txt --i ID=@chrom_lof_variants_vcf.txt -Ov | sed 's/chrX/chr23/g' | bgzip > ~{out_file}
-  
-  # build index
-  echo "building index ..."
-  tabix -p vcf ~{out_file}
-  # sanity check that all variants are there
-  paste <(wc -l < chrom_lof_variants_vcf.txt) <(bcftools index -s ~{out_file} | cut -f 3) > ~{log_file}
+  lof_variants="~{lof_variants}"
+  chunk_manifest="~{chunk_manifest}"
+  n_batches=~{n_batches}
 
+  set -euo pipefail
+  export LC_ALL=C
+
+  # 1. Variant -> chunk. The chunks call X "chrX" (IDs chrX_pos_ref_alt), as extract_variants does; chr23 IDs (older
+  #    lof_variants files) are translated. Output, in manifest order: chunk bgen path <tab> bgen variant ID
+  awk -F'\t' -v OFS='\t' '
+    NR == FNR {
+      c = $2; n[c]++; i = n[c]
+      start[c,i] = $3; end[c,i] = $4; path[c,i] = $1; rank[c,i] = FNR
+      next
+    }
+    {
+      split($1, v, "_"); c = (v[1] == "chr23") ? "chrX" : v[1]; pos = v[2] + 0
+      for (i = 1; i <= n[c]; i++) if (pos >= start[c,i] && pos <= end[c,i]) break
+      if (i > n[c]) { print "ERROR: no chunk contains " $1 > "/dev/stderr"; failed = 1; next }
+      print rank[c,i], pos, path[c,i], c "_" v[2] "_" v[3] "_" v[4]
+    }
+    END { if (failed) exit 1 }
+  ' "$chunk_manifest" "$lof_variants" | sort -k1,1n -k2,2n | cut -f3,4 > chunk_variants.tsv
+  cut -f1 chunk_variants.tsv | uniq > chunks.txt
+
+  # 2. Split the needed chunks into min(n_batches, chunks) contiguous batches whose sizes differ by at most one.
+  #    Output: batch id <tab> chunk bgens <tab> chunk .bgi indexes (comma-separated)
+  awk -v OFS='\t' -v n_batches="$n_batches" -v n="$(wc -l < chunks.txt)" '
+    BEGIN { nb = (n_batches < n) ? n_batches : n }
+    {
+      b = int((NR - 1) * nb / n)
+      sep = (count[b]++ > 0) ? "," : ""
+      bgens[b] = bgens[b] sep $0
+      bgis[b] = bgis[b] sep $0 ".bgi"
+      last = b
+    }
+    END { for (i = 0; i <= last; i++) print sprintf("%03d", i), bgens[i], bgis[i] }
+  ' chunks.txt > batches.tsv
+
+  # all chunks share the same samples: take the sample file of the first one
+  echo "$(head -n1 chunks.txt).sample" > sample_path.txt
+
+  echo "$(wc -l < chunk_variants.tsv) variants in $(wc -l < chunks.txt) of $(wc -l < "$chunk_manifest") chunks, $(wc -l < batches.tsv) batches" >&2
   >>>
-  
+
   runtime {
     docker: "~{docker}"
-    cpu: "4"
-    disks:   "local-disk ~{disk_size} HDD"
-    memory: "16 GB"
+    cpu: "1"
+    disks: "local-disk 10 HDD"
+    memory: "2 GB"
     zones: "europe-west1-b europe-west1-c europe-west1-d"
     preemptible: 2
     maxRetries: 2
   }
-  
+
   output {
-    File chrom_lof_vcf = out_file
-    File chrom_lof_vcf_index  = out_file + ".tbi"
-    File chrom_log = log_file
-    } 
+    File chunk_variants = "chunk_variants.tsv"
+    File batches = "batches.tsv"
+    String sample = read_string("sample_path.txt")
+  }
+}
+
+task subset_chunks {
+  # Subsets each chunk of one batch to its lof variants (bgenix, using the chunk .bgi index)
+  # and concatenates them, in batch order, into one bgen.
+
+  input {
+    String docker
+    String batch
+    Array[File] bgens
+    Array[File] bgis
+    File chunk_variants
+  }
+
+  Int disk_size = ceil(size(bgens,"GB") + size(bgis,"GB")) + 10
+
+  command <<<
+  batch="~{batch}"
+  bgens_file="~{write_lines(bgens)}"
+  bgis_file="~{write_lines(bgis)}"
+  chunk_variants="~{chunk_variants}"
+
+  set -euo pipefail
+  export LC_ALL=C
+
+  # link each chunk next to its own index (bgenix looks for <bgen>.bgi)
+  mkdir -p chunks subsets
+  paste "$bgens_file" "$bgis_file" | while IFS=$'\t' read -r bgen bgi; do
+    ln -s "$bgen" "chunks/$(basename "$bgen")"
+    ln -s "$bgi" "chunks/$(basename "$bgen").bgi"
+  done
+
+  # subset each chunk to its variants (matched on the bgen rsid field)
+  n_chunks=$(wc -l < "$bgens_file"); i=0
+  while read -r bgen; do
+    name=$(basename "$bgen"); i=$((i + 1))
+    awk -F'\t' -v c="$name" '{ p = $1; sub(/.*\//, "", p) } p == c { print $2 }' "$chunk_variants" > ids.txt
+    bgenix -g "chunks/$name" -incl-rsids ids.txt > "subsets/$name" 2> bgenix.log || { cat bgenix.log >&2; exit 1; }
+    echo "batch $batch: $i/$n_chunks $name ($(wc -l < ids.txt) variants)" >&2
+  done < "$bgens_file"
+
+  cat-bgen -clobber -og "batch_${batch}.bgen" -g $(while read -r bgen; do echo "subsets/$(basename "$bgen")"; done < "$bgens_file")
+  >>>
+
+  runtime {
+    docker: "~{docker}"
+    cpu: "1"
+    disks: "local-disk ~{disk_size} HDD"
+    memory: "2 GB"
+    zones: "europe-west1-b europe-west1-c europe-west1-d"
+    preemptible: 2
+    maxRetries: 2
+  }
+
+  output {
+    File batch_bgen = "batch_~{batch}.bgen"
+  }
+}
+
+task merge_bgen {
+  # Concatenates the batch bgens (in order), indexes the result and checks it holds exactly the lof variants.
+
+  input {
+    String docker
+    Array[File] bgens
+    File sample
+    File chunk_variants
+  }
+
+  Int disk_size = ceil(size(bgens,"GB"))*2 + 10
+
+  command <<<
+  bgens_file="~{write_lines(bgens)}"
+  sample="~{sample}"
+  chunk_variants="~{chunk_variants}"
+
+  set -euo pipefail
+  export LC_ALL=C
+
+  cat-bgen -clobber -og lof.bgen -g $(cat "$bgens_file")
+  bgenix -g lof.bgen -index -clobber
+  cp "$sample" lof.bgen.sample
+
+  # the merged bgen must contain exactly the requested variants
+  bgenix -g lof.bgen -list 2> /dev/null | awk -F'\t' '!/^#/ && $1 != "alternate_ids" { print $2 }' | sort > found.txt
+  cut -f2 "$chunk_variants" | sort > wanted.txt
+  if ! cmp -s wanted.txt found.txt; then
+    echo "ERROR: lof.bgen does not match the requested variants" >&2
+    comm -23 wanted.txt found.txt | sed 's/^/  missing: /' >&2
+    comm -13 wanted.txt found.txt | sed 's/^/  unexpected: /' >&2
+    exit 1
+  fi
+  echo "lof.bgen: $(wc -l < found.txt) variants, all requested variants present" >&2
+  >>>
+
+  runtime {
+    docker: "~{docker}"
+    cpu: "1"
+    disks: "local-disk ~{disk_size} HDD"
+    memory: "4 GB"
+    zones: "europe-west1-b europe-west1-c europe-west1-d"
+    preemptible: 2
+    maxRetries: 2
+  }
+
+  output {
+    File lof_bgen = "lof.bgen"
+    File lof_index = "lof.bgen.bgi"
+    File lof_sample = "lof.bgen.sample"
+  }
 }
 
 task extract_variants {
+  # Command = scripts/extract_variants.sh: the parameter block maps the WDL inputs to the script's
+  # variables, the rest is the script body. Keep the two in sync.
 
   input {
     String docker
@@ -401,38 +601,66 @@ task extract_variants {
   }
 
   Int disk_size = ceil(size(annot_file,'GB'))*2 + 10
-  
-  command <<<
 
-  # Extract variables
-  annot_file=~{annot_file}	       
+  command <<<
+  annot_file="~{annot_file}"
   max_maf=~{max_maf}
   info_filter=~{info_filter}
   gene_variants_min_count=~{gene_variants_min_count}
-  cat ~{write_lines(lof_list)} > lof_list.txt
-  
-  # Get column indices
-  GIND=$(zcat -f "~{annot_file}" | head -1 | awk -F'\t' '{for(i=1; i<=NF; i++) if($i == "gene_most_severe") {print i; exit;}}')
-  MIND=$(zcat -f "~{annot_file}" | head -1 | awk -F'\t' '{for(i=1; i<=NF; i++) if($i == "most_severe") {print i; exit;}}')
-  AIND=$(zcat -f "~{annot_file}" | head -1 | awk -F'\t' '{for(i=1; i<=NF; i++) if($i == "AF") {print i; exit;}}')
-  IIND=$(zcat -f "~{annot_file}" | head -1 | awk -F'\t' '{for(i=1; i<=NF; i++) if($i == "INFO") {print i; exit;}}')
+  lof_list=$(paste -sd, "~{write_lines(lof_list)}")  # comma-separated
 
-  echo "$GIND $MIND  $AIND $IIND"
-  #SUBSET ONLY TO VARIANTS WITH MAX MAF < THRESHOLD AND WITH LOF VARIANTS
-  zcat -f "${annot_file}" |   tr ':' '_' | awk '{print "chr"$0}' | sed 's/chrX/chr23/g' |
-      awk -v OFS='\t' -v c1="$AIND"  -v c2="$GIND" -v c3="$MIND" -v c4="$IIND"  '{print $1,$c1,$c2,$c3,$c4}' |
-      awk -v max_maf="${max_maf}" -v info_filter="${info_filter}" '$2 > 0 && $2 < max_maf || $2 > 1-max_maf && $2 < 1 && $5> info_filter'|
-      grep -wf lof_list.txt |
-      cut -f 1,3,4 |
-      sort > tmp.txt
+  set -euo pipefail
+  export LC_ALL=C  # locale-independent sort order
 
-  # keep only genes with >1 variants
-  awk -F'\t' '{gene=$2; variant=$1; if(!(gene in variants)){variants[gene]=variant; count[gene]=1} else {variants[gene]=variants[gene] "," variant; count[gene]++}} END {for(gene in variants){print gene "\t" count[gene] "\t" variants[gene]}}' tmp.txt | sort | awk -v min_count="~{gene_variants_min_count}" '$2>=min_count' | awk -F'\t' '{ split($3, variants, ","); split(variants[1], parts, "_"); chrom = parts[1]; print $1 "\t" chrom "\t" parts[2] "\t" $3}'> sets.tsv
+  # 1. LoF variants passing the MAF and INFO filters.
+  #    Columns are looked up by header name (fails if one is missing).
+  #    MAF = min(AF, 1-AF), so variants where ALT is the major allele are handled too.
+  #    Variants with missing AF or INFO are dropped.
+  #    Output, sorted by variant: chrN_pos_ref_alt (chrX for 23) <tab> gene <tab> consequence
+  zcat -f "$annot_file" | awk -F'\t' -v OFS='\t' \
+      -v lof_list="$lof_list" -v max_maf="$max_maf" -v info_filter="$info_filter" '
+    BEGIN { n = split(lof_list, l, ","); for (i = 1; i <= n; i++) is_lof[l[i]] = 1 }
+    NR == 1 {
+      for (i = 1; i <= NF; i++) col[$i] = i
+      n = split("#variant AF INFO most_severe gene_most_severe", req, " ")
+      for (i = 1; i <= n; i++) if (!(req[i] in col)) { print "missing column in annot_file: " req[i] > "/dev/stderr"; failed = 1; exit 1 }
+      next
+    }
+    !($col["most_severe"] in is_lof) { next }
+    {
+      n_lof++
+      af = $col["AF"]; info = $col["INFO"]
+      if (af == "" || af == "NA" || info == "" || info == "NA") { n_na++; next }
+      maf = (af + 0 > 0.5) ? 1 - af : af + 0
+      if (maf <= 0 || maf >= max_maf + 0) { n_maf++; next }
+      if (info + 0 <= info_filter + 0)     { n_info++; next }
+      id = "chr" $col["#variant"]; gsub(":", "_", id); sub(/^chr23_/, "chrX_", id)  # X as in the bgen chunks: chrX_pos_ref_alt
+      print id, $col["gene_most_severe"], $col["most_severe"]
+    }
+    END {
+      if (!failed) printf "LoF variants: %d. Removed: missing AF/INFO %d, MAF %d, INFO %d. Kept: %d\n", n_lof, n_na, n_maf, n_info, n_lof - n_na - n_maf - n_info > "/dev/stderr"
+    }
+  ' | sort -k1,1 > filtered.tsv
 
-  # NOW I NEED TO SUBSET THE VARIANTS AND GENERATE THE MASK
-  cat tmp.txt | grep -wf <(cat sets.tsv  | cut -f4 | tr ',' '\n') | sort > lof_variants.txt
-  paste <( echo "Mask1") <(join -t $'\t'  lof_variants.txt  tmp.txt | cut -f 3 | sort | uniq | tr '\n' ',' |  sed 's/,$/\n/') > ./mask.txt
-  
+  # 2. Keep only genes with >= gene_variants_min_count variants (first pass counts, second pass keeps).
+  #    This is the regenie annotation file: variant <tab> gene <tab> consequence
+  awk -F'\t' -v min_count="$gene_variants_min_count" '
+    NR == FNR { n[$2]++; next }
+    n[$2] >= min_count + 0
+  ' filtered.tsv filtered.tsv > lof_variants.txt
+
+  # 3. Regenie set list: gene <tab> chrom <tab> pos <tab> variant1,variant2,...
+  #    chrom/pos are taken from the gene's first variant.
+  awk -F'\t' -v OFS='\t' '
+    !($2 in vars) { genes[++n] = $2; vars[$2] = $1; next }
+                  { vars[$2] = vars[$2] "," $1 }
+    END { for (i = 1; i <= n; i++) { g = genes[i]; split(vars[g], p, "_"); print g, p[1], p[2], vars[g] } }
+  ' lof_variants.txt | sort -k1,1 > sets.tsv
+
+  # 4. Regenie mask definition: a single mask with every consequence present.
+  printf 'Mask1\t%s\n' "$(cut -f3 lof_variants.txt | sort -u | paste -sd, -)" > mask.txt
+
+  echo "Genes: $(wc -l < sets.tsv), variants: $(wc -l < lof_variants.txt), mask: $(cat mask.txt)" >&2
   >>>
   runtime {
     docker: "~{docker}"
@@ -443,14 +671,10 @@ task extract_variants {
     preemptible: 2
     maxRetries: 2
   }
-  
+
   output {
     File lof_variants = "lof_variants.txt"
     File mask = "./mask.txt"
     File sets = "./sets.tsv"
-
-    }
+  }
 }
-
-
-
