@@ -6,10 +6,10 @@
     "regenie_lof.mlogp_filter": 3,
     "regenie_lof.gene_variants_min_count": 1,
     "regenie_lof.lof_list": ["frameshift_variant","splice_donor_variant","stop_gained","splice_acceptor_variant"],
-    "regenie_lof.n_batches": 40,
+    "regenie_lof.n_batches": 50,
     
     #RELEASE SPECIFIC FILES
-    "regenie_lof.null_map": "gs://r14-data/lof/inputs/test_nulls.txt",
+    "regenie_lof.null_map": "gs://r14-data/lof/inputs/r14_nulls.txt",
     "regenie_lof.regenie.sumstats_root": "gs://r14-data/regenie/release/summary_stats/PHENO.gz",
     "regenie_lof.cov_file": "gs://finngen-production-library-red/finngen_R14/analysis_covariates/data/R14_COV_PHENO_V0.FID.txt.gz",
     "regenie_lof.extract_variants.annot_file":"gs://finngen-production-library-green/finngen_R14/finngen_R14_analysis_data/annotations/R14_annotated_variants_v0.small.gz",

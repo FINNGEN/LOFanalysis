@@ -489,7 +489,8 @@ task subset_chunks {
     File chunk_variants
   }
 
-  Int disk_size = ceil(size(bgens,"GB") + size(bgis,"GB")) + 10
+  # estimate from the first chunk only: size() on every chunk/index means one storage call per file
+  Int disk_size = ceil(size(bgens[0],"MB") * length(bgens) / 1024) + 10
 
   command <<<
   batch="~{batch}"
@@ -521,9 +522,9 @@ task subset_chunks {
 
   runtime {
     docker: "~{docker}"
-    cpu: "1"
-    disks: "local-disk ~{disk_size} HDD"
-    memory: "2 GB"
+    cpu: "4"
+    disks: "local-disk ~{disk_size} SSD"  # SSD: localizing the chunks is the slow part
+    memory: "4 GB"
     zones: "europe-west1-b europe-west1-c europe-west1-d"
     preemptible: 2
     maxRetries: 2
@@ -544,7 +545,8 @@ task merge_bgen {
     File chunk_variants
   }
 
-  Int disk_size = ceil(size(bgens,"GB"))*2 + 10
+  # estimate from the first batch only (one size() call); x2: inputs + merged lof.bgen
+  Int disk_size = ceil(size(bgens[0],"MB") * length(bgens) / 1024)*2 + 10
 
   command <<<
   bgens_file="~{write_lines(bgens)}"
