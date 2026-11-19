@@ -1,6 +1,8 @@
 # LOFanalysis
 
-Regenie pipeline for LOF.
+Regenie pipeline for LOF analysis. 
+
+Pipeline is now archived and the WDLs have been moved to the [regenie repo](https://github.com/FINNGEN/regenie-pipelines)
 Burden mode for regenie is used. This pipeline does all the work from annotation/vcfs to results. 
 
 # WDL
